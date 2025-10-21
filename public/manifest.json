@@ -1,0 +1,27 @@
+{
+  "name": "انفير - منصة مزادات إعادة التدوير",
+  "short_name": "انفير",
+  "description": "منصة المزادات الرائدة لإعادة التدوير في الشرق الأوسط",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007bff",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "shopping", "environment"],
+  "lang": "ar",
+  "dir": "rtl"
+}
