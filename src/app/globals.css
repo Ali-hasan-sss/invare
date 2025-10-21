@@ -187,6 +187,33 @@ html.dark body {
   direction: ltr;
 }
 
+/* Search bar RTL/LTR support */
+[dir="rtl"] .search-container {
+  flex-direction: row-reverse;
+}
+
+[dir="ltr"] .search-container {
+  flex-direction: row;
+}
+
+/* Ensure search icon stays inside input in both directions */
+.search-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+[dir="rtl"] .search-input-container .search-icon {
+  margin-right: 8px;
+  margin-left: 0;
+}
+
+[dir="ltr"] .search-input-container .search-icon {
+  margin-left: 8px;
+  margin-right: 0;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

@@ -297,23 +297,23 @@ const Header: React.FC = () => {
                   className="text-gray-500 dark:text-gray-400"
                 />
               </Box>
-              <Box className="flex items-center border-l border-gray-300 dark:border-gray-600 mx-2 pl-2">
+              <Box className="search-input-container border-l border-gray-300 dark:border-gray-600 mx-2 pl-2">
                 <ClientOnly
                   fallback={
                     <InputBase
                       placeholder="بحث"
-                      className="text-gray-700 dark:text-gray-200 w-48"
+                      className="text-gray-700 dark:text-gray-200 flex-1"
                       inputProps={{ "aria-label": "search" }}
                     />
                   }
                 >
                   <InputBase
                     placeholder={t("common.search")}
-                    className="text-gray-700 dark:text-gray-200 w-48"
+                    className="text-gray-700 dark:text-gray-200 flex-1"
                     inputProps={{ "aria-label": "search" }}
                   />
                 </ClientOnly>
-                <IconButton className="p-2 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-800 rounded-md flex-shrink-0">
+                <IconButton className="search-icon p-2 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-800 rounded-md flex-shrink-0">
                   <Search size={20} />
                 </IconButton>
               </Box>
