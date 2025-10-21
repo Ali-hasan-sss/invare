@@ -3,10 +3,14 @@ const nextConfig = {
   images: {
     unoptimized: true,
     loader: "default",
+    domains: [],
   },
   assetPrefix: "",
   trailingSlash: false,
   output: "standalone",
+  experimental: {
+    outputFileTracingRoot: undefined,
+  },
   async headers() {
     return [
       {
