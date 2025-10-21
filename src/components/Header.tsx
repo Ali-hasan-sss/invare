@@ -35,7 +35,6 @@ import { useAppSelector } from "@/store/hooks";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ClientOnly from "./ClientOnly";
-import Image from "next/image";
 
 const Header: React.FC = () => {
   const { t } = useTranslation();
@@ -87,7 +86,13 @@ const Header: React.FC = () => {
             className="flex items-center justify-center cursor-pointer"
             onClick={() => router.push("/")}
           >
-            <Image src="/images/logo.png" alt="logo" width={40} height={40} />
+            <img
+              src="/images/logo.png"
+              alt="logo"
+              width={40}
+              height={40}
+              className="object-contain"
+            />
           </div>
         </div>
         <IconButton
@@ -210,7 +215,13 @@ const Header: React.FC = () => {
               className="flex items-center justify-center cursor-pointer"
               onClick={() => router.push("/")}
             >
-              <Image src="/images/logo.png" alt="logo" width={60} height={60} />
+              <img
+                src="/images/logo.png"
+                alt="logo"
+                width={60}
+                height={60}
+                className="object-contain"
+              />
             </div>
           </Box>
 

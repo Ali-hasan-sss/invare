@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/Input";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useToast } from "@/components/ui/Toast";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import EmailVerification from "@/components/EmailVerification";
 
 export default function RegisterPage() {
@@ -206,7 +205,7 @@ export default function RegisterPage() {
                 >
                   <div className="flex items-center justify-center gap-3">
                     <div className="w-5 h-5 flex items-center justify-center">
-                      <Image
+                      <img
                         src="/images/Google.png"
                         alt="google"
                         width={25}
@@ -256,11 +255,10 @@ export default function RegisterPage() {
       {/* Right Side - Background Image */}
       <div className="hidden lg:flex flex-1 relative">
         <div className="absolute inset-0 rounded-3xl overflow-hidden">
-          <Image
+          <img
             src="/images/Login Art.png"
             alt="register-bg"
-            fill
-            className="object-contain"
+            className="w-full h-full object-contain"
           />
         </div>
       </div>
