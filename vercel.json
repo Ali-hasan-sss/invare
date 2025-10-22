@@ -18,6 +18,10 @@
         {
           "key": "Access-Control-Allow-Origin",
           "value": "*"
+        },
+        {
+          "key": "Content-Type",
+          "value": "image/png"
         }
       ]
     },
@@ -38,5 +42,6 @@
     }
   ],
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "public": true
 }
