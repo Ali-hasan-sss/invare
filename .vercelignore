@@ -18,5 +18,5 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
-# Keep images
-!public/images/
+# Keep all public files including images
+!public/
