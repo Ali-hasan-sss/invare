@@ -193,7 +193,7 @@ export default function LoginPage() {
       <div className="hidden lg:flex flex-1 relative">
         <div className="absolute inset-0 rounded-3xl overflow-hidden">
           <img
-            src="/images/Login Art.png"
+            src="/images/LoginArt.png"
             alt="login-bg"
             className="w-full h-full object-contain"
           />
