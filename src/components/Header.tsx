@@ -35,6 +35,7 @@ import { useAppSelector } from "@/store/hooks";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ClientOnly from "./ClientOnly";
+import Image from "next/image";
 
 const Header: React.FC = () => {
   const { t } = useTranslation();
@@ -86,7 +87,7 @@ const Header: React.FC = () => {
             className="flex items-center justify-center cursor-pointer"
             onClick={() => router.push("/")}
           >
-            <img
+            <Image
               src="/images/logo.png"
               alt="logo"
               width={40}
@@ -215,7 +216,7 @@ const Header: React.FC = () => {
               className="flex items-center justify-center cursor-pointer"
               onClick={() => router.push("/")}
             >
-              <img
+              <Image
                 src="/images/logo.png"
                 alt="logo"
                 width={60}

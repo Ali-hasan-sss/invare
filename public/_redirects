@@ -1,5 +1,0 @@
-# Redirects for images
-/images/* /images/:splat 200
-
-# Sitemap redirect
-/sitemap.xml /api/sitemap 200
