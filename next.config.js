@@ -4,12 +4,21 @@ const nextConfig = {
     unoptimized: true,
     loader: "default",
     domains: [],
+    formats: ["image/webp", "image/avif"],
   },
   assetPrefix: "",
   trailingSlash: false,
   output: "standalone",
   experimental: {
     outputFileTracingRoot: undefined,
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/images/:path*",
+        destination: "/images/:path*",
+      },
+    ];
   },
   async headers() {
     return [
