@@ -10,11 +10,18 @@ import { useToast } from "@/components/ui/Toast";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import EmailVerification from "@/components/EmailVerification";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function RegisterPage() {
   const { t, currentLanguage } = useTranslation();
   const { showToast } = useToast();
   const router = useRouter();
+  const {
+    registerUser,
+    isLoading: authLoading,
+    error: authError,
+    isAuthenticated,
+  } = useAuth();
   const [step, setStep] = useState<"form" | "verification">("form");
   const [formData, setFormData] = useState({
     firstName: "",
@@ -44,7 +51,7 @@ export default function RegisterPage() {
     }
 
     setLoading(true);
-    // Simulate API call
+    // Just move to verification step without sending request
     setTimeout(() => {
       setLoading(false);
       setStep("verification");
@@ -54,12 +61,35 @@ export default function RegisterPage() {
 
   const handleVerification = async (otp: string) => {
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      // Call register API with user data
+      const result = await registerUser({
+        email: formData.email,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+      });
+
+      // Check if the result is fulfilled (registration successful)
+      if (result && "payload" in result && result.type.includes("fulfilled")) {
+        // Store token and user data in localStorage after successful registration
+        if (typeof window !== "undefined" && result.payload) {
+          const { accessToken, user } = result.payload as any;
+          localStorage.setItem("accessToken", accessToken);
+          localStorage.setItem("user", JSON.stringify(user));
+        }
+
+        showToast(t("common.success"), "success");
+        router.push("/"); // Redirect to home page after successful registration
+      } else if (authError) {
+        showToast(authError, "error");
+      } else {
+        showToast("Registration failed", "error");
+      }
+    } catch (error) {
+      showToast("Registration failed", "error");
+    } finally {
       setLoading(false);
-      showToast(t("common.success"), "success");
-      router.push("/"); // Redirect to home page after successful registration
-    }, 1000);
+    }
   };
 
   const handleResendOtp = () => {

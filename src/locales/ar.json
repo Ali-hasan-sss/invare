@@ -19,7 +19,13 @@
     "warning": "تحذير",
     "info": "معلومات",
     "language": "اللغة",
-    "theme": "المظهر"
+    "theme": "المظهر",
+    "viewAll": "عرض الكل",
+    "noDataFound": "لا توجد بيانات",
+    "back": "رجوع",
+    "home": "الرئيسية",
+    "share": "مشاركة",
+    "favorite": "المفضلة"
   },
   "auth": {
     "welcomeBack": "مرحباً بعودتك",
@@ -63,5 +69,68 @@
     "light": "فاتح",
     "dark": "مظلم",
     "system": "النظام"
+  },
+  "user": {
+    "profile": "الملف الشخصي",
+    "settings": "الإعدادات",
+    "logout": "تسجيل الخروج"
+  },
+  "listings": {
+    "materialListings": "عروض المواد",
+    "offersFor": "العروض المتاحة لـ",
+    "foundResults": "تم العثور على {count} نتيجة",
+    "noListingsFound": "لا توجد عروض",
+    "noListingsDescription": "لا توجد عروض متاحة حالياً لهذه المادة.",
+    "active": "نشط",
+    "pending": "قيد الانتظار",
+    "expired": "منتهي الصلاحية",
+    "auction": "مزاد",
+    "expiresOn": "ينتهي في",
+    "notFound": "العرض غير موجود",
+    "description": "الوصف",
+    "noDescription": "لا يوجد وصف متاح",
+    "specifications": "المواصفات",
+    "startingPrice": "السعر الابتدائي",
+    "availableQuantity": "الكمية المتاحة",
+    "material": "المادة",
+    "seller": "البائع",
+    "privateSeller": "بائع خاص",
+    "placeBid": "تقديم عرض سعر",
+    "contactSeller": "التواصل مع البائع"
+  },
+  "bidding": {
+    "startBidding": "بدء المزايدة",
+    "biddingEnded": "انتهت المزايدة",
+    "highestBid": "أعلى عرض سعر",
+    "yourBid": "عرضك",
+    "enterBidAmount": "أدخل مبلغ المزايدة",
+    "minimumBid": "الحد الأدنى للمزايدة",
+    "bidHistory": "تاريخ المزايدات",
+    "placeBidSuccess": "تم تقديم العرض بنجاح",
+    "placeBidError": "فشل في تقديم العرض",
+    "biddingNotStarted": "لم تبدأ المزايدة بعد",
+    "timeRemaining": "الوقت المتبقي",
+    "bidsCount": "عدد المزايدات",
+    "loginRequired": "يجب عليك تسجيل الدخول لبدء المزاد",
+    "biddingForm": "تقديم عرض السعر",
+    "currentBid": "العرض الحالي",
+    "yourBidAmount": "مبلغ عرضك",
+    "submitBid": "تقديم العرض",
+    "cancelBid": "إلغاء"
+  },
+  "actions": {
+    "contactSellerSuccess": "تم التواصل مع البائع بنجاح",
+    "contactSellerError": "فشل في التواصل مع البائع",
+    "shareSuccess": "تم نسخ الرابط",
+    "shareError": "فشل في المشاركة",
+    "addToFavorites": "إضافة للمفضلة",
+    "removeFromFavorites": "إزالة من المفضلة",
+    "reportListing": "الإبلاغ عن العرض",
+    "printDetails": "طباعة التفاصيل"
+  },
+  "seller": {
+    "verified": "موثق",
+    "pending": "قيد التحقق",
+    "unverified": "غير موثق"
   }
 }

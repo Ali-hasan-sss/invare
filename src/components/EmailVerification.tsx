@@ -48,7 +48,7 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
       const isRTL = currentLanguage.dir === "rtl";
       const nextIndex = isRTL ? index - 1 : index + 1;
 
-      if (nextIndex >= 0 && nextIndex < 4) {
+      if (nextIndex >= 0 && nextIndex < 6) {
         inputs[nextIndex]?.focus();
       }
     }
@@ -59,14 +59,14 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
     const pastedData = e.clipboardData
       .getData("text")
       .replace(/\D/g, "")
-      .slice(0, 4);
+      .slice(0, 6);
     setOtp(pastedData);
 
     // Focus the last filled input or the first empty one
     const container = (e.target as HTMLElement).closest(".otp-container");
     const inputs = container?.querySelectorAll("input");
     if (inputs) {
-      const focusIndex = Math.min(pastedData.length, 3);
+      const focusIndex = Math.min(pastedData.length, 5);
       (inputs[focusIndex] as HTMLInputElement)?.focus();
     }
   };
@@ -93,7 +93,7 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
         const newOtp = otp.split("");
         newOtp[index] = "";
         setOtp(newOtp.join(""));
-      } else if (prevIndex >= 0 && prevIndex < 4) {
+      } else if (prevIndex >= 0 && prevIndex < 6) {
         // If current input is empty, go to previous and clear it
         const newOtp = otp.split("");
         newOtp[prevIndex] = "";
@@ -114,7 +114,7 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
       if (isRTL && prevIndex >= 0) {
         // In RTL, right arrow goes to previous input
         inputs[prevIndex]?.focus();
-      } else if (!isRTL && nextIndex < 4) {
+      } else if (!isRTL && nextIndex < 6) {
         // In LTR, right arrow goes to next input
         inputs[nextIndex]?.focus();
       }
@@ -124,7 +124,7 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
       const newOtp = otp.split("");
       newOtp[index] = "";
       setOtp(newOtp.join(""));
-      if (nextIndex < 4) {
+      if (nextIndex < 6) {
         inputs[nextIndex]?.focus();
       }
     }
@@ -132,7 +132,7 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otp || otp.length !== 4) {
+    if (!otp || otp.length !== 6) {
       showToast(t("auth.enterOTP"), "error");
       return;
     }
@@ -156,7 +156,7 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
             currentLanguage.dir === "rtl" ? "flex-row-reverse" : "flex-row"
           }`}
         >
-          {[0, 1, 2, 3].map((index) => (
+          {[0, 1, 2, 3, 4, 5].map((index) => (
             <Input
               key={index}
               type="text"
@@ -215,7 +215,7 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
           type="submit"
           className="w-full h-12 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           loading={loading}
-          disabled={otp.length !== 4}
+          disabled={otp.length !== 6}
           sx={{ color: "white !important" }}
         >
           {t("auth.verify")}

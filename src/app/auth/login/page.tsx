@@ -10,11 +10,18 @@ import { useToast } from "@/components/ui/Toast";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import EmailVerification from "@/components/EmailVerification";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function LoginPage() {
   const { t, currentLanguage } = useTranslation();
   const { showToast } = useToast();
   const router = useRouter();
+  const {
+    login,
+    isLoading: authLoading,
+    error: authError,
+    isAuthenticated,
+  } = useAuth();
   const [step, setStep] = useState<"email" | "otp">("email");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -26,8 +33,13 @@ export default function LoginPage() {
       return;
     }
 
+    if (!email.includes("@")) {
+      showToast("Please enter a valid email", "error");
+      return;
+    }
+
     setLoading(true);
-    // Simulate API call
+    // Just move to OTP step without sending request
     setTimeout(() => {
       setLoading(false);
       setStep("otp");
@@ -37,12 +49,24 @@ export default function LoginPage() {
 
   const handleOtpSubmit = async (otp: string) => {
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      // Call login API with email and OTP
+      const result = await login({ email, otp });
+
+      // Check if the result is fulfilled (login successful)
+      if (result && "payload" in result && result.type.includes("fulfilled")) {
+        showToast(t("common.success"), "success");
+        router.push("/"); // Redirect to home page after successful login
+      } else if (authError) {
+        showToast(authError, "error");
+      } else {
+        showToast("Login failed", "error");
+      }
+    } catch (error) {
+      showToast("Login failed", "error");
+    } finally {
       setLoading(false);
-      showToast(t("common.success"), "success");
-      router.push("/"); // Redirect to home page after successful login
-    }, 1000);
+    }
   };
 
   const handleBack = () => {

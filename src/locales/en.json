@@ -19,7 +19,13 @@
     "warning": "Warning",
     "info": "Info",
     "language": "Language",
-    "theme": "Theme"
+    "theme": "Theme",
+    "viewAll": "View All",
+    "noDataFound": "No data found",
+    "back": "Back",
+    "home": "Home",
+    "share": "Share",
+    "favorite": "Favorite"
   },
   "auth": {
     "welcomeBack": "Welcome Back",
@@ -63,5 +69,68 @@
     "light": "Light",
     "dark": "Dark",
     "system": "System"
+  },
+  "user": {
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "listings": {
+    "materialListings": "Material Listings",
+    "offersFor": "Offers for",
+    "foundResults": "Found {count} results",
+    "noListingsFound": "No listings found",
+    "noListingsDescription": "There are currently no offers available for this material.",
+    "active": "Active",
+    "pending": "Pending",
+    "expired": "Expired",
+    "auction": "Auction",
+    "expiresOn": "Expires on",
+    "notFound": "Listing not found",
+    "description": "Description",
+    "noDescription": "No description available",
+    "specifications": "Specifications",
+    "startingPrice": "Starting price",
+    "availableQuantity": "Available quantity",
+    "material": "Material",
+    "seller": "Seller",
+    "privateSeller": "Private Seller",
+    "placeBid": "Place Bid",
+    "contactSeller": "Contact Seller"
+  },
+  "bidding": {
+    "startBidding": "Start Bidding",
+    "biddingEnded": "Bidding Ended",
+    "highestBid": "Highest Bid",
+    "yourBid": "Your Bid",
+    "enterBidAmount": "Enter bid amount",
+    "minimumBid": "Minimum bid",
+    "bidHistory": "Bid History",
+    "placeBidSuccess": "Bid placed successfully",
+    "placeBidError": "Failed to place bid",
+    "biddingNotStarted": "Bidding has not started yet",
+    "timeRemaining": "Time remaining",
+    "bidsCount": "Number of bids",
+    "loginRequired": "You must be logged in to start bidding",
+    "biddingForm": "Place Your Bid",
+    "currentBid": "Current Bid",
+    "yourBidAmount": "Your Bid Amount",
+    "submitBid": "Submit Bid",
+    "cancelBid": "Cancel"
+  },
+  "actions": {
+    "contactSellerSuccess": "Seller contacted successfully",
+    "contactSellerError": "Failed to contact seller",
+    "shareSuccess": "Link copied to clipboard",
+    "shareError": "Failed to share",
+    "addToFavorites": "Add to favorites",
+    "removeFromFavorites": "Remove from favorites",
+    "reportListing": "Report listing",
+    "printDetails": "Print details"
+  },
+  "seller": {
+    "verified": "Verified",
+    "pending": "Pending Verification",
+    "unverified": "Unverified"
   }
 }
