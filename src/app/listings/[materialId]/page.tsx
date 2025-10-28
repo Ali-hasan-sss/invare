@@ -5,31 +5,19 @@ import { useParams, useRouter } from "next/navigation";
 import {
   Box,
   Typography,
-  Card,
-  CardContent,
-  CardMedia,
   Grid,
-  Chip,
   Button,
   CircularProgress,
   Alert,
   Container,
-  Link,
   Pagination,
 } from "@mui/material";
-import {
-  ArrowLeft,
-  Package,
-  Clock,
-  DollarSign,
-  User,
-  Gavel,
-} from "lucide-react";
+import { ArrowLeft, Package } from "lucide-react";
 import { useListings } from "@/hooks/useListings";
 import { useMaterials } from "@/hooks/useMaterials";
 import { useTranslation } from "@/hooks/useTranslation";
-import { Avatar } from "@/components/ui/Avatar";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import ListingCard from "@/components/ui/ListingCard";
 import ClientOnly from "@/components/ClientOnly";
 
 const MaterialListingsPage: React.FC = () => {
@@ -74,41 +62,19 @@ const MaterialListingsPage: React.FC = () => {
     router.push(`/listings/detail/${listingId}`);
   };
 
-  const formatPrice = (price: string) => {
-    return new Intl.NumberFormat("ar-SA", {
-      style: "currency",
-      currency: "SAR",
-    }).format(parseFloat(price));
+  const handleFavoriteClick = (listingId: string) => {
+    // TODO: Implement add to favorites functionality
+    console.log("Add to favorites:", listingId);
+    alert(t("actions.addToFavorites"));
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("ar-SA");
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "active":
-        return "success";
-      case "pending":
-        return "warning";
-      case "expired":
-        return "error";
-      default:
-        return "default";
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "active":
-        return t("listings.active");
-      case "pending":
-        return t("listings.pending");
-      case "expired":
-        return t("listings.expired");
-      default:
-        return status;
-    }
+  const handleShareClick = (listingId: string) => {
+    // TODO: Implement share functionality
+    console.log("Share listing:", listingId);
+    navigator.clipboard.writeText(
+      `${window.location.origin}/listings/detail/${listingId}`
+    );
+    alert(t("actions.shareSuccess"));
   };
 
   if (isLoading && !listings.length) {
@@ -206,126 +172,26 @@ const MaterialListingsPage: React.FC = () => {
       {/* Listings Grid */}
       {listings.length > 0 ? (
         <>
-          <Grid container spacing={3} className="mb-6">
+          <Grid container spacing={4} className="mb-6">
             {listings.map((listing) => (
-              <Grid item xs={12} sm={6} md={4} key={listing.id}>
-                <Card
-                  className="h-full cursor-pointer hover:shadow-lg transition-shadow duration-200"
-                  onClick={() => handleListingClick(listing.id)}
-                >
-                  {/* Listing Image */}
-                  <CardMedia
-                    component="div"
-                    className="h-48 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center"
-                  >
-                    {listing.photos && listing.photos.length > 0 ? (
-                      <img
-                        src={listing.photos[0].url}
-                        alt={listing.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <Package size={48} className="text-gray-400" />
-                    )}
-                  </CardMedia>
-
-                  <CardContent className="p-4">
-                    {/* Status Chip */}
-                    <Box className="flex justify-between items-start mb-3">
-                      <Chip
-                        label={getStatusText(listing.status)}
-                        color={getStatusColor(listing.status) as any}
-                        size="small"
-                        className="mb-2"
-                      />
-                      {listing.isBiddable && (
-                        <Chip
-                          icon={<Gavel size={16} />}
-                          label={t("listings.auction")}
-                          variant="outlined"
-                          size="small"
-                          className="text-purple-600 border-purple-600"
-                        />
-                      )}
-                    </Box>
-
-                    {/* Title */}
-                    <Typography
-                      variant="h6"
-                      component="h3"
-                      className="font-semibold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2"
-                    >
-                      {listing.title}
-                    </Typography>
-
-                    {/* Description */}
-                    {listing.description && (
-                      <Typography
-                        variant="body2"
-                        className="text-gray-600 dark:text-gray-400 mb-3 line-clamp-2"
-                      >
-                        {listing.description}
-                      </Typography>
-                    )}
-
-                    {/* Price and Quantity */}
-                    <Box className="flex items-center justify-between mb-3">
-                      <Box className="flex items-center text-green-600 dark:text-green-400">
-                        <DollarSign size={16} className="mr-1" />
-                        <Typography
-                          variant="body2"
-                          component="span"
-                          className="font-semibold"
-                        >
-                          {formatPrice(listing.startingPrice)}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          className="text-gray-500 ml-1"
-                        >
-                          / {listing.unitOfMeasure}
-                        </Typography>
-                      </Box>
-                      <Typography
-                        variant="body2"
-                        className="text-gray-600 dark:text-gray-400"
-                      >
-                        {listing.stockAmount} {listing.unitOfMeasure}
-                      </Typography>
-                    </Box>
-
-                    {/* Seller Info */}
-                    {listing.seller && (
-                      <Box className="flex items-center mb-3">
-                        <Avatar
-                          size="small"
-                          fallback={
-                            listing.seller.companyName ||
-                            listing.seller.email ||
-                            "S"
-                          }
-                        />
-                        <Typography
-                          variant="body2"
-                          className="text-gray-600 dark:text-gray-400 ml-2"
-                        >
-                          {listing.seller.companyName || listing.seller.email}
-                        </Typography>
-                      </Box>
-                    )}
-
-                    {/* Expiry Date */}
-                    {listing.expiresAt && (
-                      <Box className="flex items-center text-gray-500 dark:text-gray-400">
-                        <Clock size={14} className="mr-1" />
-                        <Typography variant="caption">
-                          {t("listings.expiresOn")}{" "}
-                          {formatDate(listing.expiresAt)}
-                        </Typography>
-                      </Box>
-                    )}
-                  </CardContent>
-                </Card>
+              <Grid item xs={12} sm={6} lg={4} key={listing.id}>
+                <ListingCard
+                  id={listing.id}
+                  title={listing.title}
+                  description={listing.description}
+                  startingPrice={listing.startingPrice}
+                  unitOfMeasure={listing.unitOfMeasure}
+                  stockAmount={listing.stockAmount}
+                  status={listing.status}
+                  isBiddable={listing.isBiddable}
+                  expiresAt={listing.expiresAt}
+                  photos={listing.photos}
+                  seller={listing.seller}
+                  material={listing.material}
+                  onClick={handleListingClick}
+                  onFavoriteClick={handleFavoriteClick}
+                  onShareClick={handleShareClick}
+                />
               </Grid>
             ))}
           </Grid>

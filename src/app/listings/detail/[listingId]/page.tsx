@@ -34,8 +34,6 @@ import {
   ArrowLeft,
   Package,
   Clock,
-  DollarSign,
-  User,
   Gavel,
   Phone,
   Mail,
@@ -133,16 +131,22 @@ const ListingDetailPage: React.FC = () => {
       companyId: company?.id,
     });
 
+    // Check if user has a company - warn if not
+    if (!company?.id) {
+      console.warn(
+        "⚠️ User doesn't have a company ID. API might require bidderCompanyId."
+      );
+      setToastMessage(t("bidding.noCompanyWarning"));
+      setToastSeverity("warning");
+      setToastOpen(true);
+    }
+
     try {
       // Clear any previous errors
       clearError();
 
       // Place bid using Redux slice
-      const result = await placeBid(
-        listingId,
-        bidAmount,
-        company?.id // معرف الشركة إذا كان المستخدم مسجل كشركة
-      );
+      const result = await placeBid(listingId, bidAmount, company?.id);
 
       if (result.type === "bids/createBid/fulfilled") {
         setToastMessage(t("bidding.placeBidSuccess"));
@@ -921,19 +925,36 @@ const ListingDetailPage: React.FC = () => {
               </Typography>
 
               {/* Debug info - remove in production */}
-              <Box className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs">
+              <Box className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs space-y-1">
                 <Typography
                   variant="caption"
-                  className="text-blue-600 dark:text-blue-400"
+                  className="text-blue-600 dark:text-blue-400 block"
                 >
-                  Debug: Company ID: {company?.id || "Not available"}
+                  🏢 Company ID: {company?.id || "❌ Not available"}
                 </Typography>
-                <br />
                 <Typography
                   variant="caption"
-                  className="text-blue-600 dark:text-blue-400"
+                  className="text-blue-600 dark:text-blue-400 block"
                 >
-                  User: {user?.firstName} {user?.lastName}
+                  👤 User: {user?.firstName} {user?.lastName} (ID: {user?.id})
+                </Typography>
+                <Typography
+                  variant="caption"
+                  className="text-blue-600 dark:text-blue-400 block"
+                >
+                  📧 Email: {user?.email}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  className={`block ${
+                    company?.id
+                      ? "text-green-600 dark:text-green-400"
+                      : "text-orange-600 dark:text-orange-400"
+                  }`}
+                >
+                  {company?.id
+                    ? "✅ Will bid as Company"
+                    : "⚠️ Will bid as Individual"}
                 </Typography>
               </Box>
             </Box>

@@ -25,7 +25,10 @@
     "back": "رجوع",
     "home": "الرئيسية",
     "share": "مشاركة",
-    "favorite": "المفضلة"
+    "favorite": "المفضلة",
+    "viewDetails": "عرض التفاصيل",
+    "buyNow": "اشتري الآن",
+    "available": "متاح"
   },
   "auth": {
     "welcomeBack": "مرحباً بعودتك",
@@ -116,7 +119,8 @@
     "currentBid": "العرض الحالي",
     "yourBidAmount": "مبلغ عرضك",
     "submitBid": "تقديم العرض",
-    "cancelBid": "إلغاء"
+    "cancelBid": "إلغاء",
+    "noCompanyWarning": "تحذير: لا يوجد معرف شركة مربوط بحسابك. قد يتطلب النظام إنشاء ملف شركة أولاً."
   },
   "actions": {
     "contactSellerSuccess": "تم التواصل مع البائع بنجاح",

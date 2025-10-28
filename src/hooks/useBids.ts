@@ -102,14 +102,24 @@ export const useBidding = () => {
         isValidUUID: bidderCompanyId ? isValidUUID(bidderCompanyId) : "N/A",
       });
 
+      // Format amount to always have 2 decimal places
+      const formattedAmount = parseFloat(amount).toFixed(2);
+
       const bidData: CreateBidData = {
         listingId,
-        amount,
+        amount: formattedAmount,
       };
 
-      // Only add bidderCompanyId if it's a valid UUID
+      // Add bidderCompanyId if available and valid UUID
       if (bidderCompanyId && isValidUUID(bidderCompanyId)) {
         bidData.bidderCompanyId = bidderCompanyId.trim();
+        console.log("✅ Adding bidderCompanyId:", bidderCompanyId.trim());
+      } else {
+        console.log("❌ bidderCompanyId not added:", {
+          bidderCompanyId: bidderCompanyId,
+          isString: typeof bidderCompanyId === "string",
+          isValid: bidderCompanyId ? isValidUUID(bidderCompanyId) : false,
+        });
       }
 
       console.log("Final bid data being sent:", bidData);

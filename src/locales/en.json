@@ -25,7 +25,10 @@
     "back": "Back",
     "home": "Home",
     "share": "Share",
-    "favorite": "Favorite"
+    "favorite": "Favorite",
+    "viewDetails": "View Details",
+    "buyNow": "Buy Now",
+    "available": "Available"
   },
   "auth": {
     "welcomeBack": "Welcome Back",
@@ -116,7 +119,8 @@
     "currentBid": "Current Bid",
     "yourBidAmount": "Your Bid Amount",
     "submitBid": "Submit Bid",
-    "cancelBid": "Cancel"
+    "cancelBid": "Cancel",
+    "noCompanyWarning": "Warning: No company ID linked to your account. The system might require creating a company profile first."
   },
   "actions": {
     "contactSellerSuccess": "Seller contacted successfully",
