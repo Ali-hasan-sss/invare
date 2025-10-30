@@ -86,6 +86,9 @@ export interface GetListingsParams {
   page?: number;
   limit?: number;
   materialId?: string;
+  companyId?: string;
+  userId?: string;
+  isBiddable?: boolean;
 }
 
 // Initial state
@@ -110,6 +113,11 @@ export const getListings = createAsyncThunk<
     if (params?.page) queryParams.append("page", params.page.toString());
     if (params?.limit) queryParams.append("limit", params.limit.toString());
     if (params?.materialId) queryParams.append("materialId", params.materialId);
+    if (params?.companyId) queryParams.append("companyId", params.companyId);
+    if (params?.userId) queryParams.append("userId", params.userId);
+    if (params?.isBiddable !== undefined) {
+      queryParams.append("isBiddable", params.isBiddable.toString());
+    }
 
     const url = `${API_CONFIG.ENDPOINTS.LISTINGS.LIST}${
       queryParams.toString() ? `?${queryParams.toString()}` : ""

@@ -51,6 +51,10 @@ import {
 import { useListings } from "@/hooks/useListings";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/hooks/useAuth";
+import PaymentFlowDialogs from "@/components/payments/PaymentFlowDialogs";
+import { PaymentMethod } from "@/config/thawani";
+import { usePaymentProcessing } from "@/hooks/usePayments";
+import BiddingDialog from "@/components/bidding/BiddingDialog";
 import { useBidding } from "@/hooks/useBids";
 import { Avatar } from "@/components/ui/Avatar";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
@@ -83,6 +87,32 @@ const ListingDetailPage: React.FC = () => {
   const [toastSeverity, setToastSeverity] = useState<
     "success" | "error" | "warning" | "info"
   >("info");
+
+  // Buy Now (Payment) state
+  const { processPayment, isLoading: isPaymentLoading } =
+    usePaymentProcessing();
+  const [isPaymentMethodDialogOpen, setIsPaymentMethodDialogOpen] =
+    useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<PaymentMethod>(PaymentMethod.THAWANI);
+  const [purchaseQuantity, setPurchaseQuantity] = useState<number>(1);
+  const [selectedListingPrice, setSelectedListingPrice] = useState<
+    string | null
+  >(null);
+  const [selectedListingUnitOfMeasure, setSelectedListingUnitOfMeasure] =
+    useState<string | null>(null);
+  const [selectedListingStockAmount, setSelectedListingStockAmount] = useState<
+    number | null
+  >(null);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [selectedListingId, setSelectedListingId] = useState<string | null>(
+    null
+  );
+  const [selectedListingAmount, setSelectedListingAmount] = useState<
+    string | null
+  >(null);
+  const [calculatedTotalAmount, setCalculatedTotalAmount] =
+    useState<string>("0");
 
   useEffect(() => {
     if (listingId && typeof listingId === "string") {
@@ -131,15 +161,7 @@ const ListingDetailPage: React.FC = () => {
       companyId: company?.id,
     });
 
-    // Check if user has a company - warn if not
-    if (!company?.id) {
-      console.warn(
-        "⚠️ User doesn't have a company ID. API might require bidderCompanyId."
-      );
-      setToastMessage(t("bidding.noCompanyWarning"));
-      setToastSeverity("warning");
-      setToastOpen(true);
-    }
+    // Do not warn if user doesn't have a company (per request)
 
     try {
       // Clear any previous errors
@@ -191,6 +213,111 @@ const ListingDetailPage: React.FC = () => {
 
   const handleCloseToast = () => {
     setToastOpen(false);
+  };
+
+  // Payment helpers
+  useEffect(() => {
+    if (selectedListingPrice && purchaseQuantity > 0) {
+      const total = (
+        parseFloat(selectedListingPrice) * purchaseQuantity
+      ).toFixed(2);
+      setCalculatedTotalAmount(total);
+    } else {
+      setCalculatedTotalAmount("0");
+    }
+  }, [selectedListingPrice, purchaseQuantity]);
+
+  const handleBuyNowClick = () => {
+    if (!currentListing) return;
+    if (!isAuthenticated) {
+      setToastMessage(t("bidding.loginRequired"));
+      setToastSeverity("warning");
+      setToastOpen(true);
+      return;
+    }
+    setSelectedListingId(currentListing.id);
+    setSelectedListingPrice(currentListing.startingPrice);
+    setSelectedListingUnitOfMeasure(currentListing.unitOfMeasure);
+    setSelectedListingStockAmount(currentListing.stockAmount);
+    setPurchaseQuantity(1);
+    setIsPaymentMethodDialogOpen(true);
+  };
+
+  const handleQuantityChange = (value: number) => {
+    if (value < 1) {
+      setPurchaseQuantity(1);
+      return;
+    }
+    if (selectedListingStockAmount && value > selectedListingStockAmount) {
+      setPurchaseQuantity(selectedListingStockAmount);
+      return;
+    }
+    setPurchaseQuantity(value);
+  };
+
+  const handleClosePaymentMethodDialog = () => {
+    setIsPaymentMethodDialogOpen(false);
+    setSelectedListingId(null);
+    setSelectedListingPrice(null);
+    setSelectedListingUnitOfMeasure(null);
+    setSelectedListingStockAmount(null);
+    setSelectedListingAmount(null);
+    setPurchaseQuantity(1);
+    setCalculatedTotalAmount("0");
+    setSelectedPaymentMethod(PaymentMethod.THAWANI);
+  };
+
+  const handleClosePaymentDialog = () => {
+    setIsPaymentDialogOpen(false);
+    setSelectedListingId(null);
+    setSelectedListingAmount(null);
+  };
+
+  const handleProceedToPayment = async () => {
+    if (
+      !selectedListingId ||
+      !calculatedTotalAmount ||
+      parseFloat(calculatedTotalAmount) <= 0
+    )
+      return;
+    if (purchaseQuantity <= 0) {
+      setToastMessage(t("payments.invalidQuantity") || "الكمية غير صحيحة");
+      setToastSeverity("error");
+      setToastOpen(true);
+      return;
+    }
+    if (
+      selectedListingStockAmount &&
+      purchaseQuantity > selectedListingStockAmount
+    ) {
+      setToastMessage(
+        t("payments.quantityExceedsStock") ||
+          "الكمية المطلوبة تتجاوز الكمية المتاحة"
+      );
+      setToastSeverity("error");
+      setToastOpen(true);
+      return;
+    }
+    setIsPaymentMethodDialogOpen(false);
+    setSelectedListingAmount(calculatedTotalAmount);
+    setIsPaymentDialogOpen(true);
+    try {
+      if (!selectedListingId || !selectedListingPrice)
+        throw new Error(t("payments.missingData") || "بيانات ناقصة");
+      await processPayment(
+        selectedListingId,
+        purchaseQuantity,
+        selectedListingPrice,
+        calculatedTotalAmount,
+        selectedPaymentMethod
+      );
+    } catch (error: any) {
+      setToastMessage(error.message || t("payments.paymentFailed"));
+      setToastSeverity("error");
+      setToastOpen(true);
+      setIsPaymentDialogOpen(false);
+      setIsPaymentMethodDialogOpen(true);
+    }
   };
 
   const handleShare = async () => {
@@ -720,7 +847,7 @@ const ListingDetailPage: React.FC = () => {
 
               {/* Action Buttons */}
               <Box className="space-y-3">
-                {listing.isBiddable && (
+                {listing.isBiddable ? (
                   <>
                     {listing.status.toLowerCase() === "active" ? (
                       <Button
@@ -763,6 +890,18 @@ const ListingDetailPage: React.FC = () => {
                       </Button>
                     )}
                   </>
+                ) : (
+                  <Button
+                    variant="contained"
+                    size="large"
+                    fullWidth
+                    className="bg-blue-600 hover:bg-blue-700 text-white py-3"
+                    onClick={handleBuyNowClick}
+                  >
+                    <Box className="flex items-center justify-center gap-2">
+                      <span>{t("common.buyNow")}</span>
+                    </Box>
+                  </Button>
                 )}
 
                 <Button
@@ -887,146 +1026,35 @@ const ListingDetailPage: React.FC = () => {
       </Dialog>
 
       {/* Bidding Dialog */}
-      <Dialog
+      <BiddingDialog
         open={isBiddingDialogOpen}
         onClose={handleCloseBiddingDialog}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          className: "dark:bg-gray-800 dark:text-white",
-          sx: {
-            bgcolor: "background.paper",
-          },
-        }}
-      >
-        <DialogTitle className="dark:bg-gray-800 dark:text-white border-b border-gray-200 dark:border-gray-700">
-          <Typography
-            component="span"
-            className="text-lg font-semibold text-gray-900 dark:text-white"
-          >
-            {t("bidding.biddingForm")}
-          </Typography>
-        </DialogTitle>
-        <DialogContent className="pt-6 dark:bg-gray-800">
-          <Box className="space-y-4">
-            {/* Current Bid Display */}
-            <Box className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-              <Typography
-                variant="body2"
-                className="text-gray-600 dark:text-gray-400 mb-1"
-              >
-                {t("bidding.currentBid")}
-              </Typography>
-              <Typography
-                variant="h6"
-                className="text-green-600 dark:text-green-400 font-bold"
-              >
-                {formatPrice(listing.startingPrice)} / {listing.unitOfMeasure}
-              </Typography>
+        onSubmit={handleSubmitBid}
+        isLoading={isBidLoading}
+        bidAmount={bidAmount}
+        setBidAmount={setBidAmount}
+        currentPriceLabel={`${formatPrice(listing.startingPrice)} / ${
+          listing.unitOfMeasure
+        }`}
+      />
 
-              {/* Debug info - remove in production */}
-              <Box className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs space-y-1">
-                <Typography
-                  variant="caption"
-                  className="text-blue-600 dark:text-blue-400 block"
-                >
-                  🏢 Company ID: {company?.id || "❌ Not available"}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  className="text-blue-600 dark:text-blue-400 block"
-                >
-                  👤 User: {user?.firstName} {user?.lastName} (ID: {user?.id})
-                </Typography>
-                <Typography
-                  variant="caption"
-                  className="text-blue-600 dark:text-blue-400 block"
-                >
-                  📧 Email: {user?.email}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  className={`block ${
-                    company?.id
-                      ? "text-green-600 dark:text-green-400"
-                      : "text-orange-600 dark:text-orange-400"
-                  }`}
-                >
-                  {company?.id
-                    ? "✅ Will bid as Company"
-                    : "⚠️ Will bid as Individual"}
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* Bid Amount Input */}
-            <TextField
-              fullWidth
-              label={t("bidding.yourBidAmount")}
-              type="number"
-              value={bidAmount}
-              onChange={(e) => setBidAmount(e.target.value)}
-              variant="outlined"
-              InputProps={{
-                className: "dark:text-white",
-              }}
-              InputLabelProps={{
-                className: "dark:text-gray-300",
-              }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  "& fieldset": {
-                    borderColor: "rgba(156, 163, 175, 0.5)",
-                  },
-                  "&:hover fieldset": {
-                    borderColor: "rgba(156, 163, 175, 0.8)",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#9333ea",
-                  },
-                },
-                "& .MuiInputLabel-root": {
-                  "&.Mui-focused": {
-                    color: "#9333ea",
-                  },
-                },
-              }}
-              helperText={
-                t("bidding.minimumBid") +
-                ": " +
-                formatPrice(listing.startingPrice)
-              }
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions className="p-6 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-          <Button
-            onClick={handleCloseBiddingDialog}
-            className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-          >
-            {t("bidding.cancelBid")}
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmitBid}
-            disabled={
-              !bidAmount ||
-              parseFloat(bidAmount) <= parseFloat(listing.startingPrice) ||
-              isBidLoading
-            }
-            className="bg-purple-600 hover:bg-purple-700 text-white disabled:bg-gray-400"
-          >
-            {isBidLoading ? (
-              <Box className="flex items-center gap-2">
-                <CircularProgress size={16} color="inherit" />
-                <span>{t("common.loading")}...</span>
-              </Box>
-            ) : (
-              t("bidding.submitBid")
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Payment Flow Dialogs for Buy Now */}
+      <PaymentFlowDialogs
+        isPaymentMethodDialogOpen={isPaymentMethodDialogOpen}
+        onClosePaymentMethodDialog={handleClosePaymentMethodDialog}
+        selectedPaymentMethod={selectedPaymentMethod}
+        setSelectedPaymentMethod={(m) => setSelectedPaymentMethod(m)}
+        purchaseQuantity={purchaseQuantity}
+        handleQuantityChange={handleQuantityChange}
+        selectedListingUnitOfMeasure={selectedListingUnitOfMeasure}
+        selectedListingPrice={selectedListingPrice}
+        selectedListingStockAmount={selectedListingStockAmount}
+        calculatedTotalAmount={calculatedTotalAmount}
+        onProceedToPayment={handleProceedToPayment}
+        isPaymentDialogOpen={isPaymentDialogOpen}
+        onClosePaymentDialog={handleClosePaymentDialog}
+        selectedListingAmount={selectedListingAmount}
+      />
 
       {/* Toast Notification */}
       <Snackbar

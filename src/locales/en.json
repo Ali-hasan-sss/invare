@@ -27,8 +27,10 @@
     "share": "Share",
     "favorite": "Favorite",
     "viewDetails": "View Details",
+    "currency": "SAR",
     "buyNow": "Buy Now",
-    "available": "Available"
+    "available": "Available",
+    "clear": "Clear"
   },
   "auth": {
     "welcomeBack": "Welcome Back",
@@ -76,10 +78,20 @@
   "user": {
     "profile": "Profile",
     "settings": "Settings",
-    "logout": "Logout"
+    "logout": "Logout",
+    "myPurchases": "My Purchases",
+    "myAuctions": "My Auctions"
+  },
+  "orders": {
+    "order": "Order",
+    "items": "Items",
+    "createdAt": "Created At",
+    "noPurchases": "No purchases found",
+    "totalAmount": "Total Amount"
   },
   "listings": {
     "materialListings": "Material Listings",
+    "allListings": "All Listings",
     "offersFor": "Offers for",
     "foundResults": "Found {count} results",
     "noListingsFound": "No listings found",
@@ -136,5 +148,37 @@
     "verified": "Verified",
     "pending": "Pending Verification",
     "unverified": "Unverified"
+  },
+  "payments": {
+    "processingPayment": "Processing Payment",
+    "redirectingToPayment": "Redirecting to payment page...",
+    "amount": "Amount",
+    "totalAmount": "Total Amount",
+    "paymentFailed": "Payment failed",
+    "paymentSuccess": "Payment successful",
+    "purchaseSuccess": "Purchase completed successfully",
+    "paymentPending": "Payment pending",
+    "selectPaymentMethod": "Select Payment Method",
+    "securePayment": "Secure Payment",
+    "proceedToPayment": "Proceed to Payment",
+    "quantity": "Quantity",
+    "availableStock": "Available",
+    "pricePerUnit": "Price per Unit",
+    "invalidQuantity": "Invalid quantity",
+    "quantityExceedsStock": "Requested quantity exceeds available stock",
+    "missingData": "Missing data",
+    "buyerCompanyIdMissing": "Buyer company ID is missing or invalid. Please ensure you are logged in with a valid company account.",
+    "sellerCompanyIdMissing": "Seller company ID is missing or invalid",
+    "listingIdInvalid": "Listing ID is not a valid UUID",
+    "companyRequired": "A company account is required to make purchases. Please ensure your account is linked to a company."
+  },
+  "filters": {
+    "material": "Material",
+    "company": "Company",
+    "user": "User",
+    "type": "Type",
+    "all": "All",
+    "allListings": "All Listings",
+    "buyNow": "Buy Now"
   }
 }

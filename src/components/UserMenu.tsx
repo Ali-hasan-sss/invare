@@ -9,7 +9,7 @@ import {
   Divider,
   Box,
 } from "@mui/material";
-import { User, Settings, LogOut } from "lucide-react";
+import { User, Settings, LogOut, ShoppingBag, Gavel } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,6 +33,16 @@ const UserMenu: React.FC<UserMenuProps> = ({ anchorEl, open, onClose }) => {
 
   const handleSettingsClick = () => {
     router.push("/settings");
+    onClose();
+  };
+
+  const handlePurchasesClick = () => {
+    router.push("/user/purchases");
+    onClose();
+  };
+
+  const handleAuctionsClick = () => {
+    router.push("/user/auctions");
     onClose();
   };
 
@@ -93,6 +103,26 @@ const UserMenu: React.FC<UserMenuProps> = ({ anchorEl, open, onClose }) => {
       </Box>
 
       {/* Menu Items */}
+      <MenuItem
+        onClick={handlePurchasesClick}
+        className="hover:bg-gray-50 dark:hover:bg-gray-700"
+      >
+        <ListItemIcon className="text-gray-600 dark:text-gray-300">
+          <ShoppingBag size={20} />
+        </ListItemIcon>
+        <ListItemText primary={t("user.myPurchases") || "مشترياتي"} />
+      </MenuItem>
+
+      <MenuItem
+        onClick={handleAuctionsClick}
+        className="hover:bg-gray-50 dark:hover:bg-gray-700"
+      >
+        <ListItemIcon className="text-gray-600 dark:text-gray-300">
+          <Gavel size={20} />
+        </ListItemIcon>
+        <ListItemText primary={t("user.myAuctions") || "مزاداتي"} />
+      </MenuItem>
+
       <MenuItem
         onClick={handleProfileClick}
         className="hover:bg-gray-50 dark:hover:bg-gray-700"

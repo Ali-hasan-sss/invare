@@ -28,7 +28,9 @@
     "favorite": "المفضلة",
     "viewDetails": "عرض التفاصيل",
     "buyNow": "اشتري الآن",
-    "available": "متاح"
+    "available": "متاح",
+    "currency": "ريال",
+    "clear": "مسح"
   },
   "auth": {
     "welcomeBack": "مرحباً بعودتك",
@@ -76,10 +78,13 @@
   "user": {
     "profile": "الملف الشخصي",
     "settings": "الإعدادات",
-    "logout": "تسجيل الخروج"
+    "logout": "تسجيل الخروج",
+    "myPurchases": "مشترياتي",
+    "myAuctions": "مزاداتي"
   },
   "listings": {
     "materialListings": "عروض المواد",
+    "allListings": "جميع العروض",
     "offersFor": "العروض المتاحة لـ",
     "foundResults": "تم العثور على {count} نتيجة",
     "noListingsFound": "لا توجد عروض",
@@ -100,6 +105,13 @@
     "privateSeller": "بائع خاص",
     "placeBid": "تقديم عرض سعر",
     "contactSeller": "التواصل مع البائع"
+  },
+  "orders": {
+    "order": "طلب",
+    "items": "العناصر",
+    "createdAt": "تاريخ الإنشاء",
+    "noPurchases": "لا توجد مشتريات",
+    "totalAmount": "الإجمالي"
   },
   "bidding": {
     "startBidding": "بدء المزايدة",
@@ -136,5 +148,37 @@
     "verified": "موثق",
     "pending": "قيد التحقق",
     "unverified": "غير موثق"
+  },
+  "payments": {
+    "processingPayment": "معالجة الدفع",
+    "redirectingToPayment": "جاري إعادة التوجيه إلى صفحة الدفع...",
+    "amount": "المبلغ",
+    "totalAmount": "المبلغ الإجمالي",
+    "paymentFailed": "فشلت عملية الدفع",
+    "paymentSuccess": "تم الدفع بنجاح",
+    "purchaseSuccess": "تم شراء الكمية بنجاح",
+    "paymentPending": "قيد المعالجة",
+    "selectPaymentMethod": "اختر طريقة الدفع",
+    "securePayment": "دفع آمن",
+    "proceedToPayment": "المتابعة للدفع",
+    "quantity": "الكمية",
+    "availableStock": "المتاح",
+    "pricePerUnit": "السعر للوحدة",
+    "invalidQuantity": "الكمية غير صحيحة",
+    "quantityExceedsStock": "الكمية المطلوبة تتجاوز الكمية المتاحة",
+    "missingData": "بيانات ناقصة",
+    "buyerCompanyIdMissing": "معرف شركة المشتري مفقود أو غير صالح. يرجى التأكد من تسجيل الدخول بحساب شركة صالح.",
+    "sellerCompanyIdMissing": "معرف شركة البائع مفقود أو غير صالح",
+    "listingIdInvalid": "معرف العرض غير صالح",
+    "companyRequired": "يجب أن يكون لديك حساب شركة لإتمام عملية الشراء. يرجى التأكد من ربط حسابك بشركة."
+  },
+  "filters": {
+    "material": "المادة",
+    "company": "الشركة",
+    "user": "المستخدم",
+    "type": "النوع",
+    "all": "الكل",
+    "allListings": "جميع العروض",
+    "buyNow": "اشتري الآن"
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   Box,
   Typography,
@@ -11,19 +11,28 @@ import {
   Alert,
   Container,
   Pagination,
+  Snackbar,
 } from "@mui/material";
 import { ArrowLeft, Package } from "lucide-react";
 import { useListings } from "@/hooks/useListings";
 import { useMaterials } from "@/hooks/useMaterials";
 import { useTranslation } from "@/hooks/useTranslation";
+import { usePaymentProcessing } from "@/hooks/usePayments";
+import { useAuth } from "@/hooks/useAuth";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import ListingCard from "@/components/ui/ListingCard";
 import ClientOnly from "@/components/ClientOnly";
+
+import { PaymentMethod, PAYMENT_METHOD_LABELS } from "@/config/thawani";
+import PaymentFlowDialogs from "@/components/payments/PaymentFlowDialogs";
+import BiddingDialog from "@/components/bidding/BiddingDialog";
+import { useBidding } from "@/hooks/useBids";
 
 const MaterialListingsPage: React.FC = () => {
   const { materialId } = useParams();
   const router = useRouter();
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
   const {
     listings,
     isLoading,
@@ -36,6 +45,52 @@ const MaterialListingsPage: React.FC = () => {
   } = useListings();
   const { getMaterialById, currentMaterial } = useMaterials();
   const [currentPageLocal, setCurrentPageLocal] = useState(1);
+  const { isAuthenticated, company } = useAuth();
+  const {
+    processPayment,
+    isLoading: isPaymentLoading,
+    error: paymentError,
+  } = usePaymentProcessing();
+
+  // Payment method selection dialog state
+  const [isPaymentMethodDialogOpen, setIsPaymentMethodDialogOpen] =
+    useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<PaymentMethod>(PaymentMethod.THAWANI);
+  const [purchaseQuantity, setPurchaseQuantity] = useState<number>(1);
+  const [selectedListingPrice, setSelectedListingPrice] = useState<
+    string | null
+  >(null);
+  const [selectedListingUnitOfMeasure, setSelectedListingUnitOfMeasure] =
+    useState<string | null>(null);
+  const [selectedListingStockAmount, setSelectedListingStockAmount] = useState<
+    number | null
+  >(null);
+
+  // Payment processing dialog state
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [selectedListingId, setSelectedListingId] = useState<string | null>(
+    null
+  );
+  const [selectedListingAmount, setSelectedListingAmount] = useState<
+    string | null
+  >(null);
+  const [calculatedTotalAmount, setCalculatedTotalAmount] =
+    useState<string>("0");
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastSeverity, setToastSeverity] = useState<
+    "success" | "error" | "warning" | "info"
+  >("info");
+
+  // Bidding dialog state
+  const {
+    placeBid,
+    isLoading: isBidLoading,
+    clearError: clearBidError,
+  } = useBidding();
+  const [isBiddingDialogOpen, setIsBiddingDialogOpen] = useState(false);
+  const [bidAmount, setBidAmount] = useState("");
 
   useEffect(() => {
     if (materialId && typeof materialId === "string") {
@@ -45,6 +100,22 @@ const MaterialListingsPage: React.FC = () => {
       getListings({ materialId, page: currentPageLocal, limit: 12 });
     }
   }, [materialId, currentPageLocal, getMaterialById, getListings]);
+
+  // Show purchase success toast if returned from payment
+  useEffect(() => {
+    const success = searchParams.get("purchaseSuccess");
+    if (success === "1") {
+      setToastMessage(t("payments.purchaseSuccess"));
+      setToastSeverity("success");
+      setToastOpen(true);
+      // remove the flag from URL without reload
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("purchaseSuccess");
+        window.history.replaceState({}, "", url.toString());
+      }
+    }
+  }, [searchParams, t]);
 
   const handlePageChange = (
     event: React.ChangeEvent<unknown>,
@@ -75,6 +146,179 @@ const MaterialListingsPage: React.FC = () => {
       `${window.location.origin}/listings/detail/${listingId}`
     );
     alert(t("actions.shareSuccess"));
+  };
+
+  const handleStartBiddingClick = (listingId: string) => {
+    if (!isAuthenticated) {
+      setToastMessage(t("bidding.loginRequired"));
+      setToastSeverity("warning");
+      setToastOpen(true);
+      return;
+    }
+    setSelectedListingId(listingId);
+    setIsBiddingDialogOpen(true);
+  };
+
+  const handleSubmitBidFromDialog = async () => {
+    if (!selectedListingId || !bidAmount) return;
+    try {
+      clearBidError();
+      const result = await placeBid(selectedListingId, bidAmount, company?.id);
+      if (result.type === "bids/createBid/fulfilled") {
+        setToastMessage(t("bidding.placeBidSuccess"));
+        setToastSeverity("success");
+        setToastOpen(true);
+        setIsBiddingDialogOpen(false);
+        setBidAmount("");
+      } else {
+        const message =
+          typeof result.payload === "string"
+            ? result.payload
+            : t("bidding.placeBidError");
+        setToastMessage(message);
+        setToastSeverity("error");
+        setToastOpen(true);
+      }
+    } catch (e: any) {
+      setToastMessage(e?.message || t("bidding.placeBidError"));
+      setToastSeverity("error");
+      setToastOpen(true);
+    }
+  };
+
+  const handleBuyNowClick = (data: {
+    id: string;
+    price: string;
+    unitOfMeasure: string;
+    stockAmount: number;
+  }) => {
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      setToastMessage(t("bidding.loginRequired"));
+      setToastSeverity("warning");
+      setToastOpen(true);
+      return;
+    }
+
+    // Set listing data
+    setSelectedListingId(data.id);
+    setSelectedListingPrice(data.price);
+    setSelectedListingUnitOfMeasure(data.unitOfMeasure);
+    setSelectedListingStockAmount(data.stockAmount);
+    setPurchaseQuantity(1); // Reset to 1
+    setIsPaymentMethodDialogOpen(true);
+  };
+
+  // Calculate total amount when quantity or price changes
+  useEffect(() => {
+    if (selectedListingPrice && purchaseQuantity > 0) {
+      const total = (
+        parseFloat(selectedListingPrice) * purchaseQuantity
+      ).toFixed(2);
+      setCalculatedTotalAmount(total);
+    } else {
+      setCalculatedTotalAmount("0");
+    }
+  }, [selectedListingPrice, purchaseQuantity]);
+
+  const handleProceedToPayment = async () => {
+    if (
+      !selectedListingId ||
+      !calculatedTotalAmount ||
+      parseFloat(calculatedTotalAmount) <= 0
+    ) {
+      return;
+    }
+
+    // Validate quantity
+    if (purchaseQuantity <= 0) {
+      setToastMessage(t("payments.invalidQuantity") || "الكمية غير صحيحة");
+      setToastSeverity("error");
+      setToastOpen(true);
+      return;
+    }
+
+    if (
+      selectedListingStockAmount &&
+      purchaseQuantity > selectedListingStockAmount
+    ) {
+      setToastMessage(
+        t("payments.quantityExceedsStock") ||
+          "الكمية المطلوبة تتجاوز الكمية المتاحة"
+      );
+      setToastSeverity("error");
+      setToastOpen(true);
+      return;
+    }
+
+    // Close payment method selection dialog
+    setIsPaymentMethodDialogOpen(false);
+
+    // Set total amount for processing
+    setSelectedListingAmount(calculatedTotalAmount);
+
+    // Open payment processing dialog
+    setIsPaymentDialogOpen(true);
+
+    try {
+      // Validate required data
+      if (!selectedListingId || !selectedListingPrice) {
+        throw new Error(t("payments.missingData") || "بيانات ناقصة");
+      }
+
+      // Process payment with selected method
+      await processPayment(
+        selectedListingId,
+        purchaseQuantity,
+        selectedListingPrice,
+        calculatedTotalAmount,
+        selectedPaymentMethod
+      );
+      // Note: processPayment will redirect to payment gateway
+      // The dialog will close after redirect
+    } catch (error: any) {
+      console.error("Payment processing error:", error);
+      setToastMessage(error.message || t("payments.paymentFailed"));
+      setToastSeverity("error");
+      setToastOpen(true);
+      setIsPaymentDialogOpen(false);
+      // Reopen payment method selection dialog on error
+      setIsPaymentMethodDialogOpen(true);
+    }
+  };
+
+  const handleClosePaymentMethodDialog = () => {
+    setIsPaymentMethodDialogOpen(false);
+    setSelectedListingId(null);
+    setSelectedListingPrice(null);
+    setSelectedListingUnitOfMeasure(null);
+    setSelectedListingStockAmount(null);
+    setSelectedListingAmount(null);
+    setPurchaseQuantity(1);
+    setCalculatedTotalAmount("0");
+    setSelectedPaymentMethod(PaymentMethod.THAWANI);
+  };
+
+  const handleQuantityChange = (value: number) => {
+    if (value < 1) {
+      setPurchaseQuantity(1);
+      return;
+    }
+    if (selectedListingStockAmount && value > selectedListingStockAmount) {
+      setPurchaseQuantity(selectedListingStockAmount);
+      return;
+    }
+    setPurchaseQuantity(value);
+  };
+
+  const handleClosePaymentDialog = () => {
+    setIsPaymentDialogOpen(false);
+    setSelectedListingId(null);
+    setSelectedListingAmount(null);
+  };
+
+  const handleCloseToast = () => {
+    setToastOpen(false);
   };
 
   if (isLoading && !listings.length) {
@@ -191,6 +435,8 @@ const MaterialListingsPage: React.FC = () => {
                   onClick={handleListingClick}
                   onFavoriteClick={handleFavoriteClick}
                   onShareClick={handleShareClick}
+                  onBuyNowClick={handleBuyNowClick}
+                  onStartBiddingClick={handleStartBiddingClick}
                 />
               </Grid>
             ))}
@@ -235,6 +481,74 @@ const MaterialListingsPage: React.FC = () => {
           </Button>
         </Box>
       )}
+
+      <PaymentFlowDialogs
+        isPaymentMethodDialogOpen={isPaymentMethodDialogOpen}
+        onClosePaymentMethodDialog={handleClosePaymentMethodDialog}
+        selectedPaymentMethod={selectedPaymentMethod}
+        setSelectedPaymentMethod={(m) => setSelectedPaymentMethod(m)}
+        purchaseQuantity={purchaseQuantity}
+        handleQuantityChange={handleQuantityChange}
+        selectedListingUnitOfMeasure={selectedListingUnitOfMeasure}
+        selectedListingPrice={selectedListingPrice}
+        selectedListingStockAmount={selectedListingStockAmount}
+        calculatedTotalAmount={calculatedTotalAmount}
+        onProceedToPayment={handleProceedToPayment}
+        isPaymentDialogOpen={isPaymentDialogOpen}
+        onClosePaymentDialog={handleClosePaymentDialog}
+        selectedListingAmount={selectedListingAmount}
+      />
+
+      {/* Bidding Dialog (locks scroll by default) */}
+      <BiddingDialog
+        open={isBiddingDialogOpen}
+        onClose={() => {
+          setIsBiddingDialogOpen(false);
+          setBidAmount("");
+        }}
+        onSubmit={handleSubmitBidFromDialog}
+        isLoading={isBidLoading}
+        bidAmount={bidAmount}
+        setBidAmount={setBidAmount}
+        currentPriceLabel={(() => {
+          const l = listings.find((x) => x.id === selectedListingId);
+          return l ? `${l.startingPrice} ${t("common.currency")}` : "";
+        })()}
+        minAmount={(() => {
+          const l = listings.find((x) => x.id === selectedListingId);
+          return l ? l.startingPrice : undefined;
+        })()}
+      />
+
+      {/* Toast Notification */}
+      <Snackbar
+        open={toastOpen}
+        autoHideDuration={4000}
+        onClose={handleCloseToast}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleCloseToast}
+          severity={toastSeverity}
+          sx={{
+            width: "100%",
+            "&.MuiAlert-standardWarning": {
+              backgroundColor: "#fef3c7",
+              color: "#92400e",
+            },
+            "&.MuiAlert-standardSuccess": {
+              backgroundColor: "#d1fae5",
+              color: "#065f46",
+            },
+            "&.MuiAlert-standardError": {
+              backgroundColor: "#fee2e2",
+              color: "#991b1b",
+            },
+          }}
+        >
+          {toastMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

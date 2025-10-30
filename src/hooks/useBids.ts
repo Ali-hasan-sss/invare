@@ -86,20 +86,11 @@ export const useBidding = () => {
 
   const placeBid = useCallback(
     async (listingId: string, amount: string, bidderCompanyId?: string) => {
-      // Helper function to validate UUID format
-      const isValidUUID = (uuid: string) => {
-        if (!uuid || typeof uuid !== "string") return false;
-        const uuidRegex =
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-        return uuidRegex.test(uuid.trim());
-      };
-
       // Debug logging
-      console.log("Bid data before validation:", {
+      console.log("Bid data before send:", {
         listingId,
         amount,
         bidderCompanyId,
-        isValidUUID: bidderCompanyId ? isValidUUID(bidderCompanyId) : "N/A",
       });
 
       // Format amount to always have 2 decimal places
@@ -110,16 +101,14 @@ export const useBidding = () => {
         amount: formattedAmount,
       };
 
-      // Add bidderCompanyId if available and valid UUID
-      if (bidderCompanyId && isValidUUID(bidderCompanyId)) {
+      // Add bidderCompanyId if provided (no client-side UUID validation)
+      if (
+        bidderCompanyId &&
+        typeof bidderCompanyId === "string" &&
+        bidderCompanyId.trim()
+      ) {
         bidData.bidderCompanyId = bidderCompanyId.trim();
-        console.log("✅ Adding bidderCompanyId:", bidderCompanyId.trim());
-      } else {
-        console.log("❌ bidderCompanyId not added:", {
-          bidderCompanyId: bidderCompanyId,
-          isString: typeof bidderCompanyId === "string",
-          isValid: bidderCompanyId ? isValidUUID(bidderCompanyId) : false,
-        });
+        console.log("Adding bidderCompanyId:", bidderCompanyId.trim());
       }
 
       console.log("Final bid data being sent:", bidData);

@@ -27,6 +27,8 @@ import {
   LogOut,
   User,
   Settings,
+  ShoppingBag,
+  Gavel,
   Menu as MenuIcon,
   X,
 } from "lucide-react";
@@ -64,8 +66,7 @@ const Header: React.FC = () => {
   const isMobile = useMediaQuery(muiTheme.breakpoints.down("md"));
 
   // Desktop menu states
-  const [auctionsAnchor, setAuctionsAnchor] =
-    React.useState<null | HTMLElement>(null);
+
   const [supportAnchor, setSupportAnchor] = React.useState<null | HTMLElement>(
     null
   );
@@ -96,9 +97,7 @@ const Header: React.FC = () => {
     React.useState<null | HTMLElement>(null);
 
   // Desktop menu handlers
-  const handleAuctionsClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAuctionsAnchor(event.currentTarget);
-  };
+
   const handleSupportClick = (event: React.MouseEvent<HTMLElement>) => {
     setSupportAnchor(event.currentTarget);
   };
@@ -125,7 +124,6 @@ const Header: React.FC = () => {
   };
 
   const handleClose = () => {
-    setAuctionsAnchor(null);
     setSupportAnchor(null);
     setMaterialsAnchor(null);
     setCategorySubmenuAnchor(null);
@@ -171,7 +169,7 @@ const Header: React.FC = () => {
 
   // Mobile drawer content
   const drawer = (
-    <Box className="w-80 h-full bg-white dark:bg-gray-900">
+    <Box className="w-80 h-full bg-white dark:bg-gray-900 overflow-x-hidden">
       <Box className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center space-x-2 rtl:space-x-reverse">
           <div
@@ -228,10 +226,16 @@ const Header: React.FC = () => {
 
       {/* Navigation Links */}
       <List className="p-4">
+        {/* Listings link */}
         <ListItem disablePadding>
-          <ListItemButton className="rounded-lg mb-2">
-            <MuiListItemText primary={t("navigation.auctions")} />
-            <ChevronDown size={16} />
+          <ListItemButton
+            className="rounded-lg mb-2"
+            onClick={() => {
+              router.push("/listings");
+              handleDrawerToggle();
+            }}
+          >
+            <MuiListItemText primary={t("listings.allListings")} />
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding>
@@ -403,6 +407,28 @@ const Header: React.FC = () => {
                 variant="outline"
                 className="w-full justify-start border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                 onClick={() => {
+                  router.push("/user/purchases");
+                  handleDrawerToggle();
+                }}
+              >
+                <ShoppingBag size={16} className="ltr:mr-2 rtl:ml-2" />
+                {t("user.myPurchases")}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                onClick={() => {
+                  router.push("/user/auctions");
+                  handleDrawerToggle();
+                }}
+              >
+                <Gavel size={16} className="ltr:mr-2 rtl:ml-2" />
+                {t("user.myAuctions")}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                onClick={() => {
                   router.push("/profile");
                   handleDrawerToggle();
                 }}
@@ -497,21 +523,20 @@ const Header: React.FC = () => {
           {/* Desktop Navigation */}
           {!isMobile && (
             <Box className="flex items-center space-x-6 rtl:space-x-reverse">
+              {/* Listings Link */}
               <ClientOnly
                 fallback={
                   <div className="flex items-center text-gray-700 dark:text-gray-300 hover:text-brand-blue dark:hover:text-brand-blue transition-colors cursor-pointer">
-                    <span>المزادات</span>
-                    <ChevronDown size={16} className="mr-1" />
+                    <span>{t("listings.allListings")}</span>
                   </div>
                 }
               >
-                <Box
-                  className="flex items-center text-gray-700 dark:text-gray-300 hover:text-brand-blue dark:hover:text-brand-blue transition-colors cursor-pointer"
-                  onClick={handleAuctionsClick}
+                <Link
+                  href="/listings"
+                  className="flex items-center text-gray-700 dark:text-gray-300 hover:text-brand-blue dark:hover:text-brand-blue transition-colors"
                 >
-                  <span>{t("navigation.auctions")}</span>
-                  <ChevronDown size={16} className="mr-1" />
-                </Box>
+                  <span>{t("listings.allListings")}</span>
+                </Link>
               </ClientOnly>
 
               <ClientOnly
@@ -681,41 +706,6 @@ const Header: React.FC = () => {
 
       {/* Desktop Dropdown Menus */}
       <ClientOnly fallback={null}>
-        <Menu
-          anchorEl={auctionsAnchor}
-          open={Boolean(auctionsAnchor)}
-          onClose={handleClose}
-          anchorOrigin={{
-            vertical: "bottom",
-            horizontal: "left",
-          }}
-          transformOrigin={{
-            vertical: "top",
-            horizontal: "left",
-          }}
-          disableScrollLock={true}
-          slotProps={{
-            paper: {
-              style: {
-                maxHeight: "300px",
-                overflow: "auto",
-                position: "fixed",
-              },
-              className: "dark:bg-gray-800 dark:text-white",
-            },
-          }}
-        >
-          <MenuItem onClick={handleClose}>
-            <ListItemText primary={t("navigation.liveAuctions")} />
-          </MenuItem>
-          <MenuItem onClick={handleClose}>
-            <ListItemText primary={t("navigation.upcomingAuctions")} />
-          </MenuItem>
-          <MenuItem onClick={handleClose}>
-            <ListItemText primary={t("navigation.endedAuctions")} />
-          </MenuItem>
-        </Menu>
-
         <Menu
           anchorEl={supportAnchor}
           open={Boolean(supportAnchor)}
@@ -911,7 +901,14 @@ const Header: React.FC = () => {
         }}
         sx={{
           display: { xs: "block", md: "none" },
-          "& .MuiDrawer-paper": { boxSizing: "border-box", width: 320 },
+          "& .MuiDrawer-paper": {
+            boxSizing: "border-box",
+            width: 320,
+            overflowX: "hidden",
+          },
+        }}
+        PaperProps={{
+          className: "dark:bg-gray-900 dark:text-white",
         }}
       >
         {drawer}

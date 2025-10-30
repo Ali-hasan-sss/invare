@@ -40,6 +40,13 @@ export interface ListingCardProps {
   onClick?: (id: string) => void;
   onFavoriteClick?: (id: string) => void;
   onShareClick?: (id: string) => void;
+  onBuyNowClick?: (data: {
+    id: string;
+    price: string;
+    unitOfMeasure: string;
+    stockAmount: number;
+  }) => void;
+  onStartBiddingClick?: (id: string) => void;
   className?: string;
 }
 
@@ -59,6 +66,8 @@ const ListingCard: React.FC<ListingCardProps> = ({
   onClick,
   onFavoriteClick,
   onShareClick,
+  onBuyNowClick,
+  onStartBiddingClick,
   className = "",
 }) => {
   const { t } = useTranslation();
@@ -125,6 +134,25 @@ const ListingCard: React.FC<ListingCardProps> = ({
     e.stopPropagation();
     if (onShareClick) {
       onShareClick(id);
+    }
+  };
+
+  const handleBuyNowClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onBuyNowClick) {
+      onBuyNowClick({
+        id,
+        price: startingPrice,
+        unitOfMeasure,
+        stockAmount,
+      });
+    }
+  };
+
+  const handleStartBiddingClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onStartBiddingClick) {
+      onStartBiddingClick(id);
     }
   };
 
@@ -282,6 +310,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
             fullWidth
             size="large"
             className="bg-gradient-to-r from-purple-500 to-purple-800 hover:from-purple-600 hover:to-purple-800 text-white font-semibold rounded-2xl py-3 shadow-lg hover:shadow-xl transition-all duration-200"
+            onClick={handleStartBiddingClick}
           >
             <Box className="flex items-center justify-center gap-2">
               <Gavel size={20} />
@@ -294,6 +323,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
             fullWidth
             size="large"
             className="bg-gradient-to-r from-blue-500 to-blue-800 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-2xl py-3 shadow-lg hover:shadow-xl transition-all duration-200"
+            onClick={handleBuyNowClick}
           >
             <Box className="flex items-center justify-center gap-2">
               <ShoppingCart size={20} />
