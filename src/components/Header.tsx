@@ -730,13 +730,28 @@ const Header: React.FC = () => {
             },
           }}
         >
-          <MenuItem onClick={handleClose}>
+          <MenuItem
+            onClick={() => {
+              router.push("/help-center");
+              handleClose();
+            }}
+          >
             <ListItemText primary={t("navigation.helpCenter")} />
           </MenuItem>
-          <MenuItem onClick={handleClose}>
+          <MenuItem
+            onClick={() => {
+              router.push("/contact");
+              handleClose();
+            }}
+          >
             <ListItemText primary={t("navigation.contactUs")} />
           </MenuItem>
-          <MenuItem onClick={handleClose}>
+          <MenuItem
+            onClick={() => {
+              router.push("/faq");
+              handleClose();
+            }}
+          >
             <ListItemText primary={t("navigation.faq")} />
           </MenuItem>
         </Menu>

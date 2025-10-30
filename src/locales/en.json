@@ -180,5 +180,42 @@
     "all": "All",
     "allListings": "All Listings",
     "buyNow": "Buy Now"
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "We'd love to hear from you. Reach us via the channels below.",
+    "emailLabel": "Email",
+    "email": "support@example.com",
+    "phoneLabel": "Phone",
+    "phone": "+968 0000 0000",
+    "addressLabel": "Address",
+    "address": "Muscat, Oman",
+    "formTitle": "Send us a message",
+    "formName": "Your Name",
+    "formEmail": "Your Email",
+    "formSubject": "Subject",
+    "formMessage": "Message",
+    "formSubmit": "Send Message",
+    "socialTitle": "Follow us"
+  },
+  "help": {
+    "title": "Help Center",
+    "subtitle": "Find answers and learn how to use the platform.",
+    "sectionGettingStarted": "Getting started",
+    "gettingStartedText": "Create an account, complete your profile, and start browsing listings and auctions.",
+    "sectionBuying": "Buying",
+    "buyingText": "Use Buy Now for secure Thawani payments, or participate in auctions.",
+    "sectionPayments": "Payments",
+    "paymentsText": "We support Thawani. After payment, you will be returned with a success message."
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "subtitle": "Quick answers to common questions",
+    "q1": "How do I complete a purchase?",
+    "a1": "Choose a listing, click Buy Now, set the quantity, and pay via Thawani.",
+    "q2": "Can I participate in auctions?",
+    "a2": "Yes. If the listing is biddable, enter your bid amount and submit.",
+    "q3": "What happens after payment?",
+    "a3": "Your order is created and you are redirected back with a success message."
   }
 }
