@@ -1,5 +1,5 @@
 export const API_CONFIG = {
-  BASE_URL: "https://invare-back-end.onrender.com",
+  BASE_URL: "https://api.invare.sa",
   ENDPOINTS: {
     AUTH: {
       LOGIN: "/auth/login",
@@ -112,6 +112,16 @@ export const API_CONFIG = {
       UPDATE_STATUS: (chatId: string) => `/chat/${chatId}/status`,
       ADD_MESSAGE: "/chat/message",
       GET_MESSAGES: (chatId: string) => `/chat/${chatId}/messages`,
+    },
+    ADVERTISEMENTS: {
+      BASE: "/advertisements",
+      LIST: "/advertisements",
+      DETAIL: (id: string) => `/advertisements/${id}`,
+      TOGGLE_ACTIVE: (id: string) => `/advertisements/${id}/toggle-active`,
+    },
+    UPLOADS: {
+      IMAGE: "/uploads/image",
+      FILE: "/uploads/file",
     },
   },
 } as const;

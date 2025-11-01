@@ -12,6 +12,8 @@ import { Input } from "../ui/Input";
 import { Button } from "../ui/Button";
 import { Select, SelectOption } from "../ui/Select";
 import { useTranslation } from "../../hooks/useTranslation";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { getCountries } from "../../store/slices/countriesSlice";
 import {
   Company,
   CreateCompanyData,
@@ -33,7 +35,9 @@ export const CompanyFormDialog: React.FC<CompanyFormDialogProps> = ({
   onSubmit,
   isLoading = false,
 }) => {
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
+  const dispatch = useAppDispatch();
+  const { countries } = useAppSelector((state) => state.countries);
   const [formData, setFormData] = useState<CreateCompanyData>({
     companyName: "",
     vatNumber: "",
@@ -42,6 +46,11 @@ export const CompanyFormDialog: React.FC<CompanyFormDialogProps> = ({
     countryId: "",
   });
 
+  // Fetch countries on mount
+  useEffect(() => {
+    dispatch(getCountries());
+  }, [dispatch]);
+
   useEffect(() => {
     if (company) {
       setFormData({
@@ -49,7 +58,7 @@ export const CompanyFormDialog: React.FC<CompanyFormDialogProps> = ({
         vatNumber: company.vatNumber || "",
         website: company.website || "",
         verificationStatus: company.verificationStatus || "pending",
-        countryId: company.countryId || "",
+        countryId: company.country?.id || company.countryId || "",
       });
     } else {
       setFormData({
@@ -78,17 +87,20 @@ export const CompanyFormDialog: React.FC<CompanyFormDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent onClose={() => onOpenChange(false)}>
+      <DialogContent
+        onClose={() => onOpenChange(false)}
+        className="bg-white dark:bg-gray-900"
+      >
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-gray-900 dark:text-gray-100">
             {company ? t("admin.editCompany") : t("admin.addCompany")}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t("admin.companyName")}
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+              {t("admin.companyName")} <span className="text-red-500">*</span>
             </label>
             <Input
               type="text"
@@ -96,11 +108,12 @@ export const CompanyFormDialog: React.FC<CompanyFormDialogProps> = ({
               value={formData.companyName}
               onChange={handleChange}
               required
+              className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
               {t("admin.vatNumber")}
             </label>
             <Input
@@ -108,11 +121,12 @@ export const CompanyFormDialog: React.FC<CompanyFormDialogProps> = ({
               name="vatNumber"
               value={formData.vatNumber}
               onChange={handleChange}
+              className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
               {t("admin.website")}
             </label>
             <Input
@@ -121,24 +135,66 @@ export const CompanyFormDialog: React.FC<CompanyFormDialogProps> = ({
               value={formData.website}
               onChange={handleChange}
               placeholder="https://example.com"
+              className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+              {t("admin.country")} <span className="text-red-500">*</span>
+            </label>
+            <Select
+              name="countryId"
+              value={formData.countryId}
+              onChange={handleChange}
+              required
+              className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+            >
+              <SelectOption
+                value=""
+                className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+              >
+                {t("admin.selectCountry")}
+              </SelectOption>
+              {countries.map((country) => (
+                <SelectOption
+                  key={country.id}
+                  value={country.id}
+                  className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                >
+                  {country.countryName}
+                </SelectOption>
+              ))}
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
               {t("admin.verificationStatus")}
             </label>
             <Select
               name="verificationStatus"
               value={formData.verificationStatus}
               onChange={handleChange}
+              className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
             >
-              <SelectOption value="verified">
+              <SelectOption
+                value="pending"
+                className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+              >
+                {t("admin.pending")}
+              </SelectOption>
+              <SelectOption
+                value="verified"
+                className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+              >
                 {t("admin.verified")}
               </SelectOption>
-              <SelectOption value="pending">{t("admin.pending")}</SelectOption>
-              <SelectOption value="unverified">
-                {t("admin.unverified")}
+              <SelectOption
+                value="rejected"
+                className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+              >
+                {t("admin.rejected")}
               </SelectOption>
             </Select>
           </div>
@@ -149,10 +205,15 @@ export const CompanyFormDialog: React.FC<CompanyFormDialogProps> = ({
               variant="secondary"
               onClick={() => onOpenChange(false)}
               disabled={isLoading}
+              className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 font-medium border border-gray-300 dark:border-gray-600"
             >
               {t("admin.cancel")}
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-medium shadow-sm"
+            >
               {isLoading ? t("admin.loading") : t("admin.save")}
             </Button>
           </DialogFooter>

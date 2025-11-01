@@ -8,6 +8,7 @@ export interface ChatMessage {
   senderUserId: string;
   content: string;
   createdAt?: string;
+  isPending?: boolean; // For optimistic updates
 }
 
 export interface Chat {
@@ -30,6 +31,7 @@ export interface CreateChatData {
   topic: string;
   createdByUserId: string;
   participantUserIds?: string[];
+  listingId?: string;
 }
 
 export interface UpdateChatStatusData {
@@ -183,9 +185,26 @@ const chatSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(createChat.fulfilled, (state, action: PayloadAction<Chat>) => {
+      .addCase(createChat.fulfilled, (state, action: PayloadAction<any>) => {
         state.isLoading = false;
-        state.chats.unshift(action.payload);
+        // Transform API response to Chat format
+        const chatData = action.payload;
+        const transformedChat: Chat = {
+          id: chatData.id,
+          topic: chatData.topic,
+          status: chatData.status,
+          createdByUserId:
+            chatData.createdBy?.id ||
+            chatData.createdByUserId ||
+            chatData.createdByUser?.id,
+          participantUserIds:
+            chatData.participants?.map((p: any) => p.user?.id || p.userId) ||
+            chatData.participantUserIds ||
+            [],
+          messages: chatData.messages || [],
+        };
+        state.chats.unshift(transformedChat);
+        state.currentChat = transformedChat;
         state.error = null;
       })
       .addCase(createChat.rejected, (state, action) => {

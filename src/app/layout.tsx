@@ -14,9 +14,25 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
   const { currentLanguage } = useAppSelector((state) => state.language);
   const { isDark } = useTheme();
   const [isClient, setIsClient] = useState(false);
+  const [isAdminRoute, setIsAdminRoute] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    // Check if current route is admin on path change
+    if (typeof window !== "undefined") {
+      setIsAdminRoute(window.location.pathname.startsWith("/admin"));
+
+      // Listen to route changes
+      const handleRouteChange = () => {
+        setIsAdminRoute(window.location.pathname.startsWith("/admin"));
+      };
+
+      window.addEventListener("popstate", handleRouteChange);
+      return () => window.removeEventListener("popstate", handleRouteChange);
+    }
   }, []);
 
   useEffect(() => {
@@ -47,6 +63,11 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
         </div>
       </div>
     );
+  }
+
+  // Don't show main Header in admin routes
+  if (isAdminRoute) {
+    return <main className="flex-grow">{children}</main>;
   }
 
   return (

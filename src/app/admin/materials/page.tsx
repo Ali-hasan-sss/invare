@@ -53,6 +53,7 @@ import { CategoryFormDialog } from "../../../components/admin/CategoryFormDialog
 import { MaterialFormDialog } from "../../../components/admin/MaterialFormDialog";
 import { DeleteConfirmDialog } from "../../../components/admin/DeleteConfirmDialog";
 import { Toast } from "../../../components/ui/Toast";
+import { cn } from "../../../lib/utils";
 
 type ViewMode = "categories" | "materials" | "listings";
 
@@ -336,105 +337,111 @@ export default function MaterialsManagement() {
         </p>
       </div>
 
-      {/* Search */}
-      <Card className="p-4 mb-4">
+      {/* Search Bar */}
+      <Card className="mb-4 p-3">
         <div className="relative">
           <Search
-            className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 ${
+            className={cn(
+              "absolute top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400",
               isRTL ? "left-3" : "right-3"
-            }`}
+            )}
           />
           <Input
             type="text"
             placeholder={t("admin.search")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className={isRTL ? "pl-10" : "pr-10"}
+            className={cn(
+              "h-10 border-0 focus:ring-0 shadow-none",
+              isRTL ? "pr-11" : "pl-11"
+            )}
           />
         </div>
       </Card>
 
       {/* Action Buttons */}
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex gap-3">
         {/* Back Button */}
-        <div>
-          {viewMode === "materials" && (
-            <Button
-              variant="secondary"
-              onClick={handleBackToCategories}
-              className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 font-medium"
-            >
-              {isRTL ? (
-                <ArrowRight className="h-4 w-4 ml-2" />
-              ) : (
-                <ArrowLeft className="h-4 w-4 mr-2" />
-              )}
-              {t("admin.backToCategories")}
-            </Button>
-          )}
-          {viewMode === "listings" && (
-            <Button
-              variant="secondary"
-              onClick={handleBackToMaterials}
-              className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 font-medium"
-            >
-              {isRTL ? (
-                <ArrowRight className="h-4 w-4 ml-2" />
-              ) : (
-                <ArrowLeft className="h-4 w-4 mr-2" />
-              )}
-              {t("admin.backToMaterials")}
-            </Button>
-          )}
-        </div>
+        {viewMode === "materials" && (
+          <Button
+            variant="secondary"
+            onClick={handleBackToCategories}
+            className="flex-1 h-10 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 font-medium"
+          >
+            {isRTL ? (
+              <ArrowRight className="h-5 w-5 ml-2" />
+            ) : (
+              <ArrowLeft className="h-5 w-5 mr-2" />
+            )}
+            {t("admin.backToCategories")}
+          </Button>
+        )}
+        {viewMode === "listings" && (
+          <Button
+            variant="secondary"
+            onClick={handleBackToMaterials}
+            className="flex-1 h-10 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 font-medium"
+          >
+            {isRTL ? (
+              <ArrowRight className="h-5 w-5 ml-2" />
+            ) : (
+              <ArrowLeft className="h-5 w-5 mr-2" />
+            )}
+            {t("admin.backToMaterials")}
+          </Button>
+        )}
 
         {/* Add Button */}
-        <div>
-          {viewMode === "categories" && (
-            <Button
-              onClick={handleAddCategory}
-              className="!bg-[#2563eb] hover:!bg-[#1d4ed8] dark:!bg-blue-500 dark:hover:!bg-blue-600 font-semibold shadow-md hover:shadow-lg transition-all"
-              sx={{
+        {viewMode === "categories" && (
+          <Button
+            onClick={handleAddCategory}
+            className="flex-1 h-10 px-4 !bg-[#2563eb] hover:!bg-[#1d4ed8] dark:!bg-blue-500 dark:hover:!bg-blue-600 font-semibold shadow-md hover:shadow-lg transition-all"
+            sx={{
+              color: "white !important",
+              backgroundColor: "#2563eb !important",
+              "&:hover": {
                 color: "white !important",
-                backgroundColor: "#2563eb !important",
-                "&:hover": {
-                  color: "white !important",
-                  backgroundColor: "#1d4ed8 !important",
-                },
-                "& *": {
-                  color: "white !important",
-                },
-              }}
-            >
-              <Plus className="h-5 w-5 mr-2" style={{ color: "white" }} />
-              <span style={{ color: "white", fontWeight: 600 }}>
-                {t("admin.addCategory")}
-              </span>
-            </Button>
-          )}
-          {viewMode === "materials" && (
-            <Button
-              onClick={handleAddMaterial}
-              className="!bg-[#2563eb] hover:!bg-[#1d4ed8] dark:!bg-blue-500 dark:hover:!bg-blue-600 font-semibold shadow-md hover:shadow-lg transition-all"
-              sx={{
+                backgroundColor: "#1d4ed8 !important",
+              },
+              "& *": {
                 color: "white !important",
-                backgroundColor: "#2563eb !important",
-                "&:hover": {
-                  color: "white !important",
-                  backgroundColor: "#1d4ed8 !important",
-                },
-                "& *": {
-                  color: "white !important",
-                },
-              }}
-            >
-              <Plus className="h-5 w-5 mr-2" style={{ color: "white" }} />
-              <span style={{ color: "white", fontWeight: 600 }}>
-                {t("admin.addMaterial")}
-              </span>
-            </Button>
-          )}
-        </div>
+              },
+            }}
+          >
+            <Plus
+              className={cn("h-5 w-5", isRTL ? "ml-2" : "mr-2")}
+              style={{ color: "white" }}
+            />
+            <span style={{ color: "white", fontWeight: 600 }}>
+              {t("admin.addCategory")}
+            </span>
+          </Button>
+        )}
+        {viewMode === "materials" && (
+          <Button
+            onClick={handleAddMaterial}
+            className="flex-1 h-10 px-4 !bg-[#2563eb] hover:!bg-[#1d4ed8] dark:!bg-blue-500 dark:hover:!bg-blue-600 font-semibold shadow-md hover:shadow-lg transition-all"
+            sx={{
+              color: "white !important",
+              backgroundColor: "#2563eb !important",
+              "&:hover": {
+                color: "white !important",
+                backgroundColor: "#1d4ed8 !important",
+              },
+              "& *": {
+                color: "white !important",
+              },
+            }}
+          >
+            <Plus
+              className={cn("h-5 w-5", isRTL ? "ml-2" : "mr-2")}
+              style={{ color: "white" }}
+            />
+            <span style={{ color: "white", fontWeight: 600 }}>
+              {t("admin.addMaterial")}
+            </span>
+          </Button>
+        )}
       </div>
 
       {/* Categories View */}

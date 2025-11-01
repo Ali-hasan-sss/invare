@@ -7,9 +7,11 @@ import { useUsers } from "../../hooks/useUsers";
 import { useCompanies } from "../../hooks/useCompanies";
 import { Card } from "../../components/ui/Card";
 import { StatCard } from "../../components/admin/StatCard";
+import { cn } from "../../lib/utils";
 
 export default function AdminDashboard() {
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
+  const isRTL = currentLanguage.dir === "rtl";
   const {
     users,
     getUsers,
@@ -92,22 +94,32 @@ export default function AdminDashboard() {
       {/* Quick Actions */}
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className="p-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            Quick Actions
+          <h2
+            className={cn(
+              "text-xl font-semibold text-gray-900 dark:text-white mb-4",
+              isRTL ? "text-right" : "text-left"
+            )}
+          >
+            {t("admin.quickActions") || "Quick Actions"}
           </h2>
           <div className="space-y-3">
             <a
               href="/admin/users"
               className="block p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
-              <div className="flex items-center gap-3">
+              <div
+                className={cn(
+                  "flex items-center gap-3",
+                  isRTL ? "flex-row-reverse" : ""
+                )}
+              >
                 <Users className="h-5 w-5 text-blue-500" />
-                <div>
+                <div className={isRTL ? "text-right" : "text-left"}>
                   <p className="font-medium text-gray-900 dark:text-white">
-                    Manage Users
+                    {t("admin.usersManagement")}
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Add, edit, or remove users
+                    {t("admin.manageUsersDesc") || "Add, edit, or remove users"}
                   </p>
                 </div>
               </div>
@@ -116,14 +128,20 @@ export default function AdminDashboard() {
               href="/admin/companies"
               className="block p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
-              <div className="flex items-center gap-3">
+              <div
+                className={cn(
+                  "flex items-center gap-3",
+                  isRTL ? "flex-row-reverse" : ""
+                )}
+              >
                 <Building2 className="h-5 w-5 text-green-500" />
-                <div>
+                <div className={isRTL ? "text-right" : "text-left"}>
                   <p className="font-medium text-gray-900 dark:text-white">
-                    Manage Companies
+                    {t("admin.companiesManagement")}
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Add, edit, or verify companies
+                    {t("admin.manageCompaniesDesc") ||
+                      "Add, edit, or verify companies"}
                   </p>
                 </div>
               </div>
@@ -132,12 +150,23 @@ export default function AdminDashboard() {
         </Card>
 
         <Card className="p-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            Recent Activity
+          <h2
+            className={cn(
+              "text-xl font-semibold text-gray-900 dark:text-white mb-4",
+              isRTL ? "text-right" : "text-left"
+            )}
+          >
+            {t("admin.recentActivity") || "Recent Activity"}
           </h2>
-          <div className="text-gray-600 dark:text-gray-400">
+          <div
+            className={cn(
+              "text-gray-600 dark:text-gray-400",
+              isRTL ? "text-right" : "text-left"
+            )}
+          >
             <p className="text-sm">
-              Activity log and recent changes will be displayed here.
+              {t("admin.activityLogDesc") ||
+                "Activity log and recent changes will be displayed here."}
             </p>
           </div>
         </Card>

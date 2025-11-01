@@ -10,6 +10,11 @@ export interface Company {
   website?: string;
   verificationStatus?: string;
   countryId?: string;
+  country?: {
+    id: string;
+    countryCode: string;
+    countryName: string;
+  };
   owner?: {
     id: string;
     email: string;

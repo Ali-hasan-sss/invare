@@ -24,6 +24,7 @@ import {
 import { UserFormDialog } from "../../../components/admin/UserFormDialog";
 import { DeleteConfirmDialog } from "../../../components/admin/DeleteConfirmDialog";
 import { Toast } from "../../../components/ui/Toast";
+import { cn } from "../../../lib/utils";
 
 export default function UsersManagement() {
   const { t, currentLanguage } = useTranslation();
@@ -77,28 +78,52 @@ export default function UsersManagement() {
   const handleSubmitUser = async (data: CreateUserData | UpdateUserData) => {
     try {
       if (selectedUser) {
-        await updateUser(selectedUser.id, data as UpdateUserData);
+        const result = await updateUser(
+          selectedUser.id,
+          data as UpdateUserData
+        );
+        if (result.type.endsWith("/rejected")) {
+          throw new Error("Update failed");
+        }
         setToast({ message: t("admin.userUpdatedSuccess"), type: "success" });
       } else {
-        await createUser(data as CreateUserData);
+        const result = await createUser(data as CreateUserData);
+        if (result.type.endsWith("/rejected")) {
+          throw new Error("Create failed");
+        }
         setToast({ message: t("admin.userCreatedSuccess"), type: "success" });
       }
       setUserFormOpen(false);
+      setSelectedUser(null);
       await getUsers();
-    } catch (err) {
-      setToast({ message: t("admin.error"), type: "error" });
+    } catch (err: any) {
+      const errorMessage = err?.message || error || t("admin.error");
+      setToast({
+        message:
+          typeof errorMessage === "string" ? errorMessage : t("admin.error"),
+        type: "error",
+      });
     }
   };
 
   const handleConfirmDelete = async () => {
     if (selectedUser) {
       try {
-        await deleteUser(selectedUser.id);
+        const result = await deleteUser(selectedUser.id);
+        if (result.type.endsWith("/rejected")) {
+          throw new Error("Delete failed");
+        }
         setToast({ message: t("admin.userDeletedSuccess"), type: "success" });
         setDeleteDialogOpen(false);
+        setSelectedUser(null);
         await getUsers();
-      } catch (err) {
-        setToast({ message: t("admin.error"), type: "error" });
+      } catch (err: any) {
+        const errorMessage = err?.message || error || t("admin.error");
+        setToast({
+          message:
+            typeof errorMessage === "string" ? errorMessage : t("admin.error"),
+          type: "error",
+        });
       }
     }
   };
@@ -135,29 +160,33 @@ export default function UsersManagement() {
         </p>
       </div>
 
-      {/* Search */}
-      <Card className="p-4 mb-4">
+      {/* Search Bar */}
+      <Card className="mb-4 p-3">
         <div className="relative">
           <Search
-            className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 ${
+            className={cn(
+              "absolute top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400",
               isRTL ? "left-3" : "right-3"
-            }`}
+            )}
           />
           <Input
             type="text"
             placeholder={t("admin.search")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className={isRTL ? "pl-10" : "pr-10"}
+            className={cn(
+              "h-10 border-0 focus:ring-0 shadow-none",
+              isRTL ? "pr-11" : "pl-11"
+            )}
           />
         </div>
       </Card>
 
-      {/* Action Buttons */}
-      <div className="mb-4 flex items-center justify-end">
+      {/* Add Button */}
+      <div className="mb-4">
         <Button
           onClick={handleAddUser}
-          className="!bg-[#2563eb] hover:!bg-[#1d4ed8] dark:!bg-blue-500 dark:hover:!bg-blue-600 font-semibold shadow-md hover:shadow-lg transition-all"
+          className="w-full h-10 px-4 !bg-[#2563eb] hover:!bg-[#1d4ed8] dark:!bg-blue-500 dark:hover:!bg-blue-600 font-semibold shadow-md hover:shadow-lg transition-all"
           sx={{
             color: "white !important",
             backgroundColor: "#2563eb !important",
@@ -173,7 +202,10 @@ export default function UsersManagement() {
             },
           }}
         >
-          <Plus className="h-5 w-5 mr-2" style={{ color: "white" }} />
+          <Plus
+            className={cn("h-5 w-5", isRTL ? "ml-2" : "mr-2")}
+            style={{ color: "white" }}
+          />
           <span style={{ color: "white", fontWeight: 600 }}>
             {t("admin.addUser")}
           </span>

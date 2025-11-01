@@ -1,6 +1,11 @@
-import { AdminLayout } from '../../components/admin/AdminLayout';
+"use client";
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+import { AdminLayout } from "@/components/admin/AdminLayout";
+
+export default function AdminRootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return <AdminLayout>{children}</AdminLayout>;
 }
-

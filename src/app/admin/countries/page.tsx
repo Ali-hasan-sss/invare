@@ -28,6 +28,7 @@ import {
 } from "../../../components/ui/Table";
 import { CountryFormDialog } from "../../../components/admin/CountryFormDialog";
 import { DeleteConfirmDialog } from "../../../components/admin/DeleteConfirmDialog";
+import { cn } from "../../../lib/utils";
 import { Toast } from "../../../components/ui/Toast";
 
 export default function CountriesManagement() {
@@ -96,9 +97,15 @@ export default function CountriesManagement() {
         });
       }
       setCountryFormOpen(false);
+      setSelectedCountry(null);
       dispatch(getCountries());
-    } catch (err) {
-      setToast({ message: t("admin.error"), type: "error" });
+    } catch (err: any) {
+      const errorMessage = err?.message || error || t("admin.error");
+      setToast({
+        message:
+          typeof errorMessage === "string" ? errorMessage : t("admin.error"),
+        type: "error",
+      });
     }
   };
 
@@ -111,9 +118,15 @@ export default function CountriesManagement() {
           type: "success",
         });
         setDeleteDialogOpen(false);
+        setSelectedCountry(null);
         dispatch(getCountries());
-      } catch (err) {
-        setToast({ message: t("admin.error"), type: "error" });
+      } catch (err: any) {
+        const errorMessage = err?.message || error || t("admin.error");
+        setToast({
+          message:
+            typeof errorMessage === "string" ? errorMessage : t("admin.error"),
+          type: "error",
+        });
       }
     }
   };
@@ -137,29 +150,33 @@ export default function CountriesManagement() {
         </p>
       </div>
 
-      {/* Search */}
-      <Card className="p-4 mb-4">
+      {/* Search Bar */}
+      <Card className="mb-4 p-3">
         <div className="relative">
           <Search
-            className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 ${
+            className={cn(
+              "absolute top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400",
               isRTL ? "left-3" : "right-3"
-            }`}
+            )}
           />
           <Input
             type="text"
             placeholder={t("admin.search")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className={isRTL ? "pl-10" : "pr-10"}
+            className={cn(
+              "h-10 border-0 focus:ring-0 shadow-none",
+              isRTL ? "pr-11" : "pl-11"
+            )}
           />
         </div>
       </Card>
 
-      {/* Action Buttons */}
-      <div className="mb-4 flex items-center justify-end">
+      {/* Add Button */}
+      <div className="mb-4">
         <Button
           onClick={handleAddCountry}
-          className="!bg-[#2563eb] hover:!bg-[#1d4ed8] dark:!bg-blue-500 dark:hover:!bg-blue-600 font-semibold shadow-md hover:shadow-lg transition-all"
+          className="w-full h-10 px-4 !bg-[#2563eb] hover:!bg-[#1d4ed8] dark:!bg-blue-500 dark:hover:!bg-blue-600 font-semibold shadow-md hover:shadow-lg transition-all"
           sx={{
             color: "white !important",
             backgroundColor: "#2563eb !important",
@@ -172,7 +189,10 @@ export default function CountriesManagement() {
             },
           }}
         >
-          <Plus className="h-5 w-5 mr-2" style={{ color: "white" }} />
+          <Plus
+            className={cn("h-5 w-5", isRTL ? "ml-2" : "mr-2")}
+            style={{ color: "white" }}
+          />
           <span style={{ color: "white", fontWeight: 600 }}>
             {t("admin.addCountry")}
           </span>

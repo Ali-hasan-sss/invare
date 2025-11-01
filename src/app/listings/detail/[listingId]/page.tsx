@@ -59,6 +59,7 @@ import { useBidding } from "@/hooks/useBids";
 import { Avatar } from "@/components/ui/Avatar";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import ClientOnly from "@/components/ClientOnly";
+import { ChatDialog } from "@/components/ChatDialog";
 
 const ListingDetailPage: React.FC = () => {
   const { listingId } = useParams();
@@ -80,6 +81,9 @@ const ListingDetailPage: React.FC = () => {
   // Bidding state
   const [isBiddingDialogOpen, setIsBiddingDialogOpen] = useState(false);
   const [bidAmount, setBidAmount] = useState("");
+
+  // Chat state
+  const [isChatDialogOpen, setIsChatDialogOpen] = useState(false);
 
   // Toast state
   const [toastOpen, setToastOpen] = useState(false);
@@ -124,16 +128,29 @@ const ListingDetailPage: React.FC = () => {
     router.back();
   };
 
-  const handleContactSeller = async () => {
-    try {
-      // TODO: Implement actual contact seller API call
-      console.log("Contacting seller...");
-      // Example success notification
-      alert(t("actions.contactSellerSuccess"));
-    } catch (error) {
-      console.error("Contact seller error:", error);
-      alert(t("actions.contactSellerError"));
+  const handleContactSeller = () => {
+    if (!isAuthenticated) {
+      setToastMessage(t("home.loginRequired"));
+      setToastSeverity("warning");
+      setToastOpen(true);
+      setTimeout(() => {
+        router.push("/auth/login");
+      }, 1500);
+      return;
     }
+
+    // Check if seller information is available
+    if (!listing.seller || !(listing as any).sellerUser) {
+      setToastMessage(
+        t("chat.sellerInfoNotAvailable") || "معلومات البائع غير متوفرة"
+      );
+      setToastSeverity("error");
+      setToastOpen(true);
+      return;
+    }
+
+    // Open chat dialog
+    setIsChatDialogOpen(true);
   };
 
   const handlePlaceBid = async () => {
@@ -1055,6 +1072,20 @@ const ListingDetailPage: React.FC = () => {
         onClosePaymentDialog={handleClosePaymentDialog}
         selectedListingAmount={selectedListingAmount}
       />
+
+      {/* Chat Dialog */}
+      {isChatDialogOpen && listing.seller && (listing as any).sellerUser && (
+        <ChatDialog
+          open={isChatDialogOpen}
+          onClose={() => setIsChatDialogOpen(false)}
+          sellerUserId={(listing as any).sellerUser.id}
+          sellerName={`${(listing as any).sellerUser.firstName} ${
+            (listing as any).sellerUser.lastName
+          }`}
+          listingTitle={listing.title}
+          listingId={listing.id}
+        />
+      )}
 
       {/* Toast Notification */}
       <Snackbar
