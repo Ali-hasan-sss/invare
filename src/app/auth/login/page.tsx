@@ -56,7 +56,14 @@ export default function LoginPage() {
       // Check if the result is fulfilled (login successful)
       if (result && "payload" in result && result.type.includes("fulfilled")) {
         showToast(t("common.success"), "success");
-        router.push("/"); // Redirect to home page after successful login
+
+        // Check if user is admin and redirect accordingly
+        const userData = (result.payload as any)?.user;
+        if (userData?.isAdmin) {
+          router.push("/admin"); // Redirect to admin dashboard
+        } else {
+          router.push("/"); // Redirect to home page
+        }
       } else if (authError) {
         showToast(authError, "error");
       } else {

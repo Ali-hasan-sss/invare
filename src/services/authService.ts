@@ -154,6 +154,14 @@ export class AuthService {
   }
 
   /**
+   * Check if current user is admin
+   */
+  static isAdmin(): boolean {
+    const user = this.getStoredUser();
+    return user?.isAdmin === true;
+  }
+
+  /**
    * Store auth data after successful login
    */
   static storeAuthData(authResponse: AuthResponse): void {
@@ -175,6 +183,7 @@ export const authAPI = {
   getAccessToken: AuthService.getAccessToken,
   getStoredUser: AuthService.getStoredUser,
   storeAuthData: AuthService.storeAuthData,
+  isAdmin: AuthService.isAdmin,
 };
 
 export default AuthService;

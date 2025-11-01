@@ -1,11 +1,14 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { Snackbar, Alert, AlertProps } from '@mui/material';
-import { CheckCircle, XCircle, AlertCircle, Info } from 'lucide-react';
+import React, { createContext, useContext, useState, useCallback } from "react";
+import { Snackbar, Alert, AlertProps } from "@mui/material";
+import { CheckCircle, XCircle, AlertCircle, Info } from "lucide-react";
 
 interface ToastContextType {
-  showToast: (message: string, type?: 'success' | 'error' | 'warning' | 'info') => void;
+  showToast: (
+    message: string,
+    type?: "success" | "error" | "warning" | "info"
+  ) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -13,7 +16,7 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {
-    throw new Error('useToast must be used within a ToastProvider');
+    throw new Error("useToast must be used within a ToastProvider");
   }
   return context;
 };
@@ -26,34 +29,40 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const [toast, setToast] = useState<{
     open: boolean;
     message: string;
-    type: 'success' | 'error' | 'warning' | 'info';
+    type: "success" | "error" | "warning" | "info";
   }>({
     open: false,
-    message: '',
-    type: 'info',
+    message: "",
+    type: "info",
   });
 
-  const showToast = useCallback((message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
-    setToast({
-      open: true,
-      message,
-      type,
-    });
-  }, []);
+  const showToast = useCallback(
+    (
+      message: string,
+      type: "success" | "error" | "warning" | "info" = "info"
+    ) => {
+      setToast({
+        open: true,
+        message,
+        type,
+      });
+    },
+    []
+  );
 
   const handleClose = () => {
-    setToast(prev => ({ ...prev, open: false }));
+    setToast((prev) => ({ ...prev, open: false }));
   };
 
   const getIcon = () => {
     switch (toast.type) {
-      case 'success':
+      case "success":
         return <CheckCircle className="w-5 h-5" />;
-      case 'error':
+      case "error":
         return <XCircle className="w-5 h-5" />;
-      case 'warning':
+      case "warning":
         return <AlertCircle className="w-5 h-5" />;
-      case 'info':
+      case "info":
         return <Info className="w-5 h-5" />;
       default:
         return <Info className="w-5 h-5" />;
@@ -67,7 +76,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
         open={toast.open}
         autoHideDuration={6000}
         onClose={handleClose}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
         <Alert
           onClose={handleClose}
@@ -79,5 +88,47 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
         </Alert>
       </Snackbar>
     </ToastContext.Provider>
+  );
+};
+
+// Simple Toast component for direct use
+interface ToastProps {
+  message: string;
+  type: "success" | "error" | "warning" | "info";
+  onClose: () => void;
+}
+
+export const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
+  const getIcon = () => {
+    switch (type) {
+      case "success":
+        return <CheckCircle className="w-5 h-5" />;
+      case "error":
+        return <XCircle className="w-5 h-5" />;
+      case "warning":
+        return <AlertCircle className="w-5 h-5" />;
+      case "info":
+        return <Info className="w-5 h-5" />;
+      default:
+        return <Info className="w-5 h-5" />;
+    }
+  };
+
+  return (
+    <Snackbar
+      open={true}
+      autoHideDuration={3000}
+      onClose={onClose}
+      anchorOrigin={{ vertical: "top", horizontal: "right" }}
+    >
+      <Alert
+        onClose={onClose}
+        severity={type}
+        icon={getIcon()}
+        className="shadow-lg"
+      >
+        {message}
+      </Alert>
+    </Snackbar>
   );
 };

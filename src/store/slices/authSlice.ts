@@ -9,6 +9,7 @@ export interface User {
   firstName?: string;
   lastName?: string;
   avatar?: string;
+  isAdmin?: boolean;
 }
 
 export interface Company {
@@ -81,10 +82,18 @@ export const loginUser = createAsyncThunk<
     );
     const data = response.data;
 
-    // Store token and user data in localStorage
+    // Store token and user data in localStorage and cookies
     if (typeof window !== "undefined") {
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("user", JSON.stringify(data.user));
+
+      // Store in cookies for middleware access
+      document.cookie = `accessToken=${data.accessToken}; path=/; max-age=${
+        7 * 24 * 60 * 60
+      }`; // 7 days
+      document.cookie = `user=${encodeURIComponent(
+        JSON.stringify(data.user)
+      )}; path=/; max-age=${7 * 24 * 60 * 60}`;
     }
 
     return data;
@@ -162,10 +171,14 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.error = null;
 
-      // Clear localStorage
+      // Clear localStorage and cookies
       if (typeof window !== "undefined") {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("user");
+
+        // Clear cookies
+        document.cookie = "accessToken=; path=/; max-age=0";
+        document.cookie = "user=; path=/; max-age=0";
       }
     },
     clearError: (state) => {
@@ -232,10 +245,18 @@ const authSlice = createSlice({
             state.user = action.payload.user;
             state.isAuthenticated = true;
 
-            // Store in localStorage
+            // Store in localStorage and cookies
             if (typeof window !== "undefined") {
               localStorage.setItem("accessToken", action.payload.accessToken);
               localStorage.setItem("user", JSON.stringify(action.payload.user));
+
+              // Store in cookies for middleware access
+              document.cookie = `accessToken=${
+                action.payload.accessToken
+              }; path=/; max-age=${7 * 24 * 60 * 60}`;
+              document.cookie = `user=${encodeURIComponent(
+                JSON.stringify(action.payload.user)
+              )}; path=/; max-age=${7 * 24 * 60 * 60}`;
             }
           }
         }
