@@ -1,0 +1,14 @@
+{
+  "name": "انفير - منصة مزادات إعادة التدوير",
+  "short_name": "انفير",
+  "description": "منصة المزادات الرائدة لإعادة التدوير في سلطنة عمان ",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007bff",
+  "orientation": "portrait-primary",
+  "icons": [],
+  "categories": ["business", "shopping", "environment"],
+  "lang": "ar",
+  "dir": "rtl"
+}

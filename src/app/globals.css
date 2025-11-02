@@ -1,0 +1,232 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Force dark mode to work */
+.dark {
+  color-scheme: dark;
+}
+
+/* Override any conflicting styles */
+.dark * {
+  border-color: inherit;
+}
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap");
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+}
+
+/* Dark mode styles */
+.dark {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 0, 0, 0;
+  --background-end-rgb: 0, 0, 0;
+}
+
+/* Ensure dark mode is applied to html element */
+html.dark {
+  color-scheme: dark;
+}
+
+/* Light mode gradient background */
+body {
+  background: linear-gradient(135deg, #eff6ff 0%, #f3e8ff 50%, #e0e7ff 100%);
+  min-height: 100vh;
+}
+
+html.dark body {
+  background: linear-gradient(
+    135deg,
+    #0f172a 0%,
+    #1e1b4b 50%,
+    #312e81 100%
+  ) !important;
+  color: #f9fafb !important;
+}
+
+/* Force dark mode styles */
+.dark body {
+  background: linear-gradient(
+    135deg,
+    #0f172a 0%,
+    #1e1b4b 50%,
+    #312e81 100%
+  ) !important;
+  color: #f9fafb !important;
+}
+
+.dark .bg-white {
+  background-color: #1f2937 !important; /* gray-800 */
+}
+
+.dark .text-gray-900 {
+  color: #f9fafb !important; /* gray-50 */
+}
+
+.dark .text-gray-700 {
+  color: #d1d5db !important; /* gray-300 */
+}
+
+.dark .text-gray-600 {
+  color: #9ca3af !important; /* gray-400 */
+}
+
+.dark .text-gray-500 {
+  color: #6b7280 !important; /* gray-500 */
+}
+
+.dark .text-gray-400 {
+  color: #9ca3af !important; /* gray-400 */
+}
+
+.dark .text-gray-300 {
+  color: #d1d5db !important; /* gray-300 */
+}
+
+.dark .border-gray-200 {
+  border-color: #374151 !important; /* gray-700 */
+}
+
+.dark .border-gray-300 {
+  border-color: #4b5563 !important; /* gray-600 */
+}
+
+.dark .bg-gray-100 {
+  background-color: #374151 !important; /* gray-700 */
+}
+
+.dark .bg-gray-50 {
+  background-color: #111827 !important; /* gray-900 */
+}
+
+.dark .hover\\:bg-gray-100:hover {
+  background-color: #4b5563 !important; /* gray-600 */
+}
+
+.dark .hover\\:bg-gray-200:hover {
+  background-color: #4b5563 !important; /* gray-600 */
+}
+
+/* RTL support for Arabic */
+[dir="rtl"] {
+  direction: rtl;
+}
+
+/* Force Material-UI input colors in dark mode */
+.dark .MuiOutlinedInput-root input {
+  color: #f9fafb !important; /* gray-50 */
+}
+
+.dark .MuiOutlinedInput-root textarea {
+  color: #f9fafb !important; /* gray-50 */
+}
+
+.dark .MuiInputLabel-root {
+  color: #9ca3af !important; /* gray-400 */
+}
+
+.dark .MuiOutlinedInput-root fieldset {
+  border-color: #4b5563 !important; /* gray-600 */
+}
+
+.dark .MuiOutlinedInput-root:hover fieldset {
+  border-color: #6b7280 !important; /* gray-500 */
+}
+
+.dark .MuiOutlinedInput-root.Mui-focused fieldset {
+  border-color: #007bff !important; /* brand-blue */
+}
+
+[dir="ltr"] {
+  direction: ltr;
+}
+
+/* Search bar RTL/LTR support */
+[dir="rtl"] .search-container {
+  flex-direction: row-reverse;
+}
+
+[dir="ltr"] .search-container {
+  flex-direction: row;
+}
+
+/* Ensure search icon stays inside input in both directions */
+.search-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+[dir="rtl"] .search-input-container .search-icon {
+  margin-right: 8px;
+  margin-left: 0;
+}
+
+[dir="ltr"] .search-input-container .search-icon {
+  margin-left: 8px;
+  margin-right: 0;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-gray-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-gray-500;
+}
