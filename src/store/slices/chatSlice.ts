@@ -16,8 +16,23 @@ export interface Chat {
   topic: string;
   createdByUserId: string;
   participantUserIds?: string[];
+  participants?: Array<{
+    user?: {
+      id: string;
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+    };
+    userId?: string;
+  }>;
+  listing?: {
+    id: string;
+    title: string;
+  };
   status: string;
   messages?: ChatMessage[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ChatState {
@@ -244,17 +259,27 @@ const chatSlice = createSlice({
       })
       .addCase(
         addChatMessage.fulfilled,
-        (state, action: PayloadAction<ChatMessage>) => {
+        (state, action: PayloadAction<any>) => {
           if (state.currentChat) {
             if (!state.currentChat.messages) {
               state.currentChat.messages = [];
             }
+            // Transform API response to ChatMessage format
+            const transformedMessage: ChatMessage = {
+              id: action.payload.id,
+              senderUserId:
+                action.payload.sender?.id ||
+                action.payload.senderUserId ||
+                action.payload.senderId,
+              content: action.payload.content,
+              createdAt: action.payload.createdAt,
+            };
             // Check if message already exists (from pending) to avoid duplicates
             const messageExists = state.currentChat.messages.some(
-              (msg) => msg.id === action.payload.id
+              (msg) => msg.id === transformedMessage.id
             );
             if (!messageExists) {
-              state.currentChat.messages.push(action.payload);
+              state.currentChat.messages.push(transformedMessage);
             }
           }
           state.error = null;
@@ -272,10 +297,21 @@ const chatSlice = createSlice({
       })
       .addCase(
         getChatMessages.fulfilled,
-        (state, action: PayloadAction<ChatMessage[]>) => {
+        (state, action: PayloadAction<any[]>) => {
           state.isLoading = false;
           if (state.currentChat) {
-            state.currentChat.messages = action.payload;
+            // Transform API response to ChatMessage format
+            // API returns messages with sender object, we need senderUserId
+            const transformedMessages: ChatMessage[] = action.payload.map(
+              (msg: any) => ({
+                id: msg.id,
+                senderUserId:
+                  msg.sender?.id || msg.senderUserId || msg.senderId,
+                content: msg.content,
+                createdAt: msg.createdAt,
+              })
+            );
+            state.currentChat.messages = transformedMessages;
           }
           state.error = null;
         }

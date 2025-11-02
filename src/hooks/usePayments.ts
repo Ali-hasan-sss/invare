@@ -6,14 +6,15 @@ import {
   createPayment,
   updatePaymentStatus,
   deletePayment,
+  edfapayCheckout,
   clearError,
   clearCurrentPayment,
   setCurrentPayment,
   Payment,
   CreatePaymentData,
+  EdfaPayCheckoutData,
+  EdfaPayCheckoutResponse,
 } from "@/store/slices/paymentsSlice";
-import { thawaniService } from "@/services/thawaniService";
-import { PaymentMethod } from "@/config/thawani";
 import { useOrders } from "./useOrders";
 import { useListings } from "./useListings";
 import { useAuth } from "./useAuth";
@@ -76,6 +77,13 @@ export const usePayments = () => {
     [dispatch]
   );
 
+  const edfapayCheckoutHandler = useCallback(
+    (orderId: string, data: EdfaPayCheckoutData) => {
+      return dispatch(edfapayCheckout({ orderId, data }));
+    },
+    [dispatch]
+  );
+
   return {
     payments,
     currentPayment,
@@ -86,6 +94,7 @@ export const usePayments = () => {
     createPayment: createPaymentHandler,
     updatePaymentStatus: updatePaymentStatusHandler,
     deletePayment: deletePaymentHandler,
+    edfapayCheckout: edfapayCheckoutHandler,
     clearError: clearErrorHandler,
     clearCurrentPayment: clearCurrentPaymentHandler,
     setCurrentPayment: setCurrentPaymentHandler,
@@ -103,23 +112,7 @@ const isValidUUID = (uuid: string | undefined | null): boolean => {
 };
 
 /**
- * Map PaymentMethod enum to API method values
- */
-const mapPaymentMethodToApiValue = (paymentMethod: PaymentMethod): string => {
-  switch (paymentMethod) {
-    case PaymentMethod.THAWANI:
-      return "card"; // Thawani uses card payment
-    case PaymentMethod.STRIPE:
-      return "card";
-    case PaymentMethod.PAYPAL:
-      return "card";
-    default:
-      return "card";
-  }
-};
-
-/**
- * Hook for processing payments with different payment gateways
+ * Hook for processing payments via EdfaPay Backend
  */
 export const usePaymentProcessing = () => {
   const paymentHooks = usePayments();
@@ -128,16 +121,51 @@ export const usePaymentProcessing = () => {
   const { user, company } = useAuth();
 
   /**
+   * Start EdfaPay checkout session
+   */
+  const startEdfapayCheckout = useCallback(
+    async (orderId: string, checkoutData: EdfaPayCheckoutData) => {
+      try {
+        const result = await paymentHooks.edfapayCheckout(
+          orderId,
+          checkoutData
+        );
+
+        if (result.type !== "payments/edfapayCheckout/fulfilled") {
+          const errorMessage =
+            typeof result.payload === "string"
+              ? result.payload
+              : "Failed to create EdfaPay checkout";
+          throw new Error(errorMessage);
+        }
+
+        const response = result.payload as EdfaPayCheckoutResponse;
+
+        // Redirect to EdfaPay checkout page
+        if (response.redirectUrl) {
+          window.location.href = response.redirectUrl;
+        }
+
+        return response;
+      } catch (error: any) {
+        console.error("EdfaPay checkout error:", error);
+        paymentHooks.clearError();
+        throw error;
+      }
+    },
+    [paymentHooks]
+  );
+
+  /**
    * Process payment for a listing (buy now)
-   * Creates Order first, then Payment, then redirects to payment gateway
+   * Creates Order first, then Payment, then redirects to EdfaPay checkout
    */
   const processPayment = useCallback(
     async (
       listingId: string,
       quantity: number,
       unitPrice: string,
-      totalAmount: string,
-      paymentMethod: PaymentMethod = PaymentMethod.THAWANI
+      totalAmount: string
     ) => {
       try {
         // Step 1: Get listing details to extract sellerCompanyId
@@ -218,13 +246,10 @@ export const usePaymentProcessing = () => {
         console.log("Order created successfully:", order.id);
 
         // Step 3: Create Payment with Order ID
-        // Map payment method to API value
-        const apiMethod = mapPaymentMethodToApiValue(paymentMethod);
-
         const paymentData: CreatePaymentData = {
-          orderId: order.id, // Use Order ID instead of listingId
+          orderId: order.id,
           amount: totalAmount,
-          method: apiMethod,
+          method: "card", // Default payment method
         };
 
         console.log("Creating payment with data:", paymentData);
@@ -251,57 +276,60 @@ export const usePaymentProcessing = () => {
           throw new Error("Payment record was not created successfully");
         }
 
-        // Process payment based on method
-        if (paymentMethod === PaymentMethod.THAWANI) {
-          const returnUrl = window.location.href;
-          const session = await thawaniService.createSessionViaBackend({
-            orderId: order.id, // Use Order ID
-            amount: payment.amount,
-            method: payment.method,
-            transactionId: payment.transactionId,
-            returnUrl,
-          });
-
-          // Redirect to Thawani checkout
-          window.location.href = session.checkoutUrl;
-
-          return {
-            success: true,
-            payment,
-            sessionId: session.sessionId,
-            checkoutUrl: session.checkoutUrl,
-          };
+        // Step 4: Use EdfaPay for payment
+        if (!user) {
+          throw new Error("User information is required for payment");
         }
 
-        // Add other payment methods here
-        throw new Error(
-          `Payment method ${paymentMethod} is not yet implemented`
-        );
+        // Get user IP (simplified - in production, get real IP)
+        const ip = "176.44.76.222"; // Default IP, should be fetched from API
+
+        // Build return URL
+        const baseUrl = window.location.origin;
+
+        const edfapayData: EdfaPayCheckoutData = {
+          currency: "SAR",
+          description: `Order Payment - ${listing.title || "Order"}`,
+          termUrl3ds: `${baseUrl}/payments/edfapay/return`,
+          payer: {
+            firstName: user.firstName || "",
+            lastName: user.lastName || "",
+            address: "", // Could be fetched from user addresses
+            country: "SA",
+            city: "", // Could be fetched from user addresses
+            zip: "",
+            email: user.email,
+            phone: (user as any).phone || "966500000000", // Default phone if not available
+            ip: ip,
+          },
+        };
+
+        await startEdfapayCheckout(order.id, edfapayData);
+
+        return {
+          success: true,
+          payment,
+          order,
+        };
       } catch (error: any) {
         console.error("Payment processing error:", error);
         paymentHooks.clearError();
         throw error;
       }
     },
-    [paymentHooks, createOrder, getListingById, user, company]
+    [
+      paymentHooks,
+      createOrder,
+      getListingById,
+      user,
+      company,
+      startEdfapayCheckout,
+    ]
   );
-
-  /**
-   * Check payment status after redirect
-   */
-  const checkPaymentStatus = useCallback(async (sessionId: string) => {
-    try {
-      const session = await thawaniService.retrieveSession(sessionId);
-      return session;
-    } catch (error: any) {
-      console.error("Payment status check error:", error);
-      throw error;
-    }
-  }, []);
 
   return {
     ...paymentHooks,
+    startEdfapayCheckout,
     processPayment,
-    checkPaymentStatus,
   };
 };

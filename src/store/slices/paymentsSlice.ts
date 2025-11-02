@@ -33,6 +33,39 @@ export interface CreatePaymentData {
   transactionId?: string;
 }
 
+export interface ThawaniCheckoutData {
+  successUrl: string;
+  cancelUrl: string;
+}
+
+export interface ThawaniCheckoutResponse {
+  paymentId: string;
+  sessionId: string;
+  redirectUrl: string;
+}
+
+export interface EdfaPayCheckoutData {
+  currency?: string;
+  description?: string;
+  termUrl3ds: string;
+  payer: {
+    firstName: string;
+    lastName: string;
+    address: string;
+    country: string;
+    city: string;
+    zip: string;
+    email: string;
+    phone: string;
+    ip: string;
+  };
+}
+
+export interface EdfaPayCheckoutResponse {
+  paymentId: string;
+  redirectUrl: string;
+}
+
 // Initial state
 const initialState: PaymentsState = {
   payments: [],
@@ -138,6 +171,52 @@ export const deletePayment = createAsyncThunk<
     );
   }
 });
+
+export const thawaniCheckout = createAsyncThunk<
+  ThawaniCheckoutResponse,
+  { orderId: string; data: ThawaniCheckoutData },
+  { rejectValue: string }
+>(
+  "payments/thawaniCheckout",
+  async ({ orderId, data }, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.post(
+        API_CONFIG.ENDPOINTS.PAYMENTS.THAWANI_CHECKOUT(orderId),
+        data
+      );
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to create Thawani checkout"
+      );
+    }
+  }
+);
+
+export const edfapayCheckout = createAsyncThunk<
+  EdfaPayCheckoutResponse,
+  { orderId: string; data: EdfaPayCheckoutData },
+  { rejectValue: string }
+>(
+  "payments/edfapayCheckout",
+  async ({ orderId, data }, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.post(
+        API_CONFIG.ENDPOINTS.PAYMENTS.EDFAPAY_CHECKOUT(orderId),
+        data
+      );
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to create EdfaPay checkout"
+      );
+    }
+  }
+);
 
 // Payments slice
 const paymentsSlice = createSlice({
@@ -257,6 +336,42 @@ const paymentsSlice = createSlice({
       .addCase(deletePayment.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload || "Failed to delete payment";
+      })
+
+      // Thawani Checkout
+      .addCase(thawaniCheckout.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(
+        thawaniCheckout.fulfilled,
+        (state, action: PayloadAction<ThawaniCheckoutResponse>) => {
+          state.isLoading = false;
+          state.error = null;
+          // Thawani checkout returns redirect URL, no need to update state
+        }
+      )
+      .addCase(thawaniCheckout.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || "Failed to create Thawani checkout";
+      })
+
+      // EdfaPay Checkout
+      .addCase(edfapayCheckout.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(
+        edfapayCheckout.fulfilled,
+        (state, action: PayloadAction<EdfaPayCheckoutResponse>) => {
+          state.isLoading = false;
+          state.error = null;
+          // EdfaPay checkout returns redirect URL, no need to update state
+        }
+      )
+      .addCase(edfapayCheckout.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || "Failed to create EdfaPay checkout";
       });
   },
 });

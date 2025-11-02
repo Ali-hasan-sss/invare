@@ -170,7 +170,7 @@ const Header: React.FC = () => {
   // Mobile drawer content
   const drawer = (
     <Box className="w-80 h-full bg-white dark:bg-gray-900 overflow-x-hidden">
-      <Box className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+      <Box className="flex items-center justify-between p-4">
         <div className="flex items-center space-x-2 rtl:space-x-reverse">
           <div
             className="flex items-center justify-center cursor-pointer"
@@ -498,10 +498,10 @@ const Header: React.FC = () => {
   return (
     <>
       <AppBar
-        position="static"
+        position="fixed"
         color="transparent"
         elevation={0}
-        className=" backdrop-blur-md"
+        className="backdrop-blur-md bg-white/70 dark:bg-gray-900/70 border-b border-gray-200/50 dark:border-gray-700/50 z-50"
       >
         <Toolbar className="flex justify-between items-center py-2 px-4 sm:px-6 lg:px-8">
           {/* Logo Section */}

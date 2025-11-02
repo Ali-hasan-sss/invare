@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Users,
   Building2,
@@ -13,6 +13,7 @@ import {
   Image,
 } from "lucide-react";
 import { useTranslation } from "../../hooks/useTranslation";
+import { useAuth } from "../../hooks/useAuth";
 import { cn } from "../../lib/utils";
 import { AdminNavbar } from "./AdminNavbar";
 
@@ -22,9 +23,37 @@ interface AdminLayoutProps {
 
 export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const { t, currentLanguage } = useTranslation();
+  const { user, isAuthenticated } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
   const isRTL = currentLanguage.dir === "rtl";
+
+  // Check admin access on client side
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      // Redirect to login if not authenticated
+      router.push("/auth/login");
+      return;
+    }
+
+    // Strictly check if user is admin (must be exactly true)
+    if (user.isAdmin !== true) {
+      // Redirect to home page if not admin
+      console.log("Access denied - User is not admin:", {
+        userId: user.id,
+        email: user.email,
+        isAdmin: user.isAdmin,
+        isAdminType: typeof user.isAdmin,
+      });
+      router.push("/");
+      return;
+    }
+
+    // User is authenticated and is admin
+    setIsChecking(false);
+  }, [user, isAuthenticated, router]);
 
   const navigation = [
     {
@@ -64,6 +93,20 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       current: pathname.startsWith("/admin/advertisements"),
     },
   ];
+
+  // Show loading or nothing while checking
+  if (isChecking || !isAuthenticated || !user || user.isAdmin !== true) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">
+            {t("common.loading") || "جاري التحميل..."}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">

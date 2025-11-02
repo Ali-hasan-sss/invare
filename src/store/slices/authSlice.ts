@@ -196,10 +196,20 @@ const authSlice = createSlice({
             state.accessToken = token;
             state.user = user;
             state.isAuthenticated = true;
+
+            // Update cookies for middleware access
+            document.cookie = `accessToken=${token}; path=/; max-age=${
+              7 * 24 * 60 * 60
+            }`; // 7 days
+            document.cookie = `user=${encodeURIComponent(
+              userStr
+            )}; path=/; max-age=${7 * 24 * 60 * 60}`;
           } catch (error) {
             // Clear invalid data
             localStorage.removeItem("accessToken");
             localStorage.removeItem("user");
+            document.cookie = "accessToken=; path=/; max-age=0";
+            document.cookie = "user=; path=/; max-age=0";
           }
         }
       }
@@ -296,6 +306,17 @@ const authSlice = createSlice({
           state.user = action.payload.user;
           state.isAuthenticated = true;
           state.error = null;
+
+          // Update localStorage and cookies
+          if (typeof window !== "undefined") {
+            const userStr = JSON.stringify(action.payload.user);
+            localStorage.setItem("user", userStr);
+
+            // Update cookies for middleware access
+            document.cookie = `user=${encodeURIComponent(
+              userStr
+            )}; path=/; max-age=${7 * 24 * 60 * 60}`;
+          }
         }
       )
       .addCase(getCurrentUser.rejected, (state, action) => {

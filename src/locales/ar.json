@@ -30,7 +30,12 @@
     "buyNow": "اشتري الآن",
     "available": "متاح",
     "currency": "ريال",
-    "clear": "مسح"
+    "clear": "مسح",
+    "justNow": "الآن",
+    "minutesAgo": "دقائق",
+    "hoursAgo": "ساعات",
+    "daysAgo": "أيام",
+    "ago": "مضت"
   },
   "home": {
     "heroTitle": "منصة إعادة التدوير الرائدة في سلطنة عمان",
@@ -233,10 +238,11 @@
     "invalidQuantity": "الكمية غير صحيحة",
     "quantityExceedsStock": "الكمية المطلوبة تتجاوز الكمية المتاحة",
     "missingData": "بيانات ناقصة",
-    "buyerCompanyIdMissing": "معرف شركة المشتري مفقود أو غير صالح. يرجى التأكد من تسجيل الدخول بحساب شركة صالح.",
-    "sellerCompanyIdMissing": "معرف شركة البائع مفقود أو غير صالح",
-    "listingIdInvalid": "معرف العرض غير صالح",
-    "companyRequired": "يجب أن يكون لديك حساب شركة لإتمام عملية الشراء. يرجى التأكد من ربط حسابك بشركة."
+    "buyerCompanyIdMissing": "Buyer company ID is missing or invalid. Please ensure you are logged in with a valid company account.",
+    "sellerCompanyIdMissing": "Seller company ID is missing or invalid",
+    "listingIdInvalid": "Listing ID is not a valid UUID",
+    "companyRequired": "A company account is required to make purchases. Please ensure your account is linked to a company.",
+    "edfapayDesc": "طريقة الدفع الآمنة"
   },
   "filters": {
     "material": "المادة",
@@ -440,7 +446,17 @@
     "newChat": "محادثة جديدة",
     "messageSent": "تم إرسال الرسالة",
     "messageError": "فشل إرسال الرسالة",
-    "sellerInfoNotAvailable": "معلومات البائع غير متوفرة حالياً"
+    "sellerInfoNotAvailable": "معلومات البائع غير متوفرة حالياً",
+    "myChats": "محادثاتي",
+    "chats": "المحادثات",
+    "noChats": "لا توجد محادثات",
+    "noChatsDescription": "لم تبدأ أي محادثة بعد",
+    "openChat": "فتح المحادثة",
+    "lastMessage": "آخر رسالة",
+    "active": "نشط",
+    "closed": "مغلق",
+    "viewListing": "عرض العرض",
+    "with": "مع"
   },
   "currency": {
     "omr": "ر.ع"

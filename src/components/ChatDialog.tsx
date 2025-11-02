@@ -51,7 +51,16 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
     Map<string, ChatMessage>
   >(new Map());
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const messagesLoadedRef = useRef<string | null>(null); // Track which chat's messages have been loaded
   const isRTL = currentLanguage.dir === "rtl";
+
+  // Reset messages loaded ref when dialog closes
+  useEffect(() => {
+    if (!open) {
+      messagesLoadedRef.current = null;
+    }
+  }, [open]);
 
   // Initialize or load chat when dialog opens
   useEffect(() => {
@@ -59,19 +68,33 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
       if (open && user) {
         setIsInitializing(true);
         try {
+          // If currentChat is already set (e.g., from chats page), use it and load messages
+          // This prevents creating a new chat when opening from chats page
+          if (currentChat?.id) {
+            // Chat is already set (from chats page), just load messages if not already loaded
+            if (
+              messagesLoadedRef.current !== currentChat.id &&
+              (!currentChat.messages || currentChat.messages.length === 0)
+            ) {
+              await getMessages(currentChat.id);
+              messagesLoadedRef.current = currentChat.id;
+            }
+            setIsInitializing(false);
+            return;
+          }
+
+          // Otherwise, check if we need to create a new chat or find existing one
           // First, fetch all user chats
           const fetchResult = await fetchUserChats(user.id);
 
-          // Get chats from the result or wait for state update
+          // Get chats from the result
           let userChats: any[] = [];
           if (fetchResult.type.endsWith("/fulfilled") && fetchResult.payload) {
             userChats = Array.isArray(fetchResult.payload)
               ? fetchResult.payload
               : [];
-          } else {
-            // Fallback to state chats if result doesn't have payload
-            userChats = chats;
           }
+          // If fetch failed or returned no data, we'll create a new chat below
 
           // Check if a chat already exists for this listing and seller
           const existingChat: any = userChats.find((chat: any) => {
@@ -109,9 +132,16 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
                 ) ||
                 existingChat.participantUserIds ||
                 [],
+              participants: existingChat.participants,
+              listing: existingChat.listing,
               messages: existingChat.messages || [],
             };
             setCurrentChatById(transformedChat);
+            // Load messages for existing chat
+            if (messagesLoadedRef.current !== existingChat.id) {
+              await getMessages(existingChat.id);
+              messagesLoadedRef.current = existingChat.id;
+            }
           } else {
             // Create a new chat with the seller
             await createNewChat({
@@ -131,23 +161,53 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
     };
 
     initializeChat();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     open,
     user?.id,
     sellerUserId,
     listingTitle,
     listingId,
-    createNewChat,
-    fetchUserChats,
-    setCurrentChatById,
+    // Note: chats is not included in dependencies to avoid infinite loop
+    // We use fetchUserChats result directly instead of state
   ]);
 
-  // Load messages when chat is set
+  // Load messages when chat is set (only if not already loading in initializeChat)
   useEffect(() => {
-    if (currentChat?.id && !isInitializing) {
+    // Only load messages if chat was set externally (e.g., from chats page)
+    // and we haven't already loaded them in initializeChat
+    if (
+      currentChat?.id &&
+      !isInitializing &&
+      messagesLoadedRef.current !== currentChat.id &&
+      (!currentChat.messages || currentChat.messages.length === 0)
+    ) {
+      messagesLoadedRef.current = currentChat.id;
       getMessages(currentChat.id);
     }
   }, [currentChat?.id, getMessages, isInitializing]);
+
+  // Scroll to bottom when chat messages are first loaded
+  useEffect(() => {
+    if (
+      currentChat?.messages &&
+      currentChat.messages.length > 0 &&
+      !isInitializing &&
+      !isLoading
+    ) {
+      const timeoutId = setTimeout(() => {
+        if (messagesContainerRef.current && messagesEndRef.current) {
+          const container = messagesContainerRef.current;
+          const hasOverflow = container.scrollHeight > container.clientHeight;
+          if (hasOverflow) {
+            // Use auto instead of smooth for initial load
+            messagesEndRef.current.scrollIntoView({ behavior: "auto" });
+          }
+        }
+      }, 150);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [currentChat?.id, isInitializing, isLoading]);
 
   // Remove pending messages when actual messages arrive from API
   useEffect(() => {
@@ -160,13 +220,14 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
       setPendingMessages((prev) => {
         const newMap = new Map(prev);
         currentChat.messages?.forEach((actualMsg) => {
-          // Remove pending messages with matching content sent by current user
+          // Remove pending messages with matching content and sender
+          // Check all pending messages, not just those from current user
           Array.from(newMap.entries()).forEach(([tempId, pendingMsg]) => {
             if (
               pendingMsg.senderUserId === actualMsg.senderUserId &&
-              pendingMsg.content === actualMsg.content &&
-              pendingMsg.senderUserId === user?.id
+              pendingMsg.content.trim() === actualMsg.content.trim()
             ) {
+              // Match found - remove pending message
               newMap.delete(tempId);
             }
           });
@@ -174,20 +235,46 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
         return newMap;
       });
     }
-  }, [currentChat?.messages, user?.id, pendingMessages.size]);
+  }, [currentChat?.messages, pendingMessages.size]);
 
-  // Merge and sort all messages (actual + pending)
+  // Merge and sort all messages (actual + pending), excluding duplicates
   const allMessages = useMemo(() => {
     const messages: ChatMessage[] = [];
+    const seenContent = new Set<string>(); // Track seen messages to avoid duplicates
 
-    // Add actual messages
+    // First, add actual messages
     if (currentChat?.messages) {
-      messages.push(...currentChat.messages);
+      currentChat.messages.forEach((actualMsg) => {
+        // Create a unique key for this message
+        const messageKey = `${
+          actualMsg.senderUserId
+        }-${actualMsg.content.trim()}-${actualMsg.createdAt}`;
+        if (!seenContent.has(messageKey)) {
+          messages.push(actualMsg);
+          seenContent.add(messageKey);
+        }
+      });
     }
 
-    // Add pending messages
+    // Then, add pending messages only if they don't match actual messages
     Array.from(pendingMessages.values()).forEach((pendingMsg) => {
-      messages.push(pendingMsg);
+      // Check if this pending message matches any actual message
+      const hasMatchingActual = currentChat?.messages?.some(
+        (actualMsg) =>
+          actualMsg.senderUserId === pendingMsg.senderUserId &&
+          actualMsg.content.trim() === pendingMsg.content.trim()
+      );
+
+      // Only add pending message if there's no matching actual message
+      if (!hasMatchingActual) {
+        const messageKey = `${
+          pendingMsg.senderUserId
+        }-${pendingMsg.content.trim()}-${pendingMsg.createdAt}`;
+        if (!seenContent.has(messageKey)) {
+          messages.push(pendingMsg);
+          seenContent.add(messageKey);
+        }
+      }
     });
 
     // Sort by createdAt (oldest first)
@@ -198,9 +285,22 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
     });
   }, [currentChat?.messages, pendingMessages]);
 
-  // Scroll to bottom when messages change (including pending messages)
+  // Scroll to bottom when messages change, only if there's overflow
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Use setTimeout to ensure DOM is updated
+    const timeoutId = setTimeout(() => {
+      if (messagesContainerRef.current && messagesEndRef.current) {
+        const container = messagesContainerRef.current;
+        const hasOverflow = container.scrollHeight > container.clientHeight;
+
+        // Only scroll if there's overflow (more messages than visible)
+        if (hasOverflow) {
+          messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+      }
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
   }, [allMessages]);
 
   const handleSendMessage = async () => {
@@ -235,12 +335,12 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
         content: messageContent,
       });
 
-      // Remove pending message after success
-      // The message will be added to currentChat.messages by Redux,
-      // and pending message will be removed by useEffect when actual message arrives
+      // Message sent successfully
+      // The message will be added to currentChat.messages by Redux reducer
+      // The pending message will be automatically removed by useEffect when actual message arrives
       if (result.type.endsWith("/fulfilled")) {
-        // Keep pending message until actual message arrives
-        // It will be removed by the useEffect that matches pending with actual messages
+        // Wait for the actual message to be added to currentChat.messages
+        // The useEffect will remove the pending message when it detects a match
       }
     } catch (error) {
       console.error("Failed to send message:", error);
@@ -314,7 +414,10 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
 
       {/* Messages Container */}
       <DialogContent sx={{ p: 0 }} className="bg-gray-50 dark:bg-gray-900">
-        <div className="h-96 overflow-y-auto p-4 space-y-3">
+        <div
+          ref={messagesContainerRef}
+          className="h-96 overflow-y-auto p-4 space-y-3"
+        >
           {isInitializing || isLoading ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
@@ -328,7 +431,9 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
             <>
               {/* Render all messages (merged and sorted) */}
               {allMessages.map((msg, index) => {
-                const isOwnMessage = msg.senderUserId === user?.id;
+                // Ensure we're comparing string IDs correctly
+                const isOwnMessage =
+                  String(msg.senderUserId) === String(user?.id);
                 const isPending = msg.isPending === true;
 
                 return (

@@ -52,6 +52,12 @@ export const API_CONFIG = {
       UPDATE_STATUS: (id: string, status: string) =>
         `/payments/${id}/status/${status}`,
       DETAIL: (id: string) => `/payments/${id}`,
+      THAWANI_CHECKOUT: (orderId: string) =>
+        `/payments/thawani/${orderId}/checkout`,
+      THAWANI_WEBHOOK: "/payments/thawani/webhook",
+      EDFAPAY_CHECKOUT: (orderId: string) =>
+        `/payments/edfapay/${orderId}/checkout`,
+      EDFAPAY_WEBHOOK: "/payments/edfapay/webhook",
     },
     SHIPMENTS: {
       BASE: "/shipments",

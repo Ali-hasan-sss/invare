@@ -9,7 +9,7 @@ import {
   Divider,
   Box,
 } from "@mui/material";
-import { User, Settings, LogOut, ShoppingBag, Gavel } from "lucide-react";
+import { User, Settings, LogOut, ShoppingBag, Gavel, MessageCircle } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/hooks/useAuth";
@@ -43,6 +43,11 @@ const UserMenu: React.FC<UserMenuProps> = ({ anchorEl, open, onClose }) => {
 
   const handleAuctionsClick = () => {
     router.push("/user/auctions");
+    onClose();
+  };
+
+  const handleChatsClick = () => {
+    router.push("/chat");
     onClose();
   };
 
@@ -121,6 +126,16 @@ const UserMenu: React.FC<UserMenuProps> = ({ anchorEl, open, onClose }) => {
           <Gavel size={20} />
         </ListItemIcon>
         <ListItemText primary={t("user.myAuctions") || "مزاداتي"} />
+      </MenuItem>
+
+      <MenuItem
+        onClick={handleChatsClick}
+        className="hover:bg-gray-50 dark:hover:bg-gray-700"
+      >
+        <ListItemIcon className="text-gray-600 dark:text-gray-300">
+          <MessageCircle size={20} />
+        </ListItemIcon>
+        <ListItemText primary={t("chat.myChats") || "محادثاتي"} />
       </MenuItem>
 
       <MenuItem

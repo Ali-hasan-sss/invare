@@ -26,7 +26,7 @@ import ListingCard from "@/components/ui/ListingCard";
 import ListingsFilter, {
   ListingsFilterData,
 } from "@/components/ui/ListingsFilter";
-import { PaymentMethod, PAYMENT_METHOD_LABELS } from "@/config/thawani";
+// PaymentMethod removed - using EdfaPay only
 import PaymentFlowDialogs from "@/components/payments/PaymentFlowDialogs";
 import BiddingDialog from "@/components/bidding/BiddingDialog";
 import { useBidding } from "@/hooks/useBids";
@@ -59,11 +59,10 @@ const ListingsPageContent: React.FC = () => {
   const { companies, getCompanies } = useCompaniesList();
   const { users, getUsers } = useUsersList();
 
-  // Payment method selection dialog state
+  // Payment method selection dialog state (legacy, not used anymore)
   const [isPaymentMethodDialogOpen, setIsPaymentMethodDialogOpen] =
     useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] =
-    useState<PaymentMethod>(PaymentMethod.THAWANI);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<any>(null);
   const [purchaseQuantity, setPurchaseQuantity] = useState<number>(1);
   const [selectedListingPrice, setSelectedListingPrice] = useState<
     string | null
@@ -244,12 +243,12 @@ const ListingsPageContent: React.FC = () => {
         throw new Error(t("payments.missingData") || "بيانات ناقصة");
       }
 
+      // Payment gateway will be selected automatically based on NEXT_PUBLIC_PAYMENT_COUNTRY
       await processPayment(
         selectedListingId,
         purchaseQuantity,
         selectedListingPrice,
-        calculatedTotalAmount,
-        selectedPaymentMethod
+        calculatedTotalAmount
       );
       // processPayment will redirect
     } catch (error: any) {
@@ -270,7 +269,7 @@ const ListingsPageContent: React.FC = () => {
     setSelectedListingAmount(null);
     setPurchaseQuantity(1);
     setCalculatedTotalAmount("0");
-    setSelectedPaymentMethod(PaymentMethod.THAWANI);
+    setSelectedPaymentMethod(null);
   };
 
   const handleQuantityChange = (value: number) => {

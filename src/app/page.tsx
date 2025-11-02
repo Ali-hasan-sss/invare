@@ -32,7 +32,7 @@ import { CreateAdvertisementData } from "@/store/slices/advertisementsSlice";
 export default function HomePage() {
   const { t, currentLanguage } = useTranslation();
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user, company } = useAuth();
   const { showToast } = useToast();
   const { advertisements, fetchAdvertisements, addAdvertisement } =
     useAdvertisements();
@@ -72,7 +72,28 @@ export default function HomePage() {
 
   const handleSubmitListing = async (listingData: CreateListingData) => {
     try {
-      const result = await createListing(listingData);
+      // Ensure user is authenticated and has an ID
+      if (!user?.id) {
+        showToast(t("home.loginRequired"), "error");
+        router.push("/auth/login");
+        return;
+      }
+
+      // Add sellerUserId (required) and sellerCompanyId (if available)
+      const listingDataWithSeller: CreateListingData & {
+        sellerUserId: string;
+        sellerCompanyId?: string;
+      } = {
+        ...listingData,
+        sellerUserId: user.id,
+      };
+
+      // Add sellerCompanyId only if company exists
+      if (company?.id) {
+        listingDataWithSeller.sellerCompanyId = company.id;
+      }
+
+      const result = await createListing(listingDataWithSeller);
 
       // Check if the result is fulfilled
       if (result && "type" in result && result.type.includes("/fulfilled")) {
@@ -188,8 +209,8 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 dark:from-blue-800 dark:via-blue-900 dark:to-gray-900">
+      {/* Hero Section - starts from top with negative margin to go behind header */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 dark:from-blue-800 dark:via-blue-900 dark:to-gray-900 -mt-16">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div

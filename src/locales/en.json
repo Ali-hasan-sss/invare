@@ -30,7 +30,12 @@
     "currency": "SAR",
     "buyNow": "Buy Now",
     "available": "Available",
-    "clear": "Clear"
+    "clear": "Clear",
+    "justNow": "Just now",
+    "minutesAgo": "minutes",
+    "hoursAgo": "hours",
+    "daysAgo": "days",
+    "ago": "ago"
   },
   "home": {
     "heroTitle": "Oman's Leading Recycling Platform",
@@ -236,7 +241,8 @@
     "buyerCompanyIdMissing": "Buyer company ID is missing or invalid. Please ensure you are logged in with a valid company account.",
     "sellerCompanyIdMissing": "Seller company ID is missing or invalid",
     "listingIdInvalid": "Listing ID is not a valid UUID",
-    "companyRequired": "A company account is required to make purchases. Please ensure your account is linked to a company."
+    "companyRequired": "A company account is required to make purchases. Please ensure your account is linked to a company.",
+    "edfapayDesc": "Secure payment method"
   },
   "filters": {
     "material": "Material",
@@ -440,7 +446,17 @@
     "newChat": "New Chat",
     "messageSent": "Message sent",
     "messageError": "Failed to send message",
-    "sellerInfoNotAvailable": "Seller information is not available"
+    "sellerInfoNotAvailable": "Seller information is not available",
+    "myChats": "My Chats",
+    "chats": "Chats",
+    "noChats": "No chats",
+    "noChatsDescription": "You haven't started any conversations yet",
+    "openChat": "Open Chat",
+    "lastMessage": "Last message",
+    "active": "Active",
+    "closed": "Closed",
+    "viewListing": "View Listing",
+    "with": "with"
   },
   "currency": {
     "omr": "OMR"

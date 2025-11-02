@@ -17,14 +17,13 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { useTranslation } from "@/hooks/useTranslation";
-import { PaymentMethod, PAYMENT_METHOD_LABELS } from "@/config/thawani";
 
 export interface PaymentFlowDialogsProps {
   // Selection dialog
   isPaymentMethodDialogOpen: boolean;
   onClosePaymentMethodDialog: () => void;
-  selectedPaymentMethod: PaymentMethod;
-  setSelectedPaymentMethod: (m: PaymentMethod) => void;
+  selectedPaymentMethod: any; // Legacy prop, not used anymore
+  setSelectedPaymentMethod: (m: any) => void; // Legacy prop, not used anymore
   purchaseQuantity: number;
   handleQuantityChange: (value: number) => void;
   selectedListingUnitOfMeasure: string | null;
@@ -163,32 +162,30 @@ const PaymentFlowDialogs: React.FC<PaymentFlowDialogsProps> = (props) => {
               </Box>
             )}
 
-            <RadioGroup
-              value={selectedPaymentMethod}
-              onChange={(e) =>
-                setSelectedPaymentMethod(e.target.value as PaymentMethod)
-              }
-              className="space-y-3"
-            >
-              <FormControlLabel
-                value={PaymentMethod.THAWANI}
-                control={<Radio className="dark:text-gray-300" />}
-                label={
-                  <Box className="flex items-center gap-2">
-                    <Typography className="font-medium text-gray-900 dark:text-white">
-                      {PAYMENT_METHOD_LABELS[PaymentMethod.THAWANI]}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      className="text-gray-500 dark:text-gray-400"
-                    >
-                      ({t("payments.securePayment") || "دفع آمن"})
-                    </Typography>
-                  </Box>
-                }
-                className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              />
-            </RadioGroup>
+            {/* Payment method - EdfaPay only */}
+            <Box className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700/50">
+              <Box className="flex items-center justify-between">
+                <Box>
+                  <Typography className="font-medium text-gray-900 dark:text-white mb-1">
+                    EdfaPay
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    className="text-gray-500 dark:text-gray-400"
+                  >
+                    {t("payments.edfapayDesc") || "طريقة الدفع الآمنة"}
+                  </Typography>
+                </Box>
+                <Box className="text-right">
+                  <Typography
+                    variant="caption"
+                    className="text-green-600 dark:text-green-400 font-medium"
+                  >
+                    {t("payments.securePayment") || "دفع آمن"}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions className="p-4 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">

@@ -52,7 +52,7 @@ import { useListings } from "@/hooks/useListings";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/hooks/useAuth";
 import PaymentFlowDialogs from "@/components/payments/PaymentFlowDialogs";
-import { PaymentMethod } from "@/config/thawani";
+// PaymentMethod removed - using EdfaPay only
 import { usePaymentProcessing } from "@/hooks/usePayments";
 import BiddingDialog from "@/components/bidding/BiddingDialog";
 import { useBidding } from "@/hooks/useBids";
@@ -98,7 +98,7 @@ const ListingDetailPage: React.FC = () => {
   const [isPaymentMethodDialogOpen, setIsPaymentMethodDialogOpen] =
     useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
-    useState<PaymentMethod>(PaymentMethod.THAWANI);
+    useState<any>(null);
   const [purchaseQuantity, setPurchaseQuantity] = useState<number>(1);
   const [selectedListingPrice, setSelectedListingPrice] = useState<
     string | null
@@ -139,8 +139,10 @@ const ListingDetailPage: React.FC = () => {
       return;
     }
 
-    // Check if seller information is available
-    if (!listing.seller || !(listing as any).sellerUser) {
+    // Check if seller user information is available
+    // sellerUser is required for chat (seller can be null if it's a user listing)
+    const sellerUser = (listing as any).sellerUser;
+    if (!sellerUser || !sellerUser.id) {
       setToastMessage(
         t("chat.sellerInfoNotAvailable") || "معلومات البائع غير متوفرة"
       );
@@ -281,7 +283,7 @@ const ListingDetailPage: React.FC = () => {
     setSelectedListingAmount(null);
     setPurchaseQuantity(1);
     setCalculatedTotalAmount("0");
-    setSelectedPaymentMethod(PaymentMethod.THAWANI);
+    setSelectedPaymentMethod(null);
   };
 
   const handleClosePaymentDialog = () => {
@@ -325,8 +327,7 @@ const ListingDetailPage: React.FC = () => {
         selectedListingId,
         purchaseQuantity,
         selectedListingPrice,
-        calculatedTotalAmount,
-        selectedPaymentMethod
+        calculatedTotalAmount
       );
     } catch (error: any) {
       setToastMessage(error.message || t("payments.paymentFailed"));
@@ -1074,14 +1075,14 @@ const ListingDetailPage: React.FC = () => {
       />
 
       {/* Chat Dialog */}
-      {isChatDialogOpen && listing.seller && (listing as any).sellerUser && (
+      {isChatDialogOpen && (listing as any).sellerUser && (
         <ChatDialog
           open={isChatDialogOpen}
           onClose={() => setIsChatDialogOpen(false)}
           sellerUserId={(listing as any).sellerUser.id}
-          sellerName={`${(listing as any).sellerUser.firstName} ${
-            (listing as any).sellerUser.lastName
-          }`}
+          sellerName={`${(listing as any).sellerUser.firstName || ""} ${
+            (listing as any).sellerUser.lastName || ""
+          }`.trim() || (listing as any).sellerUser.email || t("listings.seller")}
           listingTitle={listing.title}
           listingId={listing.id}
         />

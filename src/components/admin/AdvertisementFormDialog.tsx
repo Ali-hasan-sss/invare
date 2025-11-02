@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/Input";
 import { Select, SelectOption } from "@/components/ui/Select";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useListings } from "@/hooks/useListings";
+import { useAuth } from "@/hooks/useAuth";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import type { Advertisement } from "@/store/slices/advertisementsSlice";
 
@@ -27,6 +28,7 @@ export const AdvertisementFormDialog: React.FC<
 > = ({ open, advertisement, onClose, onSubmit }) => {
   const { t } = useTranslation();
   const { listings, getListings } = useListings();
+  const { user } = useAuth();
 
   const [formData, setFormData] = useState({
     imageUrl: "",
@@ -35,11 +37,12 @@ export const AdvertisementFormDialog: React.FC<
   });
 
   useEffect(() => {
-    if (open) {
-      getListings();
+    if (open && user?.id) {
+      // Fetch only listings belonging to the current user
+      getListings({ userId: user.id });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, user?.id]);
 
   useEffect(() => {
     if (advertisement) {

@@ -23,7 +23,7 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import ListingCard from "@/components/ui/ListingCard";
 import ClientOnly from "@/components/ClientOnly";
 
-import { PaymentMethod, PAYMENT_METHOD_LABELS } from "@/config/thawani";
+// PaymentMethod removed - using EdfaPay only
 import PaymentFlowDialogs from "@/components/payments/PaymentFlowDialogs";
 import BiddingDialog from "@/components/bidding/BiddingDialog";
 import { useBidding } from "@/hooks/useBids";
@@ -55,8 +55,7 @@ const MaterialListingsPage: React.FC = () => {
   // Payment method selection dialog state
   const [isPaymentMethodDialogOpen, setIsPaymentMethodDialogOpen] =
     useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] =
-    useState<PaymentMethod>(PaymentMethod.THAWANI);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<any>(null);
   const [purchaseQuantity, setPurchaseQuantity] = useState<number>(1);
   const [selectedListingPrice, setSelectedListingPrice] = useState<
     string | null
@@ -271,8 +270,7 @@ const MaterialListingsPage: React.FC = () => {
         selectedListingId,
         purchaseQuantity,
         selectedListingPrice,
-        calculatedTotalAmount,
-        selectedPaymentMethod
+        calculatedTotalAmount
       );
       // Note: processPayment will redirect to payment gateway
       // The dialog will close after redirect
@@ -296,7 +294,7 @@ const MaterialListingsPage: React.FC = () => {
     setSelectedListingAmount(null);
     setPurchaseQuantity(1);
     setCalculatedTotalAmount("0");
-    setSelectedPaymentMethod(PaymentMethod.THAWANI);
+    setSelectedPaymentMethod(null);
   };
 
   const handleQuantityChange = (value: number) => {
