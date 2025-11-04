@@ -6,7 +6,6 @@ import {
   Toolbar,
   Box,
   IconButton,
-  InputBase,
   Menu,
   MenuItem,
   ListItemIcon,
@@ -20,8 +19,6 @@ import {
   useTheme as useMuiTheme,
 } from "@mui/material";
 import {
-  LayoutGrid,
-  Search,
   ChevronDown,
   LogIn,
   LogOut,
@@ -187,41 +184,10 @@ const Header: React.FC = () => {
         </div>
         <IconButton
           onClick={handleDrawerToggle}
-          className="text-gray-600 dark:text-gray-300"
+          className="text-black dark:text-white"
         >
           <X size={24} />
         </IconButton>
-      </Box>
-
-      {/* Search Bar */}
-      <Box className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <Box className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-2 shadow-sm">
-          <IconButton className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md">
-            <LayoutGrid size={20} />
-          </IconButton>
-          <Box className="flex items-center border-l border-gray-300 dark:border-gray-600 mx-2 pl-2 flex-1">
-            <InputBase
-              placeholder={t("navigation.allCategories")}
-              className="text-gray-700 dark:text-gray-200 flex-1"
-              inputProps={{ "aria-label": "all categories" }}
-            />
-            <ChevronDown
-              size={16}
-              className="text-gray-500 dark:text-gray-400"
-            />
-          </Box>
-        </Box>
-
-        <Box className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-2 shadow-sm mt-2">
-          <InputBase
-            placeholder={t("common.search")}
-            className="text-gray-700 dark:text-gray-200 flex-1"
-            inputProps={{ "aria-label": "search" }}
-          />
-          <IconButton className="p-2 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-800 rounded-md">
-            <Search size={20} />
-          </IconButton>
-        </Box>
       </Box>
 
       {/* Navigation Links */}
@@ -264,7 +230,7 @@ const Header: React.FC = () => {
           <Box className="ml-4 mb-2">
             {/* Loading state */}
             {categoriesLoading && (
-              <Box className="flex items-center py-2 px-3 text-gray-500 dark:text-gray-400">
+              <Box className="flex items-center py-2 px-3 text-black dark:text-white">
                 <Box className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600 mr-2" />
                 {t("common.loading")}...
               </Box>
@@ -304,14 +270,14 @@ const Header: React.FC = () => {
                     />
                     <MuiListItemText
                       primary={t("common.back")}
-                      className="text-sm text-purple-600 dark:text-purple-400"
+                      className="text-sm text-black dark:text-white"
                     />
                   </ListItemButton>
                 </ListItem>
 
                 {/* Materials loading */}
                 {materialsLoading && (
-                  <Box className="flex items-center py-2 px-3 text-gray-500 dark:text-gray-400">
+                  <Box className="flex items-center py-2 px-3 text-black dark:text-white">
                     <Box className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600 mr-2" />
                     {t("common.loading")}...
                   </Box>
@@ -334,7 +300,7 @@ const Header: React.FC = () => {
                             primary={material.name}
                             className="text-sm"
                           />
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                          <span className="text-xs text-black dark:text-white opacity-70">
                             {material.unitOfMeasure}
                           </span>
                         </Box>
@@ -355,7 +321,7 @@ const Header: React.FC = () => {
             {categories.length === 0 &&
               !categoriesLoading &&
               mobileCategoriesFetched && (
-                <Box className="py-2 px-3 text-gray-500 dark:text-gray-400 text-sm">
+                <Box className="py-2 px-3 text-black dark:text-white text-sm">
                   {t("common.noDataFound")}
                 </Box>
               )}
@@ -366,131 +332,17 @@ const Header: React.FC = () => {
       {/* Language and Theme Controls */}
       <Box className="p-4 border-t border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <span className="text-sm font-medium text-black dark:text-white">
             {t("common.language")}
           </span>
           <LanguageSwitcher />
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <span className="text-sm font-medium text-black dark:text-white">
             {t("common.theme")}
           </span>
           <ThemeToggle />
         </div>
-      </Box>
-
-      {/* Auth Section */}
-      <Box className="p-4 border-t border-gray-200 dark:border-gray-700">
-        {isAuthenticated && user ? (
-          <div className="space-y-3">
-            {/* User Info */}
-            <div className="flex items-center space-x-3 rtl:space-x-reverse">
-              <Avatar
-                size="medium"
-                src={user.avatar}
-                fallback={user.firstName + " " + user.lastName}
-                alt={user.firstName}
-              />
-              <div>
-                <div className="font-medium text-gray-900 dark:text-white">
-                  {user.firstName} {user.lastName}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {user.email}
-                </div>
-              </div>
-            </div>
-
-            {/* User Menu Items */}
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-start border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                onClick={() => {
-                  router.push("/user/purchases");
-                  handleDrawerToggle();
-                }}
-              >
-                <ShoppingBag size={16} className="ltr:mr-2 rtl:ml-2" />
-                {t("user.myPurchases")}
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                onClick={() => {
-                  router.push("/user/auctions");
-                  handleDrawerToggle();
-                }}
-              >
-                <Gavel size={16} className="ltr:mr-2 rtl:ml-2" />
-                {t("user.myAuctions")}
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                onClick={() => {
-                  router.push("/profile");
-                  handleDrawerToggle();
-                }}
-              >
-                <User size={16} className="ltr:mr-2 rtl:ml-2" />
-                {t("user.profile")}
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                onClick={() => {
-                  router.push("/settings");
-                  handleDrawerToggle();
-                }}
-              >
-                <Settings size={16} className="ltr:mr-2 rtl:ml-2" />
-                {t("user.settings")}
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start border-red-300 dark:border-red-600 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                onClick={async () => {
-                  try {
-                    await logoutUser();
-                    handleDrawerToggle();
-                    router.push("/");
-                  } catch (error) {
-                    console.error("Logout error:", error);
-                  }
-                }}
-              >
-                <LogOut size={16} className="ltr:mr-2 rtl:ml-2" />
-                {t("user.logout")}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <Button
-              variant="primary"
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 text-white px-4 py-2 rounded-md shadow-md"
-              sx={{ color: "white !important" }}
-              onClick={() => {
-                router.push("/auth/register");
-                handleDrawerToggle();
-              }}
-            >
-              {t("auth.register")}
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-              onClick={() => {
-                router.push("/auth/login");
-                handleDrawerToggle();
-              }}
-            >
-              <LogIn size={16} className="ltr:mr-2 rtl:ml-2" />
-              {t("common.login")}
-            </Button>
-          </div>
-        )}
       </Box>
     </Box>
   );
@@ -501,7 +353,7 @@ const Header: React.FC = () => {
         position="fixed"
         color="transparent"
         elevation={0}
-        className="backdrop-blur-md bg-white/70 dark:bg-gray-900/70 border-b border-gray-200/50 dark:border-gray-700/50 z-50"
+        className="backdrop-blur-lg bg-gradient-to-br from-gray-900 via-secondary-900 to-accent-900 z-50 shadow-lg"
       >
         <Toolbar className="flex justify-between items-center py-2 px-4 sm:px-6 lg:px-8">
           {/* Logo Section */}
@@ -526,14 +378,14 @@ const Header: React.FC = () => {
               {/* Listings Link */}
               <ClientOnly
                 fallback={
-                  <div className="flex items-center text-gray-700 dark:text-gray-300 hover:text-brand-blue dark:hover:text-brand-blue transition-colors cursor-pointer">
+                  <div className="flex items-center text-black dark:text-white hover:opacity-80 transition-colors cursor-pointer font-medium">
                     <span>{t("listings.allListings")}</span>
                   </div>
                 }
               >
                 <Link
                   href="/listings"
-                  className="flex items-center text-gray-700 dark:text-gray-300 hover:text-brand-blue dark:hover:text-brand-blue transition-colors"
+                  className="flex items-center text-black dark:text-white hover:opacity-80 transition-colors font-medium"
                 >
                   <span>{t("listings.allListings")}</span>
                 </Link>
@@ -541,99 +393,87 @@ const Header: React.FC = () => {
 
               <ClientOnly
                 fallback={
-                  <div className="flex items-center text-gray-700 dark:text-gray-300 hover:text-brand-blue dark:hover:text-brand-blue transition-colors cursor-pointer">
+                  <div className="flex items-center text-black dark:text-white hover:opacity-80 transition-colors cursor-pointer font-medium">
                     <span>الدعم</span>
-                    <ChevronDown size={16} className="mr-1" />
+                    <ChevronDown size={16} className="mr-1 text-black dark:text-white" />
                   </div>
                 }
               >
                 <Box
-                  className="flex items-center text-gray-700 dark:text-gray-300 hover:text-brand-blue dark:hover:text-brand-blue transition-colors cursor-pointer"
+                  className="flex items-center text-black dark:text-white hover:opacity-80 transition-colors cursor-pointer font-medium"
                   onClick={handleSupportClick}
                 >
                   <span>{t("navigation.support")}</span>
-                  <ChevronDown size={16} className="mr-1" />
+                  <ChevronDown size={16} className="mr-1 text-black dark:text-white" />
                 </Box>
               </ClientOnly>
 
               <ClientOnly
                 fallback={
-                  <div className="flex items-center text-gray-700 dark:text-gray-300 hover:text-brand-blue dark:hover:text-brand-blue transition-colors cursor-pointer">
+                  <div className="flex items-center text-black dark:text-white hover:opacity-80 transition-colors cursor-pointer font-medium">
                     <span>المواد</span>
-                    <ChevronDown size={16} className="mr-1" />
+                    <ChevronDown size={16} className="mr-1 text-black dark:text-white" />
                   </div>
                 }
               >
                 <Box
-                  className="flex items-center text-gray-700 dark:text-gray-300 hover:text-brand-blue dark:hover:text-brand-blue transition-colors cursor-pointer"
+                  className="flex items-center text-black dark:text-white hover:opacity-80 transition-colors cursor-pointer font-medium"
                   onClick={handleMaterialsClick}
                 >
                   <span>{t("navigation.materials")}</span>
-                  <ChevronDown size={16} className="mr-1" />
+                  <ChevronDown size={16} className="mr-1 text-black dark:text-white" />
                 </Box>
               </ClientOnly>
-            </Box>
-          )}
-
-          {/* Desktop Search Bar */}
-          {!isMobile && (
-            <Box className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1 shadow-sm flex-1 max-w-md mx-4">
-              <IconButton className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md">
-                <LayoutGrid size={20} />
-              </IconButton>
-              <Box className="flex items-center border-l border-gray-300 dark:border-gray-600 mx-2 pl-2">
-                <ClientOnly
-                  fallback={
-                    <InputBase
-                      placeholder="جميع الفئات"
-                      className="text-gray-700 dark:text-gray-200 w-32"
-                      inputProps={{ "aria-label": "all categories" }}
-                    />
-                  }
-                >
-                  <InputBase
-                    placeholder={t("navigation.allCategories")}
-                    className="text-gray-700 dark:text-gray-200 w-32"
-                    inputProps={{ "aria-label": "all categories" }}
-                  />
-                </ClientOnly>
-                <ChevronDown
-                  size={16}
-                  className="text-gray-500 dark:text-gray-400"
-                />
-              </Box>
-              <Box className="search-input-container border-l border-gray-300 dark:border-gray-600 mx-2 pl-2">
-                <ClientOnly
-                  fallback={
-                    <InputBase
-                      placeholder="بحث"
-                      className="text-gray-700 dark:text-gray-200 flex-1"
-                      inputProps={{ "aria-label": "search" }}
-                    />
-                  }
-                >
-                  <InputBase
-                    placeholder={t("common.search")}
-                    className="text-gray-700 dark:text-gray-200 flex-1"
-                    inputProps={{ "aria-label": "search" }}
-                  />
-                </ClientOnly>
-                <IconButton className="search-icon p-2 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-800 rounded-md flex-shrink-0">
-                  <Search size={20} />
-                </IconButton>
-              </Box>
             </Box>
           )}
 
           {/* Right Section: User/Utility Controls */}
           <Box className="flex items-center space-x-2 rtl:space-x-reverse">
             {isMobile ? (
-              <IconButton
-                onClick={handleDrawerToggle}
-                className="text-gray-600 dark:text-gray-300"
-              >
-                <MenuIcon size={24} />
-              </IconButton>
+              <>
+                {/* Mobile User Menu - Same as Desktop */}
+                <ClientOnly fallback={null}>
+                  {isAuthenticated && user ? (
+                    <div
+                      className="flex items-center space-x-2 rtl:space-x-reverse cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg p-1.5 transition-colors"
+                      onClick={handleUserMenuClick}
+                    >
+                      <Avatar
+                        size="small"
+                        src={user.avatar}
+                        fallback={user.firstName + " " + user.lastName}
+                        alt={user.firstName}
+                        className="w-8 h-8"
+                      />
+                      <span className="text-black dark:text-white font-medium text-sm hidden sm:block">
+                        {user.firstName} {user.lastName}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-1 rtl:space-x-reverse">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        className="bg-gradient-to-r from-accent-600 to-secondary-500 hover:from-accent-700 hover:to-secondary-600 text-white px-2 py-1 text-xs rounded-md shadow-md"
+                        sx={{ color: "white !important" }}
+                        onClick={() => router.push("/auth/register")}
+                      >
+                        {t("auth.register")}
+                      </Button>
+                      <Link
+                        href="/auth/login"
+                        className="flex items-center text-black dark:text-white hover:opacity-80 transition-colors text-xs font-medium"
+                      >
+                        {t("common.login")}
+                      </Link>
+                    </div>
+                  )}
+                </ClientOnly>
+                {/* Mobile Menu Button */}
+                <IconButton onClick={handleDrawerToggle} className="text-black dark:text-white">
+                  <MenuIcon size={24} />
+                </IconButton>
+              </>
             ) : (
               <>
                 <ClientOnly fallback={<div className="w-8 h-8" />}>
@@ -648,7 +488,7 @@ const Header: React.FC = () => {
                     <div className="flex items-center space-x-2 rtl:space-x-reverse">
                       <Button
                         variant="primary"
-                        className="bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 text-white px-4 py-2 rounded-md shadow-md"
+                        className="bg-gradient-to-r from-accent-600 to-secondary-500 hover:from-accent-700 hover:to-secondary-600 text-white px-4 py-2 rounded-md shadow-md"
                         sx={{ color: "white !important" }}
                       >
                         إنشاء حساب
@@ -674,7 +514,7 @@ const Header: React.FC = () => {
                         fallback={user.firstName + " " + user.lastName}
                         alt={user.firstName}
                       />
-                      <span className="text-gray-700 dark:text-gray-300 font-medium">
+                      <span className="text-black dark:text-white font-medium">
                         {user.firstName} {user.lastName}
                       </span>
                     </div>
@@ -682,7 +522,7 @@ const Header: React.FC = () => {
                     <div className="flex items-center space-x-2 rtl:space-x-reverse">
                       <Button
                         variant="primary"
-                        className="bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 text-white px-4 py-2 rounded-md shadow-md"
+                        className="bg-gradient-to-r from-accent-600 to-secondary-500 hover:from-accent-700 hover:to-secondary-600 text-white px-4 py-2 rounded-md shadow-md"
                         sx={{ color: "white !important" }}
                         onClick={() => router.push("/auth/register")}
                       >
@@ -690,7 +530,7 @@ const Header: React.FC = () => {
                       </Button>
                       <Link
                         href="/auth/login"
-                        className="flex items-center text-gray-700 dark:text-gray-300 hover:text-brand-blue dark:hover:text-brand-blue transition-colors"
+                        className="flex items-center text-black dark:text-white hover:opacity-80 transition-colors font-medium"
                       >
                         {t("common.login")}
                         <LogIn size={16} className="ltr:ml-1 rtl:mr-1" />
@@ -726,7 +566,7 @@ const Header: React.FC = () => {
                 overflow: "auto",
                 position: "fixed",
               },
-              className: "dark:bg-gray-800 dark:text-white",
+              className: "bg-white dark:bg-gray-800 text-black dark:text-white",
             },
           }}
         >
@@ -776,7 +616,7 @@ const Header: React.FC = () => {
                 overflow: "auto",
                 position: "fixed",
               },
-              className: "dark:bg-gray-800 dark:text-white",
+              className: "bg-white dark:bg-gray-800 text-black dark:text-white",
             },
           }}
         >
@@ -805,11 +645,11 @@ const Header: React.FC = () => {
               >
                 <ListItemText
                   primary={category.name}
-                  className="text-gray-700 dark:text-gray-300"
+                  className="text-black dark:text-white"
                 />
                 <ChevronDown
                   size={16}
-                  className="transform -rotate-90 text-gray-400"
+                  className="transform -rotate-90 text-black dark:text-white"
                 />
               </MenuItem>
             ))}
@@ -821,7 +661,7 @@ const Header: React.FC = () => {
               <MenuItem disabled>
                 <ListItemText
                   primary={t("common.noDataFound")}
-                  className="text-gray-500 dark:text-gray-400"
+                  className="text-black dark:text-white"
                 />
               </MenuItem>
             )}
@@ -852,7 +692,7 @@ const Header: React.FC = () => {
                 position: "fixed",
                 minWidth: "200px",
               },
-              className: "dark:bg-gray-800 dark:text-white",
+              className: "bg-white dark:bg-gray-800 text-black dark:text-white",
             },
           }}
         >
@@ -886,7 +726,7 @@ const Header: React.FC = () => {
                 <ListItemText
                   primary={material.name}
                   secondary={material.unitOfMeasure}
-                  className="text-gray-700 dark:text-gray-300"
+                  className="text-black dark:text-white"
                 />
               </MenuItem>
             ))}
@@ -898,7 +738,7 @@ const Header: React.FC = () => {
               <MenuItem disabled>
                 <ListItemText
                   primary={t("common.noDataFound")}
-                  className="text-gray-500 dark:text-gray-400"
+                  className="text-black dark:text-white"
                 />
               </MenuItem>
             )}

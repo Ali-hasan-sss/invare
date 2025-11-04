@@ -37,7 +37,7 @@ const LanguageSwitcher: React.FC = () => {
     <>
       <IconButton
         onClick={handleClick}
-        className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+        className="text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/20"
         aria-label="language switcher"
       >
         <Globe className="w-5 h-5 mr-1" />
@@ -63,7 +63,7 @@ const LanguageSwitcher: React.FC = () => {
             style: {
               position: "fixed",
             },
-            className: "dark:bg-gray-800 dark:text-white",
+            className: "bg-white dark:bg-gray-800 text-black dark:text-white",
           },
         }}
         className="mt-2"

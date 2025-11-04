@@ -97,8 +97,7 @@ const ListingDetailPage: React.FC = () => {
     usePaymentProcessing();
   const [isPaymentMethodDialogOpen, setIsPaymentMethodDialogOpen] =
     useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] =
-    useState<any>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<any>(null);
   const [purchaseQuantity, setPurchaseQuantity] = useState<number>(1);
   const [selectedListingPrice, setSelectedListingPrice] = useState<
     string | null
@@ -456,6 +455,47 @@ const ListingDetailPage: React.FC = () => {
 
   const listing = currentListing;
   const hasImages = listing.photos && listing.photos.length > 0;
+
+  // Check if current user is the seller
+  // Check multiple possible ways the seller information might be stored
+  const sellerUser = (listing as any).sellerUser;
+  const sellerUserId = listing.sellerUserId || sellerUser?.id;
+  const sellerCompanyId = listing.sellerCompanyId || listing.seller?.id;
+
+  // Debug logging (remove after testing)
+  if (process.env.NODE_ENV === "development") {
+    console.log("Owner check:", {
+      user: user?.id,
+      company: company?.id,
+      listingSellerUserId: listing.sellerUserId,
+      listingSellerCompanyId: listing.sellerCompanyId,
+      sellerUserId,
+      sellerCompanyId,
+      sellerUser: sellerUser?.id,
+      seller: listing.seller?.id,
+      userEmail: user?.email,
+      sellerUserEmail: sellerUser?.email,
+      sellerEmail: listing.seller?.email,
+    });
+  }
+
+  const isOwner =
+    (user?.id && sellerUserId && String(user.id) === String(sellerUserId)) ||
+    (company?.id &&
+      sellerCompanyId &&
+      String(company.id) === String(sellerCompanyId)) ||
+    (user?.id &&
+      listing.seller?.id &&
+      String(user.id) === String(listing.seller.id)) ||
+    (user?.email && sellerUser?.email && user.email === sellerUser.email) ||
+    (user?.email &&
+      listing.seller?.email &&
+      user.email === listing.seller.email);
+
+  // Debug logging (remove after testing)
+  if (process.env.NODE_ENV === "development") {
+    console.log("isOwner result:", isOwner);
+  }
 
   return (
     <Container maxWidth="lg" className="py-8">
@@ -922,18 +962,21 @@ const ListingDetailPage: React.FC = () => {
                   </Button>
                 )}
 
-                <Button
-                  variant="outlined"
-                  size="large"
-                  fullWidth
-                  className="py-3"
-                  onClick={handleContactSeller}
-                >
-                  <Box className="flex items-center justify-center gap-2">
-                    <MessageCircle size={20} />
-                    <span>{t("listings.contactSeller")}</span>
-                  </Box>
-                </Button>
+                {/* Contact Seller Button - Only show if user is not the owner */}
+                {!isOwner && (
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    fullWidth
+                    className="py-3"
+                    onClick={handleContactSeller}
+                  >
+                    <Box className="flex items-center justify-center gap-2">
+                      <MessageCircle size={20} />
+                      <span>{t("listings.contactSeller")}</span>
+                    </Box>
+                  </Button>
+                )}
 
                 <Box className="flex gap-2">
                   <Button
@@ -1080,9 +1123,13 @@ const ListingDetailPage: React.FC = () => {
           open={isChatDialogOpen}
           onClose={() => setIsChatDialogOpen(false)}
           sellerUserId={(listing as any).sellerUser.id}
-          sellerName={`${(listing as any).sellerUser.firstName || ""} ${
-            (listing as any).sellerUser.lastName || ""
-          }`.trim() || (listing as any).sellerUser.email || t("listings.seller")}
+          sellerName={
+            `${(listing as any).sellerUser.firstName || ""} ${
+              (listing as any).sellerUser.lastName || ""
+            }`.trim() ||
+            (listing as any).sellerUser.email ||
+            t("listings.seller")
+          }
           listingTitle={listing.title}
           listingId={listing.id}
         />

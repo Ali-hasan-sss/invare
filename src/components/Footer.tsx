@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 import {
   Recycle,
   Mail,
@@ -17,28 +18,65 @@ import { cn } from "@/lib/utils";
 
 const Footer: React.FC = () => {
   const { t, currentLanguage } = useTranslation();
+  const router = useRouter();
+  const pathname = usePathname();
   const isRTL = currentLanguage.dir === "rtl";
 
   const currentYear = new Date().getFullYear();
 
+  // Scroll to section when hash is present in URL
+  useEffect(() => {
+    if (pathname === "/" && window.location.hash) {
+      const sectionId = window.location.hash.replace("#", "");
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 100);
+    }
+  }, [pathname]);
+
+  const handleAnchorClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string
+  ) => {
+    if (href.startsWith("/#")) {
+      e.preventDefault();
+      const sectionId = href.replace("/#", "");
+
+      // If we're on the home page, scroll to the section
+      if (pathname === "/") {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
+          window.history.pushState({}, "", href);
+        }
+      } else {
+        // If we're on a different page, navigate to home page with hash
+        router.push(href);
+      }
+    }
+  };
+
   const footerLinks = {
     about: [
-      { key: "aboutUs", href: "/about" },
-      { key: "ourMission", href: "/mission" },
-      { key: "team", href: "/team" },
-      { key: "careers", href: "/careers" },
+      { key: "aboutUs", href: "/#about-us" },
+      { key: "ourMission", href: "/#mission" },
+      // { key: "team", href: "/team" },
+      // { key: "careers", href: "/careers" },
     ],
     services: [
-      { key: "auctions", href: "/auctions" },
+      // { key: "auctions", href: "/auctions" },
       { key: "materials", href: "/materials" },
       { key: "listings", href: "/listings" },
-      { key: "pricing", href: "/pricing" },
+      // { key: "pricing", href: "/pricing" },
     ],
     support: [
-      { key: "helpCenter", href: "/help" },
+      { key: "helpCenter", href: "/help-center" },
       { key: "faq", href: "/faq" },
       { key: "contactUs", href: "/contact" },
-      { key: "terms", href: "/terms" },
+      // { key: "terms", href: "/terms" },
     ],
     legal: [
       { key: "privacyPolicy", href: "/privacy" },
@@ -76,16 +114,16 @@ const Footer: React.FC = () => {
   ];
 
   return (
-    <footer className="bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 dark:from-gray-950 dark:via-blue-950 dark:to-purple-950 text-white mt-auto">
+    <footer className="bg-gradient-to-br from-gray-900 via-secondary-900 to-accent-900 dark:from-gray-950 dark:via-secondary-950 dark:to-accent-950 text-white mt-auto">
       <div className="container mx-auto px-4 py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
           {/* Company Info */}
           <div className="lg:col-span-2">
             <div className="flex items-center gap-3 mb-4">
-              <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-2 rounded-lg">
+              <div className="bg-gradient-to-br from-secondary-500 to-accent-600 p-2 rounded-lg">
                 <Recycle className="h-6 w-6 text-white" />
               </div>
-              <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              <h3 className="text-2xl font-bold bg-gradient-to-r from-secondary-400 to-accent-400 bg-clip-text text-transparent">
                 {t("footer.companyName")}
               </h3>
             </div>
@@ -94,23 +132,23 @@ const Footer: React.FC = () => {
             </p>
             <div className="space-y-3">
               <div className="flex items-center gap-3 text-gray-300">
-                <MapPin className="h-5 w-5 text-blue-400 flex-shrink-0" />
+                <MapPin className="h-5 w-5 text-secondary-400 flex-shrink-0" />
                 <span className="text-sm">{t("footer.address")}</span>
               </div>
               <div className="flex items-center gap-3 text-gray-300">
-                <Phone className="h-5 w-5 text-blue-400 flex-shrink-0" />
+                <Phone className="h-5 w-5 text-secondary-400 flex-shrink-0" />
                 <a
                   href="tel:+96812345678"
-                  className="text-sm hover:text-blue-400 transition-colors"
+                  className="text-sm hover:text-secondary-400 transition-colors"
                 >
                   {t("footer.phone")}
                 </a>
               </div>
               <div className="flex items-center gap-3 text-gray-300">
-                <Mail className="h-5 w-5 text-blue-400 flex-shrink-0" />
+                <Mail className="h-5 w-5 text-secondary-400 flex-shrink-0" />
                 <a
                   href="mailto:info@invare.com"
-                  className="text-sm hover:text-blue-400 transition-colors"
+                  className="text-sm hover:text-secondary-400 transition-colors"
                 >
                   {t("footer.email")}
                 </a>
@@ -120,7 +158,7 @@ const Footer: React.FC = () => {
 
           {/* Quick Links */}
           <div>
-            <h4 className="font-semibold text-lg mb-4 text-blue-400">
+            <h4 className="font-semibold text-lg mb-4 text-secondary-400">
               {t("footer.quickLinks")}
             </h4>
             <ul className="space-y-2">
@@ -128,9 +166,10 @@ const Footer: React.FC = () => {
                 <li key={link.key}>
                   <Link
                     href={link.href}
-                    className="text-gray-300 hover:text-blue-400 transition-colors text-sm flex items-center gap-2 group"
+                    onClick={(e) => handleAnchorClick(e, link.href)}
+                    className="text-gray-300 hover:text-secondary-400 transition-colors text-sm flex items-center gap-2 group"
                   >
-                    <span className="w-0 group-hover:w-1.5 h-0.5 bg-blue-400 transition-all duration-200" />
+                    <span className="w-0 group-hover:w-1.5 h-0.5 bg-secondary-400 transition-all duration-200" />
                     {t(`footer.${link.key}`)}
                   </Link>
                 </li>
@@ -140,7 +179,7 @@ const Footer: React.FC = () => {
 
           {/* Services */}
           <div>
-            <h4 className="font-semibold text-lg mb-4 text-blue-400">
+            <h4 className="font-semibold text-lg mb-4 text-secondary-400">
               {t("footer.services")}
             </h4>
             <ul className="space-y-2">
@@ -148,9 +187,9 @@ const Footer: React.FC = () => {
                 <li key={link.key}>
                   <Link
                     href={link.href}
-                    className="text-gray-300 hover:text-blue-400 transition-colors text-sm flex items-center gap-2 group"
+                    className="text-gray-300 hover:text-secondary-400 transition-colors text-sm flex items-center gap-2 group"
                   >
-                    <span className="w-0 group-hover:w-1.5 h-0.5 bg-blue-400 transition-all duration-200" />
+                    <span className="w-0 group-hover:w-1.5 h-0.5 bg-secondary-400 transition-all duration-200" />
                     {t(`footer.${link.key}`)}
                   </Link>
                 </li>
@@ -160,7 +199,7 @@ const Footer: React.FC = () => {
 
           {/* Support */}
           <div>
-            <h4 className="font-semibold text-lg mb-4 text-blue-400">
+            <h4 className="font-semibold text-lg mb-4 text-secondary-400">
               {t("footer.support")}
             </h4>
             <ul className="space-y-2 mb-6">
@@ -168,9 +207,9 @@ const Footer: React.FC = () => {
                 <li key={link.key}>
                   <Link
                     href={link.href}
-                    className="text-gray-300 hover:text-blue-400 transition-colors text-sm flex items-center gap-2 group"
+                    className="text-gray-300 hover:text-secondary-400 transition-colors text-sm flex items-center gap-2 group"
                   >
-                    <span className="w-0 group-hover:w-1.5 h-0.5 bg-blue-400 transition-all duration-200" />
+                    <span className="w-0 group-hover:w-1.5 h-0.5 bg-secondary-400 transition-all duration-200" />
                     {t(`footer.${link.key}`)}
                   </Link>
                 </li>
@@ -179,7 +218,7 @@ const Footer: React.FC = () => {
 
             {/* Social Media */}
             <div className="mt-6">
-              <h5 className="font-semibold text-sm mb-3 text-blue-400">
+              <h5 className="font-semibold text-sm mb-3 text-secondary-400">
                 {t("footer.followUs")}
               </h5>
               <div className="flex gap-3">
@@ -192,7 +231,7 @@ const Footer: React.FC = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={social.ariaLabel}
-                      className="bg-gray-800 hover:bg-blue-600 p-2 rounded-lg transition-all duration-200 hover:scale-110"
+                      className="bg-gray-800 hover:bg-secondary-600 p-2 rounded-lg transition-all duration-200 hover:scale-110"
                     >
                       <Icon className="h-5 w-5" />
                     </a>
@@ -214,19 +253,19 @@ const Footer: React.FC = () => {
           <div className="flex flex-wrap items-center gap-6 text-sm text-gray-400">
             <Link
               href="/privacy"
-              className="hover:text-blue-400 transition-colors"
+              className="hover:text-secondary-400 transition-colors"
             >
               {t("footer.privacyPolicy")}
             </Link>
             <Link
               href="/terms"
-              className="hover:text-blue-400 transition-colors"
+              className="hover:text-secondary-400 transition-colors"
             >
               {t("footer.termsOfService")}
             </Link>
             <Link
               href="/cookies"
-              className="hover:text-blue-400 transition-colors"
+              className="hover:text-secondary-400 transition-colors"
             >
               {t("footer.cookiePolicy")}
             </Link>

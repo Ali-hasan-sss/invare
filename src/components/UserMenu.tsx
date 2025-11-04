@@ -83,7 +83,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ anchorEl, open, onClose }) => {
             minWidth: "200px",
             position: "fixed",
           },
-          className: "dark:bg-gray-800 dark:text-white shadow-lg",
+          className: "bg-white dark:bg-gray-800 text-black dark:text-white shadow-lg",
         },
       }}
     >

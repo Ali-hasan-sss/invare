@@ -54,6 +54,17 @@ export interface ListingsState {
   limit: number;
 }
 
+export interface ListingPhotoInput {
+  url: string;
+  isPrimary?: boolean;
+  sortOrder?: number;
+}
+
+export interface ListingAttributeInput {
+  attrKey: string;
+  attrValue: string;
+}
+
 export interface CreateListingData {
   title: string;
   description?: string;
@@ -66,6 +77,8 @@ export interface CreateListingData {
   materialId: string;
   sellerCompanyId?: string;
   sellerUserId?: string;
+  photos?: ListingPhotoInput[];
+  attributes?: ListingAttributeInput[];
 }
 
 export interface UpdateListingData {
@@ -80,6 +93,8 @@ export interface UpdateListingData {
   materialId?: string;
   sellerCompanyId?: string;
   sellerUserId?: string;
+  photos?: ListingPhotoInput[];
+  attributes?: ListingAttributeInput[];
 }
 
 export interface GetListingsParams {

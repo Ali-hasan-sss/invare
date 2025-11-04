@@ -96,7 +96,7 @@ const ThemeToggle: React.FC = () => {
     <>
       <IconButton
         onClick={handleClick}
-        className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+        className="text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/20"
         aria-label="theme switcher"
       >
         {getCurrentIcon()}
@@ -121,28 +121,28 @@ const ThemeToggle: React.FC = () => {
             style: {
               position: "fixed",
             },
-            className: "dark:bg-gray-800 dark:text-white",
+            className: "bg-white dark:bg-gray-800 text-black dark:text-white",
           },
         }}
         className="mt-2"
       >
         <MenuItem onClick={() => handleThemeChange("light")}>
           <ListItemIcon>
-            <Sun className="w-5 h-5" />
+            <Sun className="w-5 h-5 text-black dark:text-white" />
           </ListItemIcon>
           <ListItemText primary={t("theme.light")} />
         </MenuItem>
 
         <MenuItem onClick={() => handleThemeChange("dark")}>
           <ListItemIcon>
-            <Moon className="w-5 h-5" />
+            <Moon className="w-5 h-5 text-black dark:text-white" />
           </ListItemIcon>
           <ListItemText primary={t("theme.dark")} />
         </MenuItem>
 
         <MenuItem onClick={() => handleThemeChange("system")}>
           <ListItemIcon>
-            <Monitor className="w-5 h-5" />
+            <Monitor className="w-5 h-5 text-black dark:text-white" />
           </ListItemIcon>
           <ListItemText primary={t("theme.system")} />
         </MenuItem>

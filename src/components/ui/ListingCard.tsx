@@ -309,7 +309,19 @@ const ListingCard: React.FC<ListingCardProps> = ({
             variant="contained"
             fullWidth
             size="large"
-            className="bg-gradient-to-r from-purple-500 to-purple-800 hover:from-purple-600 hover:to-purple-800 text-white font-semibold rounded-2xl py-3 shadow-lg hover:shadow-xl transition-all duration-200"
+            className="text-white font-semibold rounded-2xl py-3 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+            style={{
+              background:
+                "linear-gradient(135deg, #8BC540 0%, #3A95C4 50%, #854A97 100%)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background =
+                "linear-gradient(135deg, #7bb038 0%, #2d85b3 50%, #764388 100%)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background =
+                "linear-gradient(135deg, #8BC540 0%, #3A95C4 50%, #854A97 100%)";
+            }}
             onClick={handleStartBiddingClick}
           >
             <Box className="flex items-center justify-center gap-2">
@@ -322,7 +334,19 @@ const ListingCard: React.FC<ListingCardProps> = ({
             variant="contained"
             fullWidth
             size="large"
-            className="bg-gradient-to-r from-blue-500 to-blue-800 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-2xl py-3 shadow-lg hover:shadow-xl transition-all duration-200"
+            className="text-white font-semibold rounded-2xl py-3 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+            style={{
+              background:
+                "linear-gradient(135deg, #8BC540 0%, #3A95C4 50%, #854A97 100%)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background =
+                "linear-gradient(135deg, #7bb038 0%, #2d85b3 50%, #764388 100%)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background =
+                "linear-gradient(135deg, #8BC540 0%, #3A95C4 50%, #854A97 100%)";
+            }}
             onClick={handleBuyNowClick}
           >
             <Box className="flex items-center justify-center gap-2">

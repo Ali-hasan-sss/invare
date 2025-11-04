@@ -161,45 +161,6 @@ export default function HomePage() {
     );
   };
 
-  const services = [
-    {
-      icon: Gavel,
-      title: t("home.service1Title"),
-      description: t("home.service1Description"),
-      color: "from-blue-500 to-blue-600",
-    },
-    {
-      icon: Award,
-      title: t("home.service2Title"),
-      description: t("home.service2Description"),
-      color: "from-green-500 to-green-600",
-    },
-    {
-      icon: Shield,
-      title: t("home.service3Title"),
-      description: t("home.service3Description"),
-      color: "from-purple-500 to-purple-600",
-    },
-    {
-      icon: Users,
-      title: t("home.service4Title"),
-      description: t("home.service4Description"),
-      color: "from-orange-500 to-orange-600",
-    },
-    {
-      icon: HeadphonesIcon,
-      title: t("home.service5Title"),
-      description: t("home.service5Description"),
-      color: "from-pink-500 to-pink-600",
-    },
-    {
-      icon: TrendingUp,
-      title: t("home.service6Title"),
-      description: t("home.service6Description"),
-      color: "from-indigo-500 to-indigo-600",
-    },
-  ];
-
   const stats = [
     { value: "5,000+", label: t("home.statsUsers"), icon: Users },
     { value: "10,000+", label: t("home.statsListings"), icon: Package },
@@ -210,7 +171,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
       {/* Hero Section - starts from top with negative margin to go behind header */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 dark:from-blue-800 dark:via-blue-900 dark:to-gray-900 -mt-16">
+      <section className="relative overflow-hidden bg-[#3A95C4] dark:bg-[#3A95C4] -mt-16">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div
@@ -222,15 +183,10 @@ export default function HomePage() {
         </div>
 
         <div className="relative container mx-auto px-4 py-20 lg:py-32">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="max-w-4xl mx-auto text-center">
             {/* Hero Content */}
-            <div
-              className={cn(
-                "text-white",
-                isRTL ? "lg:text-right" : "lg:text-left"
-              )}
-            >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 mb-6">
+            <div className="text-white">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm   mb-6">
                 <Recycle className="h-5 w-5" />
                 <span className="text-sm font-medium">
                   {t("home.whyChooseUs")}
@@ -241,24 +197,19 @@ export default function HomePage() {
                 {t("home.heroTitle")}
               </h1>
 
-              <p className="text-xl md:text-2xl mb-4 text-blue-100">
+              <p className="text-xl md:text-2xl mb-4 text-secondary-100">
                 {t("home.heroSubtitle")}
               </p>
 
-              <p className="text-lg mb-8 text-blue-200">
+              <p className="text-lg mb-8 text-secondary-200">
                 {t("home.heroDescription")}
               </p>
 
-              <div
-                className={cn(
-                  "flex flex-wrap gap-4",
-                  isRTL ? "justify-end" : "justify-start"
-                )}
-              >
+              <div className="flex flex-wrap gap-4 justify-center">
                 <Button
                   onClick={handleStartBidding}
                   size="lg"
-                  className="!bg-white !text-blue-700 hover:!bg-blue-50 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
+                  className="!bg-white !text-secondary-700 hover:!bg-secondary-50 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
                 >
                   <Gavel className={cn("h-5 w-5", isRTL ? "ml-2" : "mr-2")} />
                   {t("home.startBidding")}
@@ -268,29 +219,12 @@ export default function HomePage() {
                   onClick={handlePostListing}
                   size="lg"
                   variant="secondary"
-                  className="!bg-blue-500/20 !text-white border-2 border-white/30 hover:!bg-blue-500/30 backdrop-blur-sm font-semibold"
+                  className="!bg-secondary-500/20 !text-white border-2 border-white/30 hover:!bg-secondary-500/30 backdrop-blur-sm font-semibold"
                 >
                   <Package className={cn("h-5 w-5", isRTL ? "ml-2" : "mr-2")} />
                   {t("home.postListing")}
                 </Button>
               </div>
-            </div>
-
-            {/* Hero Image / Illustration */}
-            <div className="relative">
-              <div className="relative z-10 bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 shadow-2xl">
-                <div className="aspect-square relative">
-                  <Image
-                    src="/images/logo.png"
-                    alt="Recycling"
-                    fill
-                    className="object-contain drop-shadow-2xl"
-                  />
-                </div>
-              </div>
-              {/* Decorative Elements */}
-              <div className="absolute -top-4 -right-4 w-72 h-72 bg-blue-400/20 rounded-full blur-3xl" />
-              <div className="absolute -bottom-4 -left-4 w-72 h-72 bg-purple-400/20 rounded-full blur-3xl" />
             </div>
           </div>
         </div>
@@ -321,7 +255,7 @@ export default function HomePage() {
                 key={index}
                 className="text-center p-6 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-750 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow"
               >
-                <stat.icon className="h-8 w-8 mx-auto mb-3 text-blue-600 dark:text-blue-400" />
+                <stat.icon className="h-8 w-8 mx-auto mb-3 text-secondary-600 dark:text-secondary-400" />
                 <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
                   {stat.value}
                 </div>
@@ -341,7 +275,7 @@ export default function HomePage() {
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               {t("home.featuredAds")}
             </h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-blue-600 to-purple-600 mx-auto rounded-full" />
+            <div className="w-24 h-1 bg-gradient-to-r from-secondary-600 to-accent-600 mx-auto rounded-full" />
           </div>
 
           {advertisements.length > 0 ? (
@@ -382,7 +316,7 @@ export default function HomePage() {
                             {ad.listing?.title || "Featured Listing"}
                           </h3>
                           <div className="flex items-center gap-2 mb-4">
-                            <span className="text-lg font-semibold text-blue-200">
+                            <span className="text-lg font-semibold text-secondary-200">
                               {t("common.currency")}{" "}
                               {ad.listing?.startingPrice || "N/A"}
                             </span>
@@ -459,7 +393,7 @@ export default function HomePage() {
                       className={cn(
                         "w-3 h-3 rounded-full transition-all",
                         currentSlide === index
-                          ? "bg-blue-600 w-8"
+                          ? "bg-secondary-600 w-8"
                           : "bg-gray-300 dark:bg-gray-600 hover:bg-gray-400"
                       )}
                     />
@@ -481,7 +415,7 @@ export default function HomePage() {
             <Button
               onClick={handleAddAdvertisement}
               size="lg"
-              className="!bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 !text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
+              className="!bg-gradient-to-r from-secondary-600 to-accent-600 hover:from-secondary-700 hover:to-accent-700 !text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
             >
               <Package className={cn("h-5 w-5", isRTL ? "ml-2" : "mr-2")} />
               {t("advertisement.addAdvertisement")}
@@ -490,53 +424,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Services Section */}
-      <section className="py-20 bg-white dark:bg-gray-900">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              {t("home.servicesTitle")}
-            </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              {t("home.servicesSubtitle")}
-            </p>
-            <div className="w-24 h-1 bg-gradient-to-r from-blue-600 to-purple-600 mx-auto mt-4 rounded-full" />
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {services.map((service, index) => (
-              <div
-                key={index}
-                className="group relative p-8 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-750 border border-gray-200 dark:border-gray-700 hover:shadow-2xl hover:scale-105 transition-all duration-300"
-              >
-                {/* Icon */}
-                <div
-                  className={cn(
-                    "inline-flex p-4 rounded-xl bg-gradient-to-br mb-6 shadow-lg group-hover:shadow-xl transition-shadow",
-                    service.color
-                  )}
-                >
-                  <service.icon className="h-8 w-8 text-white" />
-                </div>
-
-                {/* Content */}
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  {service.title}
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                  {service.description}
-                </p>
-
-                {/* Hover Effect */}
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-600/0 to-purple-600/0 group-hover:from-blue-600/5 group-hover:to-purple-600/5 transition-all duration-300 pointer-events-none" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-blue-600 via-purple-600 to-blue-700 relative overflow-hidden">
+      <section
+        className="py-20 bg-gradient-to-br from-primary-500 via-secondary-500 to-accent-500 dark:from-primary-600 dark:via-secondary-600 dark:to-accent-600 relative overflow-hidden"
+        style={{
+          background:
+            "linear-gradient(135deg, #8BC540 0%, #3A95C4 50%, #854A97 100%)",
+        }}
+      >
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div
@@ -552,10 +447,10 @@ export default function HomePage() {
             <h2 className="text-3xl md:text-5xl font-bold mb-6">
               {t("home.ctaTitle")}
             </h2>
-            <p className="text-xl md:text-2xl mb-4 text-blue-100">
+            <p className="text-xl md:text-2xl mb-4 text-secondary-100">
               {t("home.ctaSubtitle")}
             </p>
-            <p className="text-lg mb-10 text-blue-200 max-w-2xl mx-auto">
+            <p className="text-lg mb-10 text-secondary-200 max-w-2xl mx-auto">
               {t("home.ctaDescription")}
             </p>
 
@@ -563,7 +458,7 @@ export default function HomePage() {
               <Button
                 onClick={handleGetStarted}
                 size="lg"
-                className="!bg-white !text-blue-700 hover:!bg-blue-50 font-semibold text-lg px-8 py-6 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all"
+                className="!bg-white !text-secondary-700 hover:!bg-secondary-50 font-semibold text-lg px-8 py-6 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all"
               >
                 {t("home.getStarted")}
                 <ArrowRight
@@ -583,7 +478,63 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      {/* About Us Section */}
+      <section
+        id="about-us"
+        className="py-20 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 scroll-mt-20"
+      >
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                {t("home.aboutUsTitle")}
+              </h2>
+              <div className="w-24 h-1 bg-gradient-to-r from-secondary-600 to-accent-600 mx-auto rounded-full" />
+            </div>
 
+            <div className="space-y-6 text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
+              <p>{t("home.aboutUsContent")}</p>
+              <p>{t("home.aboutUsContent2")}</p>
+              <p className="font-semibold text-gray-900 dark:text-white">
+                {t("home.aboutUsContent3")}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Mission Section */}
+      <section
+        id="mission"
+        className="py-20 bg-white dark:bg-gray-900 relative overflow-hidden scroll-mt-20"
+      >
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }}
+          />
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                {t("home.missionTitle")}
+              </h2>
+              <div className="w-24 h-1 bg-gradient-to-r from-secondary-600 to-accent-600 mx-auto rounded-full" />
+            </div>
+
+            <div className="bg-gradient-to-br from-secondary-50 to-accent-50 dark:from-gray-800 dark:to-gray-750 rounded-3xl p-8 md:p-12 border border-secondary-200 dark:border-gray-700 shadow-xl">
+              <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 leading-relaxed text-center">
+                {t("home.missionContent")}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
       {/* Listing Form Dialog */}
       <ListingFormDialog
         open={showListingForm}

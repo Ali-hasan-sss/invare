@@ -38,9 +38,9 @@
     "ago": "ago"
   },
   "home": {
-    "heroTitle": "Oman's Leading Recycling Platform",
+    "heroTitle": "Saudi Arabia's Leading Recycling Platform",
     "heroSubtitle": "Discover and trade high-quality recycling materials through transparent and secure auctions",
-    "heroDescription": "We connect sellers and buyers in a trusted marketplace for recycling materials, contributing together to a sustainable future for Oman's environment",
+    "heroDescription": "We connect sellers and buyers in a trusted marketplace for recycling materials, contributing together to a sustainable future for Saudi Arabia's environment",
     "startBidding": "Start Bidding",
     "postListing": "Post Your Offer",
     "exploreMaterials": "Explore Materials",
@@ -57,7 +57,7 @@
     "service3Title": "Secure Trading",
     "service3Description": "A trusted and secured platform to protect the rights of all parties",
     "service4Title": "Wide Network",
-    "service4Description": "We connect you with a wide network of suppliers and buyers across Oman",
+    "service4Description": "We connect you with a wide network of suppliers and buyers across Saudi Arabia",
     "service5Title": "24/7 Support",
     "service5Description": "Dedicated support team to assist you around the clock",
     "service6Title": "Detailed Reports",
@@ -71,7 +71,13 @@
     "statsUsers": "Active Users",
     "statsListings": "Available Listings",
     "statsDeals": "Successful Deals",
-    "statsSatisfaction": "Customer Satisfaction"
+    "statsSatisfaction": "Customer Satisfaction",
+    "aboutUsTitle": "About Us – Kingdom of Saudi Arabia (Riyadh Branch)",
+    "aboutUsContent": "We are INVARE, a leading digital platform for managing the recyclable raw materials market. We connect suppliers, waste collectors, and recycling facilities within an innovative technological ecosystem that enhances environmental and economic sustainability.",
+    "aboutUsContent2": "Our Riyadh branch provides advanced solutions to streamline buying, selling, and material tracking, supported by analytical reports that help companies meet ESG standards, improve environmental performance, and generate better financial returns from their waste.",
+    "aboutUsContent3": "We strive to drive the circular economy forward in the Kingdom and to build a more sustainable future that benefits all stakeholders.",
+    "missionTitle": "Our Mission",
+    "missionContent": "At INVARE, we aim to enable the transition to a more efficient and sustainable circular economy through innovative technological solutions that connect all parties in the recycling chain. We work to improve resource management, increase the value of waste for companies and society, and support the achievement of environmental standards (ESG) to contribute to a cleaner and more prosperous future."
   },
   "auth": {
     "welcomeBack": "Welcome Back",
@@ -168,6 +174,9 @@
     "createListing": "Create Listing",
     "title": "Listing Title",
     "enterTitle": "Enter listing title",
+    "category": "Category",
+    "selectCategory": "Select Category",
+    "selectCategoryFirst": "Select Category First",
     "material": "Material",
     "selectMaterial": "Select Material",
     "description": "Description",
@@ -182,7 +191,22 @@
     "isBiddable": "Allow bidding on this listing",
     "listingNote": "The listing will be reviewed before being published on the platform",
     "listingCreatedSuccess": "Listing created successfully",
-    "listingCreatedError": "Failed to create listing"
+    "listingCreatedError": "Failed to create listing",
+    "photos": "Photos",
+    "addPhoto": "Add Photo",
+    "optional": "Optional",
+    "uploadingPhoto": "Uploading photo...",
+    "photoUploaded": "Photo uploaded successfully",
+    "photoUploadError": "Failed to upload photo",
+    "waitForUpload": "Please wait for all photos to finish uploading",
+    "setPrimary": "Set Primary",
+    "primary": "Primary",
+    "attributes": "Attributes",
+    "addAttribute": "Add Attribute",
+    "attrKey": "Attribute Key",
+    "attrKeyPlaceholder": "e.g., Purity",
+    "attrValue": "Attribute Value",
+    "attrValuePlaceholder": "e.g., 90%"
   },
   "bidding": {
     "startBidding": "Start Bidding",
@@ -261,7 +285,7 @@
     "phoneLabel": "Phone",
     "phone": "+968 0000 0000",
     "addressLabel": "Address",
-    "address": "Muscat, Oman",
+    "address": "Riyadh, Saudi Arabia",
     "formTitle": "Send us a message",
     "formName": "Your Name",
     "formEmail": "Your Email",
@@ -456,7 +480,14 @@
     "active": "Active",
     "closed": "Closed",
     "viewListing": "View Listing",
-    "with": "with"
+    "with": "with",
+    "updatePrice": "Update Price",
+    "newPrice": "New Price",
+    "enterNewPrice": "Enter new price",
+    "priceUpdated": "Price updated successfully",
+    "priceUpdateError": "Failed to update price",
+    "currentPrice": "Current Price",
+    "update": "Update"
   },
   "currency": {
     "omr": "OMR"
@@ -540,8 +571,8 @@
   },
   "footer": {
     "companyName": "Invare",
-    "description": "Oman's leading recycling auction platform. We connect sellers and buyers in a trusted and transparent marketplace for high-quality recycling materials.",
-    "address": "Muscat, Sultanate of Oman",
+    "description": "Saudi Arabia's leading recycling auction platform. We connect sellers and buyers in a trusted and transparent marketplace for high-quality recycling materials.",
+    "address": "Riyadh, Kingdom of Saudi Arabia",
     "phone": "+968 1234 5678",
     "email": "info@invare.com",
     "quickLinks": "Quick Links",

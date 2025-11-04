@@ -12,7 +12,17 @@ import { Input } from "@/components/ui/Input";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useChat } from "@/hooks/useChat";
 import { useAuth } from "@/hooks/useAuth";
-import { Send, X, MessageCircle, Loader2 } from "lucide-react";
+import { useListings } from "@/hooks/useListings";
+import { useToast } from "@/components/ui/Toast";
+import { useRouter } from "next/navigation";
+import {
+  Send,
+  X,
+  MessageCircle,
+  Loader2,
+  DollarSign,
+  ExternalLink,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/store/slices/chatSlice";
 
@@ -35,6 +45,8 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
 }) => {
   const { t, currentLanguage } = useTranslation();
   const { user } = useAuth();
+  const { showToast } = useToast();
+  const router = useRouter();
   const {
     currentChat,
     chats,
@@ -45,22 +57,49 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
     fetchUserChats,
     setCurrentChatById,
   } = useChat();
+  const { currentListing, getListingById, updateListing } = useListings();
   const [message, setMessage] = useState("");
   const [isInitializing, setIsInitializing] = useState(false);
   const [pendingMessages, setPendingMessages] = useState<
     Map<string, ChatMessage>
   >(new Map());
+  const [showPriceForm, setShowPriceForm] = useState(false);
+  const [newPrice, setNewPrice] = useState("");
+  const [isUpdatingPrice, setIsUpdatingPrice] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesLoadedRef = useRef<string | null>(null); // Track which chat's messages have been loaded
   const isRTL = currentLanguage.dir === "rtl";
 
-  // Reset messages loaded ref when dialog closes
+  // Extract listingId from currentChat or use prop
+  const effectiveListingId = useMemo(() => {
+    // First try to get from currentChat.listing.id (new structure)
+    if (currentChat?.listing?.id) {
+      return currentChat.listing.id;
+    }
+    // Fallback to prop
+    return listingId;
+  }, [currentChat?.listing?.id, listingId]);
+
+  // Check if current user is the seller
+  const isSeller = user?.id && String(user.id) === String(sellerUserId);
+
+  // Reset messages loaded ref and price form when dialog closes
   useEffect(() => {
     if (!open) {
       messagesLoadedRef.current = null;
+      setShowPriceForm(false);
+      setNewPrice("");
     }
   }, [open]);
+
+  // Fetch listing details when dialog opens (for seller to see current price)
+  useEffect(() => {
+    if (open && effectiveListingId && isSeller) {
+      getListingById(effectiveListingId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, effectiveListingId, isSeller]);
 
   // Initialize or load chat when dialog opens
   useEffect(() => {
@@ -362,6 +401,82 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
     }
   };
 
+  const handleUpdatePrice = async (e?: React.FormEvent | React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    console.log("handleUpdatePrice called", {
+      newPrice,
+      listingId: effectiveListingId,
+      isUpdatingPrice,
+    });
+
+    if (!newPrice.trim() || !effectiveListingId || isUpdatingPrice) {
+      console.log("Validation failed");
+      return;
+    }
+
+    const priceValue = parseFloat(newPrice.trim());
+    if (isNaN(priceValue) || priceValue < 0) {
+      showToast(t("chat.priceUpdateError") || "Invalid price", "error");
+      return;
+    }
+
+    setIsUpdatingPrice(true);
+    try {
+      console.log("Calling updateListing with:", {
+        listingId: effectiveListingId,
+        startingPrice: priceValue.toString(),
+      });
+      const result = await updateListing(effectiveListingId, {
+        startingPrice: priceValue.toString(),
+      });
+
+      console.log("Update result:", result);
+
+      // Check if the result is a fulfilled action
+      if (result && typeof result === "object" && "type" in result) {
+        const actionType = String(result.type);
+        console.log("Action type:", actionType);
+        if (actionType.includes("fulfilled")) {
+          showToast(
+            t("chat.priceUpdated") || "Price updated successfully",
+            "success"
+          );
+          setShowPriceForm(false);
+          setNewPrice("");
+          // Refresh listing to get updated price
+          await getListingById(effectiveListingId);
+        } else {
+          // Handle rejected action
+          const errorMessage =
+            result && "payload" in result && result.payload
+              ? String(result.payload)
+              : t("chat.priceUpdateError") || "Failed to update price";
+          console.log("Update failed:", errorMessage);
+          showToast(errorMessage, "error");
+        }
+      } else {
+        console.log("Unexpected result structure:", result);
+        // Fallback if result structure is unexpected
+        showToast(
+          t("chat.priceUpdateError") || "Failed to update price",
+          "error"
+        );
+      }
+    } catch (error) {
+      console.error("Failed to update price:", error);
+      showToast(
+        t("chat.priceUpdateError") || "Failed to update price",
+        "error"
+      );
+    } finally {
+      setIsUpdatingPrice(false);
+    }
+  };
+
   return (
     <Dialog
       open={open}
@@ -387,11 +502,11 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
           borderBottom: "1px solid",
           p: 3,
         }}
-        className="text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-800"
+        className="text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 bg-gradient-to-r from-secondary-50 to-accent-50 dark:from-gray-800 dark:to-gray-800"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-600 dark:bg-blue-500 rounded-full">
+            <div className="p-2 bg-secondary-600 dark:bg-secondary-500 rounded-full">
               <MessageCircle className="h-5 w-5 text-white" />
             </div>
             <div>
@@ -403,14 +518,113 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
-          >
-            <X className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* View Listing Button - Shown to both buyer and seller */}
+            {effectiveListingId && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  router.push(`/listings/detail/${effectiveListingId}`);
+                  onClose();
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors text-secondary-600 dark:text-secondary-400 text-sm font-medium"
+                title={t("chat.viewListing")}
+              >
+                <ExternalLink className="h-4 w-4" />
+                <span>{t("chat.viewListing")}</span>
+              </button>
+            )}
+            {/* Update Price Button - Only visible to seller */}
+            {isSeller && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowPriceForm(!showPriceForm);
+                  if (!showPriceForm && currentListing?.startingPrice) {
+                    setNewPrice(currentListing.startingPrice);
+                  }
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors text-secondary-600 dark:text-secondary-400 text-sm font-medium"
+                title={t("chat.updatePrice")}
+              >
+                <DollarSign className="h-4 w-4" />
+                <span>{t("chat.updatePrice")}</span>
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
+            >
+              <X className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+            </button>
+          </div>
         </div>
       </DialogTitle>
+
+      {/* Price Update Form */}
+      {isSeller && showPriceForm && (
+        <div className="px-4 py-3 bg-secondary-50 dark:bg-secondary-900/20 border-b border-secondary-200 dark:border-secondary-800">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleUpdatePrice(e as any);
+            }}
+            className="flex items-center gap-3"
+          >
+            <div className="flex-1">
+              {currentListing?.startingPrice && (
+                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                  {t("chat.currentPrice")}: {currentListing.startingPrice}{" "}
+                  {t("common.currency")}
+                </p>
+              )}
+              <Input
+                type="number"
+                inputProps={{ step: "0.01", min: "0" }}
+                value={newPrice}
+                onChange={(e) => setNewPrice(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleUpdatePrice(e as any);
+                  }
+                }}
+                placeholder={t("chat.enterNewPrice")}
+                className="text-gray-900 dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+              />
+            </div>
+            <Button
+              type="submit"
+              disabled={
+                !newPrice.trim() || isUpdatingPrice || !effectiveListingId
+              }
+              size="sm"
+              className="!bg-secondary-600 hover:!bg-secondary-700 dark:!bg-secondary-500 dark:hover:!bg-secondary-600 !text-white font-semibold"
+            >
+              {isUpdatingPrice ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                  {t("chat.update")}
+                </>
+              ) : (
+                t("chat.update")
+              )}
+            </Button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowPriceForm(false);
+                setNewPrice("");
+              }}
+              className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <X className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+            </button>
+          </form>
+        </div>
+      )}
 
       {/* Messages Container */}
       <DialogContent sx={{ p: 0 }} className="bg-gray-50 dark:bg-gray-900">
@@ -455,7 +669,7 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
                         "max-w-[75%] rounded-2xl px-4 py-2.5 shadow-sm transition-opacity duration-300",
                         isPending && "opacity-60",
                         isOwnMessage
-                          ? "bg-blue-600 text-white"
+                          ? "bg-secondary-600 text-white"
                           : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700"
                       )}
                     >
@@ -465,7 +679,7 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
                           className={cn(
                             "text-xs mt-1",
                             isOwnMessage
-                              ? "text-blue-100"
+                              ? "text-secondary-100"
                               : "text-gray-500 dark:text-gray-400"
                           )}
                         >
