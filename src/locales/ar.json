@@ -35,7 +35,9 @@
     "minutesAgo": "دقائق",
     "hoursAgo": "ساعات",
     "daysAgo": "أيام",
-    "ago": "مضت"
+    "ago": "مضت",
+    "country": "البلد",
+    "selectCountry": "اختر البلد"
   },
   "home": {
     "heroTitle": "منصة إعادة التدوير الرائدة في المملكة العربية السعودية",
@@ -100,7 +102,9 @@
     "firstName": "الاسم الأول",
     "lastName": "الاسم الأخير",
     "alreadyHaveAccount": "لديك حساب بالفعل؟",
-    "signIn": "تسجيل الدخول"
+    "signIn": "تسجيل الدخول",
+    "backToEmail": "رجوع إلى البريد الإلكتروني",
+    "otpDigit": "رقم التحقق"
   },
   "navigation": {
     "auctions": "المزادات",

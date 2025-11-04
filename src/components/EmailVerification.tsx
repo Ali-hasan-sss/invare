@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { Box, Typography } from "@mui/material";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -27,30 +27,65 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
   const { t, currentLanguage } = useTranslation();
   const { showToast } = useToast();
   const router = useRouter();
-  const [otp, setOtp] = React.useState("");
+  const [otp, setOtp] = React.useState(["", "", "", "", "", ""]);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const isRTL = currentLanguage.dir === "rtl";
+
+  // Focus first input on mount
+  useEffect(() => {
+    if (inputRefs.current[0] && otp.every((digit) => digit === "")) {
+      setTimeout(() => {
+        inputRefs.current[0]?.focus();
+      }, 100);
+    }
+  }, []);
 
   const handleOtpChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     index: number
   ) => {
-    const value = e.target.value.replace(/\D/g, "").slice(0, 1);
-    const newOtp = otp.split("");
-    newOtp[index] = value;
-    const updatedOtp = newOtp.join("");
-    setOtp(updatedOtp);
+    const inputValue = e.target.value;
+    const value = inputValue.replace(/\D/g, "");
 
-    // Auto-focus next input based on direction
-    if (value) {
-      const container = (e.target as HTMLElement).closest(".otp-container");
-      const inputs = container?.querySelectorAll(
-        "input"
-      ) as NodeListOf<HTMLInputElement>;
-      const isRTL = currentLanguage.dir === "rtl";
+    // Handle paste or multiple digits
+    if (value.length > 1) {
+      const digits = value.slice(0, 6).split("");
+      const newOtp = [...otp];
+
+      // Fill from current index
+      digits.forEach((digit, i) => {
+        const targetIndex = index + i;
+        if (targetIndex < 6) {
+          newOtp[targetIndex] = digit;
+        }
+      });
+
+      setOtp(newOtp);
+
+      // Focus the next empty input or last input
+      const lastFilledIndex = Math.min(index + digits.length - 1, 5);
+      const nextIndex = lastFilledIndex < 5 ? lastFilledIndex + 1 : 5;
+      setTimeout(() => {
+        inputRefs.current[nextIndex]?.focus();
+      }, 10);
+    } else if (value.length === 1) {
+      // Single digit input
+      const newOtp = [...otp];
+      newOtp[index] = value;
+      setOtp(newOtp);
+
+      // Move to next input based on RTL direction
       const nextIndex = isRTL ? index - 1 : index + 1;
-
       if (nextIndex >= 0 && nextIndex < 6) {
-        inputs[nextIndex]?.focus();
+        setTimeout(() => {
+          inputRefs.current[nextIndex]?.focus();
+        }, 10);
       }
+    } else if (inputValue === "") {
+      // Clear current input (when user deletes)
+      const newOtp = [...otp];
+      newOtp[index] = "";
+      setOtp(newOtp);
     }
   };
 
@@ -60,83 +95,107 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
       .getData("text")
       .replace(/\D/g, "")
       .slice(0, 6);
-    setOtp(pastedData);
 
-    // Focus the last filled input or the first empty one
-    const container = (e.target as HTMLElement).closest(".otp-container");
-    const inputs = container?.querySelectorAll("input");
-    if (inputs) {
-      const focusIndex = Math.min(pastedData.length, 5);
-      (inputs[focusIndex] as HTMLInputElement)?.focus();
-    }
+    if (pastedData.length === 0) return;
+
+    const digits = pastedData.split("");
+    const newOtp = [...otp];
+    const target = e.currentTarget;
+    const pasteIndex = parseInt(target.dataset.index || "0");
+
+    // Fill from the clicked input index (or start from beginning if all empty)
+    const startIndex = otp.every((digit) => digit === "") ? 0 : pasteIndex;
+
+    digits.forEach((digit, i) => {
+      const targetIndex = startIndex + i;
+      if (targetIndex < 6) {
+        newOtp[targetIndex] = digit;
+      }
+    });
+
+    setOtp(newOtp);
+
+    // Focus the next empty input or last input
+    const lastFilledIndex = Math.min(startIndex + digits.length - 1, 5);
+    const nextIndex = lastFilledIndex < 5 ? lastFilledIndex + 1 : 5;
+
+    setTimeout(() => {
+      if (inputRefs.current[nextIndex]) {
+        inputRefs.current[nextIndex].focus();
+      }
+    }, 10);
   };
 
   const handleOtpKeyDown = (
     e: React.KeyboardEvent<HTMLDivElement>,
     index: number
   ) => {
-    const container = (e.target as HTMLElement).closest(".otp-container");
-    const inputs = container?.querySelectorAll(
-      "input"
-    ) as NodeListOf<HTMLInputElement>;
-
-    // Determine direction based on language
-    const isRTL = currentLanguage.dir === "rtl";
     const prevIndex = isRTL ? index + 1 : index - 1;
     const nextIndex = isRTL ? index - 1 : index + 1;
 
     if (e.key === "Backspace") {
       e.preventDefault();
+      const newOtp = [...otp];
 
       if (otp[index]) {
         // If current input has value, clear it
-        const newOtp = otp.split("");
         newOtp[index] = "";
-        setOtp(newOtp.join(""));
+        setOtp(newOtp);
       } else if (prevIndex >= 0 && prevIndex < 6) {
         // If current input is empty, go to previous and clear it
-        const newOtp = otp.split("");
         newOtp[prevIndex] = "";
-        setOtp(newOtp.join(""));
-        inputs[prevIndex]?.focus();
+        setOtp(newOtp);
+        setTimeout(() => {
+          inputRefs.current[prevIndex]?.focus();
+        }, 10);
       }
     } else if (e.key === "ArrowLeft") {
       e.preventDefault();
       if (isRTL && nextIndex >= 0) {
         // In RTL, left arrow goes to next input
-        inputs[nextIndex]?.focus();
+        inputRefs.current[nextIndex]?.focus();
       } else if (!isRTL && prevIndex >= 0) {
         // In LTR, left arrow goes to previous input
-        inputs[prevIndex]?.focus();
+        inputRefs.current[prevIndex]?.focus();
       }
     } else if (e.key === "ArrowRight") {
       e.preventDefault();
       if (isRTL && prevIndex >= 0) {
         // In RTL, right arrow goes to previous input
-        inputs[prevIndex]?.focus();
+        inputRefs.current[prevIndex]?.focus();
       } else if (!isRTL && nextIndex < 6) {
         // In LTR, right arrow goes to next input
-        inputs[nextIndex]?.focus();
+        inputRefs.current[nextIndex]?.focus();
       }
     } else if (e.key === "Delete") {
       e.preventDefault();
       // Clear current input and move to next
-      const newOtp = otp.split("");
+      const newOtp = [...otp];
       newOtp[index] = "";
-      setOtp(newOtp.join(""));
+      setOtp(newOtp);
       if (nextIndex < 6) {
-        inputs[nextIndex]?.focus();
+        setTimeout(() => {
+          inputRefs.current[nextIndex]?.focus();
+        }, 10);
       }
+    }
+  };
+
+  const handleInputFocus = (index: number) => {
+    // When focusing, select all text if any
+    if (inputRefs.current[index] && otp[index]) {
+      inputRefs.current[index]?.select();
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otp || otp.length !== 6) {
+    const otpString = otp.join("");
+    if (!otpString || otpString.length !== 6) {
       showToast(t("auth.enterOTP"), "error");
       return;
     }
-    onVerify(otp);
+    onVerify(otpString);
   };
 
   const handleResendOtp = () => {
@@ -152,24 +211,30 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
       {/* OTP Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div
-          className={`otp-container flex justify-center gap-3 ${
-            currentLanguage.dir === "rtl" ? "flex-row-reverse" : "flex-row"
+          className={`otp-container flex justify-center gap-2 sm:gap-3 ${
+            isRTL ? "flex-row-reverse" : "flex-row"
           }`}
         >
           {[0, 1, 2, 3, 4, 5].map((index) => (
             <Input
               key={index}
+              inputRef={(el) => {
+                inputRefs.current[index] = el;
+              }}
               type="text"
               value={otp[index] || ""}
               onChange={(e) => handleOtpChange(e, index)}
               onPaste={handleOtpPaste}
               onKeyDown={(e) => handleOtpKeyDown(e, index)}
-              className="w-16 h-16 text-center text-xl font-bold"
+              onFocus={() => handleInputFocus(index)}
+              data-index={index}
+              className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-center text-lg sm:text-xl md:text-2xl font-bold"
               inputProps={{
                 maxLength: 1,
-                dir: currentLanguage.dir,
+                dir: "ltr", // Always LTR for numbers
                 inputMode: "numeric",
                 pattern: "[0-9]",
+                "aria-label": `${t("auth.otpDigit")} ${index + 1}`,
               }}
               sx={{
                 "& .MuiOutlinedInput-root": {
@@ -182,13 +247,15 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
                   },
                   "&.Mui-focused fieldset": {
                     borderColor: "rgb(20 184 166)", // teal-500
+                    borderWidth: "2px",
                   },
                   "& input": {
                     color: "rgb(17 24 39) !important", // gray-900
                     textAlign: "center",
-                    fontSize: "1.25rem",
+                    fontSize: "1.125rem", // text-lg on mobile
                     fontWeight: "bold",
-                    direction: currentLanguage.dir,
+                    direction: "ltr", // Always LTR for numbers
+                    padding: "8px !important",
                   },
                 },
                 // Dark mode styles
@@ -206,6 +273,17 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
                     color: "rgb(249 250 251) !important", // gray-50
                   },
                 },
+                // Responsive font sizes
+                "@media (min-width: 640px)": {
+                  "& .MuiOutlinedInput-root input": {
+                    fontSize: "1.25rem !important", // text-xl on sm
+                  },
+                },
+                "@media (min-width: 768px)": {
+                  "& .MuiOutlinedInput-root input": {
+                    fontSize: "1.5rem !important", // text-2xl on md
+                  },
+                },
               }}
             />
           ))}
@@ -215,7 +293,7 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
           type="submit"
           className="w-full h-12 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           loading={loading}
-          disabled={otp.length !== 6}
+          disabled={otp.join("").length !== 6}
           sx={{ color: "white !important" }}
         >
           {t("auth.verify")}
@@ -238,10 +316,12 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
           <Button
             variant="ghost"
             onClick={onBack}
-            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+            className={`text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 flex items-center gap-2 ${
+              isRTL ? "flex-row-reverse" : "flex-row"
+            }`}
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to email
+            <ArrowLeft className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
+            {t("auth.backToEmail")}
           </Button>
         </div>
       </form>

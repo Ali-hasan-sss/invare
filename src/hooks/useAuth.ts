@@ -5,6 +5,7 @@ import {
   registerUser,
   registerCompany,
   getCurrentUser,
+  requestOtp,
   logout,
   clearError,
   initializeAuth,
@@ -42,6 +43,14 @@ export const useAuth = () => {
     [dispatch]
   );
 
+  // Request OTP function
+  const requestOtpCode = useCallback(
+    async (email: string) => {
+      return dispatch(requestOtp({ email }));
+    },
+    [dispatch]
+  );
+
   // Get current user function
   const fetchCurrentUser = useCallback(async () => {
     return dispatch(getCurrentUser());
@@ -75,6 +84,7 @@ export const useAuth = () => {
     login,
     registerUser: registerUserAccount,
     registerCompany: registerCompanyAccount,
+    requestOtp: requestOtpCode,
     getCurrentUser: fetchCurrentUser,
     logout: logoutUser,
     clearError: clearAuthError,
@@ -113,6 +123,7 @@ export const useAuthActions = () => {
     login,
     registerUser,
     registerCompany,
+    requestOtp,
     logout,
     clearError,
     initializeAuth,
@@ -122,6 +133,7 @@ export const useAuthActions = () => {
     login,
     registerUser,
     registerCompany,
+    requestOtp,
     logout,
     clearError,
     initializeAuth,

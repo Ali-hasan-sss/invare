@@ -2,9 +2,9 @@
 
 import React, { useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import {
-  Recycle,
   Mail,
   Phone,
   MapPin,
@@ -120,12 +120,15 @@ const Footer: React.FC = () => {
           {/* Company Info */}
           <div className="lg:col-span-2">
             <div className="flex items-center gap-3 mb-4">
-              <div className="bg-gradient-to-br from-secondary-500 to-accent-600 p-2 rounded-lg">
-                <Recycle className="h-6 w-6 text-white" />
+              <div className="flex items-center justify-center">
+                <Image
+                  src="/images/logo.png"
+                  alt="logo"
+                  width={100}
+                  height={100}
+                  className="object-contain"
+                />
               </div>
-              <h3 className="text-2xl font-bold bg-gradient-to-r from-secondary-400 to-accent-400 bg-clip-text text-transparent">
-                {t("footer.companyName")}
-              </h3>
             </div>
             <p className="text-gray-300 mb-6 leading-relaxed">
               {t("footer.description")}

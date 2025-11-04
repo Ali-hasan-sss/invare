@@ -6,6 +6,7 @@ export const API_CONFIG = {
       REGISTER_USER: "/auth/register/user",
       REGISTER_COMPANY: "/auth/register/company",
       ME: "/auth/me",
+      REQUEST_OTP: "/auth/request-otp",
     },
     MATERIALS: {
       BASE: "/materials",

@@ -142,6 +142,24 @@ export const registerCompany = createAsyncThunk<
   }
 });
 
+export const requestOtp = createAsyncThunk<
+  { success: boolean },
+  { email: string },
+  { rejectValue: string }
+>("auth/requestOtp", async (data, { rejectWithValue }) => {
+  try {
+    const response = await apiClient.post(
+      API_CONFIG.ENDPOINTS.AUTH.REQUEST_OTP,
+      { email: data.email }
+    );
+    return response.data;
+  } catch (error: any) {
+    return rejectWithValue(
+      error.response?.data?.message || error.message || "Failed to request OTP"
+    );
+  }
+});
+
 export const getCurrentUser = createAsyncThunk<
   { user: User },
   void,
@@ -292,6 +310,20 @@ const authSlice = createSlice({
       .addCase(registerCompany.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload || "Company registration failed";
+      })
+
+      // Request OTP
+      .addCase(requestOtp.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(requestOtp.fulfilled, (state) => {
+        state.isLoading = false;
+        state.error = null;
+      })
+      .addCase(requestOtp.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || "Failed to request OTP";
       })
 
       // Get Current User

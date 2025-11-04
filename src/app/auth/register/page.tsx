@@ -1,7 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { Container, Box, Typography, Divider } from "@mui/material";
+import { useState, useEffect } from "react";
+import {
+  Container,
+  Box,
+  Typography,
+  Divider,
+  FormControl,
+  Select,
+  MenuItem,
+} from "@mui/material";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -11,6 +19,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import EmailVerification from "@/components/EmailVerification";
 import { useAuth } from "@/hooks/useAuth";
+import { useCountriesList } from "@/hooks/useCountries";
 
 export default function RegisterPage() {
   const { t, currentLanguage } = useTranslation();
@@ -18,17 +27,31 @@ export default function RegisterPage() {
   const router = useRouter();
   const {
     registerUser,
+    requestOtp,
     isLoading: authLoading,
     error: authError,
     isAuthenticated,
   } = useAuth();
+  const {
+    countries,
+    getCountries,
+    isLoading: isLoadingCountries,
+  } = useCountriesList();
   const [step, setStep] = useState<"form" | "verification">("form");
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
+    countryId: "",
   });
   const [loading, setLoading] = useState(false);
+
+  // Fetch countries on mount
+  useEffect(() => {
+    if (countries.length === 0) {
+      getCountries();
+    }
+  }, [countries.length, getCountries]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -51,12 +74,24 @@ export default function RegisterPage() {
     }
 
     setLoading(true);
-    // Just move to verification step without sending request
-    setTimeout(() => {
+    try {
+      // Request OTP
+      const result = await requestOtp(formData.email);
+
+      // Check if the result is fulfilled (OTP sent successfully)
+      if (result && "payload" in result && result.type.includes("fulfilled")) {
+        setStep("verification");
+        showToast(t("auth.otpSent"), "success");
+      } else if (authError) {
+        showToast(authError, "error");
+      } else {
+        showToast("Failed to send OTP", "error");
+      }
+    } catch (error) {
+      showToast("Failed to send OTP", "error");
+    } finally {
       setLoading(false);
-      setStep("verification");
-      showToast(t("auth.otpSent"), "success");
-    }, 1000);
+    }
   };
 
   const handleVerification = async (otp: string) => {
@@ -67,6 +102,7 @@ export default function RegisterPage() {
         email: formData.email,
         firstName: formData.firstName,
         lastName: formData.lastName,
+        countryId: formData.countryId || undefined, // Send countryId if selected, otherwise undefined
       });
 
       // Check if the result is fulfilled (registration successful)
@@ -109,34 +145,34 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen py-20 md:px-5 flex">
+    <div className="min-h-screen py-8 sm:py-12 md:py-20 px-4 sm:px-5 flex">
       {/* Left Side - Form */}
-      <div className="flex-1 flex items-center justify-center p-8 backdrop-blur-sm rounded-2xl mx-4 my-8">
-        <Container maxWidth="sm" className="w-full max-w-md">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 md:p-8 backdrop-blur-sm rounded-2xl mx-auto sm:mx-4 my-4 sm:my-8 max-w-md w-full">
+        <Container maxWidth="sm" className="w-full">
           <Box className="w-full">
             {/* Back Button */}
             <Button
               variant="ghost"
               onClick={handleBack}
-              className="mb-8 p-2 text-gray-600 hover:text-gray-900"
+              className="mb-6 sm:mb-8 p-2 text-gray-600 hover:text-gray-900"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
 
             {/* Welcome Message */}
-            <div className="mb-8">
+            <div className="mb-6 sm:mb-8">
               <Typography
                 variant="h3"
-                className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-2"
+                className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-2"
               >
                 {step === "form" ? t("auth.createAccount") : t("auth.enterOTP")}
               </Typography>
               {step === "form" ? (
-                <Typography className="text-gray-600 dark:text-gray-300 text-center">
+                <Typography className="text-sm sm:text-base text-gray-600 dark:text-gray-300 text-center">
                   {t("auth.createAccountSubtitle")}
                 </Typography>
               ) : (
-                <Typography className="text-gray-600 dark:text-gray-300 text-center">
+                <Typography className="text-sm sm:text-base text-gray-600 dark:text-gray-300 text-center">
                   {t("auth.otpSent")}
                 </Typography>
               )}
@@ -144,9 +180,12 @@ export default function RegisterPage() {
 
             {/* Registration Form */}
             {step === "form" && (
-              <form onSubmit={handleFormSubmit} className="space-y-6">
+              <form
+                onSubmit={handleFormSubmit}
+                className="space-y-4 sm:space-y-6"
+              >
                 {/* Name Fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                       {t("auth.firstName")}
@@ -160,7 +199,7 @@ export default function RegisterPage() {
                       }
                       fullWidth
                       required
-                      className="h-12"
+                      className="h-11 sm:h-12"
                     />
                   </div>
                   <div>
@@ -176,7 +215,7 @@ export default function RegisterPage() {
                       }
                       fullWidth
                       required
-                      className="h-12"
+                      className="h-11 sm:h-12"
                     />
                   </div>
                 </div>
@@ -193,22 +232,86 @@ export default function RegisterPage() {
                     onChange={(e) => handleInputChange("email", e.target.value)}
                     fullWidth
                     required
-                    className="h-12"
+                    className="h-11 sm:h-12"
                   />
+                </div>
+
+                {/* Country Select */}
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                    {t("common.country")}
+                  </label>
+                  <FormControl fullWidth size="small">
+                    <Select
+                      value={formData.countryId || ""}
+                      onChange={(e) =>
+                        handleInputChange("countryId", e.target.value as string)
+                      }
+                      displayEmpty
+                      className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white h-11 sm:h-12"
+                      disabled={isLoadingCountries}
+                      sx={{
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "rgba(156, 163, 175, 0.5)",
+                        },
+                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "rgba(156, 163, 175, 0.8)",
+                        },
+                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#9333ea",
+                        },
+                        pr: 2,
+                        pl: 2,
+                        "& .MuiSelect-icon": {
+                          right: 8,
+                          left: "auto",
+                          color: "rgb(107 114 128)",
+                        },
+                        '[dir="rtl"] & .MuiSelect-icon': {
+                          left: 8,
+                          right: "auto",
+                        },
+                        ".dark & .MuiSelect-icon": {
+                          color: "rgb(156 163 175)",
+                        },
+                      }}
+                      MenuProps={{
+                        disableScrollLock: true,
+                        PaperProps: {
+                          className: "dark:bg-gray-700 dark:text-white",
+                        },
+                      }}
+                    >
+                      <MenuItem value="">
+                        <em>{t("common.selectCountry")}</em>
+                      </MenuItem>
+                      {isLoadingCountries ? (
+                        <MenuItem value="" disabled>
+                          {t("common.loading")}
+                        </MenuItem>
+                      ) : (
+                        countries.map((country) => (
+                          <MenuItem key={country.id} value={country.id}>
+                            {country.countryName}
+                          </MenuItem>
+                        ))
+                      )}
+                    </Select>
+                  </FormControl>
                 </div>
 
                 <Button
                   type="submit"
-                  className="w-full h-12 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="w-full h-11 sm:h-12 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 text-sm sm:text-base"
                   loading={loading}
                   sx={{ color: "white !important" }}
                 >
                   {t("auth.register")}
                 </Button>
 
-                <div className="relative my-6">
+                <div className="relative my-4 sm:my-6">
                   <Divider />
-                  <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/80 dark:bg-gray-900/80 px-4 text-gray-500 dark:text-gray-400 text-sm">
+                  <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/80 dark:bg-gray-900/80 px-3 sm:px-4 text-gray-500 dark:text-gray-400 text-xs sm:text-sm">
                     {t("auth.or")}
                   </span>
                 </div>
@@ -217,7 +320,7 @@ export default function RegisterPage() {
                   type="button"
                   variant="outline"
                   onClick={handleGoogleSignUp}
-                  className="w-full h-12 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-all duration-200"
+                  className="w-full h-11 sm:h-12 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-all duration-200 text-sm sm:text-base"
                   sx={{
                     color: "rgb(55 65 81) !important", // gray-700 for light mode
                     "&:hover": {
@@ -234,26 +337,28 @@ export default function RegisterPage() {
                     },
                   }}
                 >
-                  <div className="flex items-center justify-center gap-3">
-                    <div className="w-5 h-5 flex items-center justify-center">
+                  <div className="flex items-center justify-center gap-2 sm:gap-3">
+                    <div className="w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
                       <Image
                         src="/images/Google.png"
                         alt="google"
-                        width={25}
-                        height={25}
-                        className="object-contain"
+                        width={20}
+                        height={20}
+                        className="sm:w-[25px] sm:h-[25px] object-contain"
                       />
                     </div>
-                    <span>{t("auth.signInWithGoogle")}</span>
+                    <span className="text-xs sm:text-base">
+                      {t("auth.signInWithGoogle")}
+                    </span>
                   </div>
                 </Button>
 
                 <div className="text-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                  <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                     {t("auth.alreadyHaveAccount")}{" "}
                     <Button
                       variant="ghost"
-                      className="p-0 h-auto text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                      className="p-0 h-auto text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-xs sm:text-sm"
                       onClick={() => router.push("/auth/login")}
                     >
                       {t("auth.signIn")}
@@ -261,8 +366,8 @@ export default function RegisterPage() {
                   </span>
                 </div>
 
-                <div className="text-center mt-8">
-                  <Typography className="text-xs text-gray-400 dark:text-gray-500">
+                <div className="text-center mt-6 sm:mt-8">
+                  <Typography className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500">
                     © 2025 ALL RIGHTS RESERVED
                   </Typography>
                 </div>

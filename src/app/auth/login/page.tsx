@@ -18,6 +18,7 @@ export default function LoginPage() {
   const router = useRouter();
   const {
     login,
+    requestOtp,
     isLoading: authLoading,
     error: authError,
     isAuthenticated,
@@ -39,12 +40,24 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    // Just move to OTP step without sending request
-    setTimeout(() => {
+    try {
+      // Request OTP
+      const result = await requestOtp(email);
+
+      // Check if the result is fulfilled (OTP sent successfully)
+      if (result && "payload" in result && result.type.includes("fulfilled")) {
+        setStep("otp");
+        showToast(t("auth.otpSent"), "success");
+      } else if (authError) {
+        showToast(authError, "error");
+      } else {
+        showToast("Failed to send OTP", "error");
+      }
+    } catch (error) {
+      showToast("Failed to send OTP", "error");
+    } finally {
       setLoading(false);
-      setStep("otp");
-      showToast(t("auth.otpSent"), "success");
-    }, 1000);
+    }
   };
 
   const handleOtpSubmit = async (otp: string) => {
@@ -89,30 +102,30 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen py-20 md:px-5 flex">
+    <div className="min-h-screen py-8 sm:py-12 md:py-20 px-4 sm:px-5 flex">
       {/* Left Side - Form */}
-      <div className="flex-1 flex items-center justify-center p-8  backdrop-blur-sm rounded-2xl mx-4 my-8 ">
-        <Container maxWidth="sm" className="w-full max-w-md">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 md:p-8 backdrop-blur-sm rounded-2xl mx-auto sm:mx-4 my-4 sm:my-8 max-w-md w-full">
+        <Container maxWidth="sm" className="w-full">
           <Box className="w-full">
             {/* Welcome Message */}
-            <div className="mb-8">
+            <div className="mb-6 sm:mb-8">
               <Typography
                 variant="h3"
-                className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-2"
+                className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-2"
               >
                 {step === "email" ? t("auth.welcomeBack") : t("auth.enterOTP")}
               </Typography>
               {step === "email" ? (
-                <div className="space-y-2">
-                  <Typography className="text-gray-600 dark:text-gray-300 text-center">
+                <div className="space-y-1 sm:space-y-2">
+                  <Typography className="text-sm sm:text-base text-gray-600 dark:text-gray-300 text-center">
                     {t("auth.welcomeSubtitle1")}
                   </Typography>
-                  <Typography className="text-gray-600 dark:text-gray-300 text-center">
+                  <Typography className="text-sm sm:text-base text-gray-600 dark:text-gray-300 text-center">
                     {t("auth.welcomeSubtitle2")}
                   </Typography>
                 </div>
               ) : (
-                <Typography className="text-gray-600 dark:text-gray-300 text-center">
+                <Typography className="text-sm sm:text-base text-gray-600 dark:text-gray-300 text-center">
                   {t("auth.otpSent")}
                 </Typography>
               )}
@@ -120,7 +133,10 @@ export default function LoginPage() {
 
             {/* Email Step */}
             {step === "email" && (
-              <form onSubmit={handleEmailSubmit} className="space-y-6">
+              <form
+                onSubmit={handleEmailSubmit}
+                className="space-y-4 sm:space-y-6"
+              >
                 <div>
                   <label className="block text-sm font-medium mb-2 text-center text-gray-700 dark:text-gray-300">
                     {t("common.email")}
@@ -132,22 +148,22 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     fullWidth
                     required
-                    className="h-12"
+                    className="h-11 sm:h-12"
                   />
                 </div>
 
                 <Button
                   type="submit"
-                  className="w-full h-12 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="w-full h-11 sm:h-12 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 text-sm sm:text-base"
                   loading={loading}
                   sx={{ color: "white !important" }}
                 >
                   {t("common.signIn")}
                 </Button>
 
-                <div className="relative my-6">
+                <div className="relative my-4 sm:my-6">
                   <Divider />
-                  <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/80 dark:bg-gray-900/80 px-4 text-gray-500 dark:text-gray-400 text-sm">
+                  <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/80 dark:bg-gray-900/80 px-3 sm:px-4 text-gray-500 dark:text-gray-400 text-xs sm:text-sm">
                     {t("auth.or")}
                   </span>
                 </div>
@@ -156,7 +172,7 @@ export default function LoginPage() {
                   type="button"
                   variant="outline"
                   onClick={handleGoogleSignIn}
-                  className="w-full h-12 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-all duration-200"
+                  className="w-full h-11 sm:h-12 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-all duration-200 text-sm sm:text-base"
                   sx={{
                     color: "rgb(55 65 81) !important", // gray-700 for light mode
                     "&:hover": {
@@ -173,34 +189,36 @@ export default function LoginPage() {
                     },
                   }}
                 >
-                  <div className="flex items-center justify-center gap-3">
-                    <div className="w-5 h-5 flex items-center justify-center">
+                  <div className="flex items-center justify-center gap-2 sm:gap-3">
+                    <div className="w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
                       <Image
                         src="/images/Google.png"
                         alt="google"
-                        width={25}
-                        height={25}
-                        className="object-contain"
+                        width={20}
+                        height={20}
+                        className="sm:w-[25px] sm:h-[25px] object-contain"
                       />
                     </div>
-                    <span>{t("auth.signInWithGoogle")}</span>
+                    <span className="text-xs sm:text-base">
+                      {t("auth.signInWithGoogle")}
+                    </span>
                   </div>
                 </Button>
 
                 <div className="text-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                  <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                     {t("auth.dontHaveAccount")}{" "}
                     <Button
                       variant="ghost"
-                      className="p-0 h-auto text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                      className="p-0 h-auto text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-xs sm:text-sm"
                     >
                       {t("auth.signUp")}
                     </Button>
                   </span>
                 </div>
 
-                <div className="text-center mt-8">
-                  <Typography className="text-xs text-gray-400 dark:text-gray-500">
+                <div className="text-center mt-6 sm:mt-8">
+                  <Typography className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500">
                     © 2025 ALL RIGHTS RESERVED
                   </Typography>
                 </div>

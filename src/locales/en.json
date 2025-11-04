@@ -35,7 +35,9 @@
     "minutesAgo": "minutes",
     "hoursAgo": "hours",
     "daysAgo": "days",
-    "ago": "ago"
+    "ago": "ago",
+    "country": "Country",
+    "selectCountry": "Select Country"
   },
   "home": {
     "heroTitle": "Saudi Arabia's Leading Recycling Platform",
@@ -100,7 +102,9 @@
     "firstName": "First Name",
     "lastName": "Last Name",
     "alreadyHaveAccount": "Already have an account?",
-    "signIn": "Sign In"
+    "signIn": "Sign In",
+    "backToEmail": "Back to email",
+    "otpDigit": "OTP digit"
   },
   "navigation": {
     "auctions": "Auctions",
