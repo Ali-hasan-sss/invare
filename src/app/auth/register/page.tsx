@@ -74,24 +74,32 @@ export default function RegisterPage() {
     }
 
     setLoading(true);
-    try {
-      // Request OTP
-      const result = await requestOtp(formData.email);
-
-      // Check if the result is fulfilled (OTP sent successfully)
-      if (result && "payload" in result && result.type.includes("fulfilled")) {
-        setStep("verification");
-        showToast(t("auth.otpSent"), "success");
-      } else if (authError) {
-        showToast(authError, "error");
-      } else {
-        showToast("Failed to send OTP", "error");
-      }
-    } catch (error) {
-      showToast("Failed to send OTP", "error");
-    } finally {
+    // Temporarily skip OTP request - directly move to verification step
+    setTimeout(() => {
       setLoading(false);
-    }
+      setStep("verification");
+      showToast(t("auth.otpSent"), "success");
+    }, 1000);
+
+    // OTP Request Code - Commented out for testing
+    // try {
+    //   // Request OTP
+    //   const result = await requestOtp(formData.email);
+    //
+    //   // Check if the result is fulfilled (OTP sent successfully)
+    //   if (result && "payload" in result && result.type.includes("fulfilled")) {
+    //     setStep("verification");
+    //     showToast(t("auth.otpSent"), "success");
+    //   } else if (authError) {
+    //     showToast(authError, "error");
+    //   } else {
+    //     showToast("Failed to send OTP", "error");
+    //   }
+    // } catch (error) {
+    //   showToast("Failed to send OTP", "error");
+    // } finally {
+    //   setLoading(false);
+    // }
   };
 
   const handleVerification = async (otp: string) => {

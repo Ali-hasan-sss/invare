@@ -1,0 +1,100 @@
+﻿          <span style={{ color: "white", fontWeight: 600 }}>
+            {t("admin.addCategory")}
+          </span>
+        </Button>
+      </div>
+
+      {/* Categories View */}
+      <Card className="overflow-hidden">
+        {categoriesLoading ? (
+          <div className="p-8 text-center text-gray-600 dark:text-gray-400">
+            {t("admin.loading")}
+          </div>
+        ) : filteredCategories.length === 0 ? (
+          <div className="p-8 text-center text-gray-600 dark:text-gray-400">
+            {t("admin.noCategories")}
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-center text-gray-700 dark:text-gray-200">
+                  {t("admin.categoryName")}
+                </TableHead>
+                <TableHead className="text-center w-32 text-gray-700 dark:text-gray-200">
+                  {t("admin.actions")}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredCategories.map((category) => (
+                <TableRow
+                  key={category.id}
+                  className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  onClick={() => handleViewMaterials(category)}
+                >
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-2 font-medium text-gray-900 dark:text-white">
+                      <FolderOpen className="h-5 w-5 text-yellow-600" />
+                      {category.name}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div
+                      className="flex justify-center gap-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => handleEditCategory(category)}
+                        title={t("admin.edit")}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDeleteCategory(category)}
+                        title={t("admin.delete")}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Card>
+
+      {/* Dialogs */}
+      <CategoryFormDialog
+        open={categoryFormOpen}
+        onOpenChange={setCategoryFormOpen}
+        category={editingCategory}
+        onSubmit={handleSubmitCategory}
+        isLoading={categoriesLoading}
+      />
+
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+        title={t("admin.deleteCategory")}
+        description={t("admin.deleteCategoryConfirm")}
+        isLoading={categoriesLoading}
+      />
+
+      {/* Toast */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+    </div>
+  );
+}

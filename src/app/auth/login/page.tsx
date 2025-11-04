@@ -40,24 +40,32 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    try {
-      // Request OTP
-      const result = await requestOtp(email);
-
-      // Check if the result is fulfilled (OTP sent successfully)
-      if (result && "payload" in result && result.type.includes("fulfilled")) {
-        setStep("otp");
-        showToast(t("auth.otpSent"), "success");
-      } else if (authError) {
-        showToast(authError, "error");
-      } else {
-        showToast("Failed to send OTP", "error");
-      }
-    } catch (error) {
-      showToast("Failed to send OTP", "error");
-    } finally {
+    // Temporarily skip OTP request - directly move to OTP step
+    setTimeout(() => {
       setLoading(false);
-    }
+      setStep("otp");
+      showToast(t("auth.otpSent"), "success");
+    }, 1000);
+
+    // OTP Request Code - Commented out for testing
+    // try {
+    //   // Request OTP
+    //   const result = await requestOtp(email);
+    //
+    //   // Check if the result is fulfilled (OTP sent successfully)
+    //   if (result && "payload" in result && result.type.includes("fulfilled")) {
+    //     setStep("otp");
+    //     showToast(t("auth.otpSent"), "success");
+    //   } else if (authError) {
+    //     showToast(authError, "error");
+    //   } else {
+    //     showToast("Failed to send OTP", "error");
+    //   }
+    // } catch (error) {
+    //   showToast("Failed to send OTP", "error");
+    // } finally {
+    //   setLoading(false);
+    // }
   };
 
   const handleOtpSubmit = async (otp: string) => {

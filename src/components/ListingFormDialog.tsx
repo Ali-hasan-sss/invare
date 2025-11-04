@@ -26,12 +26,16 @@ interface ListingFormDialogProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (listingData: CreateListingData) => void;
+  initialCategoryId?: string;
+  initialMaterialId?: string;
 }
 
 export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
   open,
   onClose,
   onSubmit,
+  initialCategoryId,
+  initialMaterialId,
 }) => {
   const { t } = useTranslation();
   const { materials, getMaterials } = useMaterials();
@@ -67,11 +71,20 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
     if (open) {
       // Fetch categories when dialog opens
       getCategories();
-      // Reset category selection when dialog opens
-      setSelectedCategoryId("");
+      // Set initial category and material if provided
+      if (initialCategoryId) {
+        setSelectedCategoryId(initialCategoryId);
+        setFormData((prev) => ({
+          ...prev,
+          materialId: initialMaterialId || "",
+        }));
+      } else {
+        // Reset category selection when dialog opens
+        setSelectedCategoryId("");
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, initialCategoryId, initialMaterialId]);
 
   // Fetch materials only when category is selected
   useEffect(() => {

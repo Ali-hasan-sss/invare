@@ -5,16 +5,10 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   Recycle,
-  Shield,
-  Users,
-  Award,
-  TrendingUp,
-  HeadphonesIcon,
   ChevronLeft,
   ChevronRight,
   Gavel,
   Package,
-  CheckCircle2,
   ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -161,13 +155,6 @@ export default function HomePage() {
     );
   };
 
-  const stats = [
-    { value: "5,000+", label: t("home.statsUsers"), icon: Users },
-    { value: "10,000+", label: t("home.statsListings"), icon: Package },
-    { value: "15,000+", label: t("home.statsDeals"), icon: CheckCircle2 },
-    { value: "98%", label: t("home.statsSatisfaction"), icon: Award },
-  ];
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
       {/* Hero Section - starts from top with negative margin to go behind header */}
@@ -243,28 +230,6 @@ export default function HomePage() {
               className="text-gray-50 dark:text-gray-900"
             />
           </svg>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-12 bg-white dark:bg-gray-900">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {stats.map((stat, index) => (
-              <div
-                key={index}
-                className="text-center p-6 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-750 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow"
-              >
-                <stat.icon className="h-8 w-8 mx-auto mb-3 text-secondary-600 dark:text-secondary-400" />
-                <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
-                  {stat.value}
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  {stat.label}
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
