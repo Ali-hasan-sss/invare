@@ -41,7 +41,7 @@
     "heroTitle": "Saudi Arabia's Leading Recycling Platform",
     "heroSubtitle": "Discover and trade high-quality recycling materials through transparent and secure auctions",
     "heroDescription": "We connect sellers and buyers in a trusted marketplace for recycling materials, contributing together to a sustainable future for Saudi Arabia's environment",
-    "startBidding": "Start Bidding",
+    "startBidding": "Explore Offers",
     "postListing": "Post Your Offer",
     "exploreMaterials": "Explore Materials",
     "loginRequired": "Please login first",
@@ -269,6 +269,7 @@
     "edfapayDesc": "Secure payment method"
   },
   "filters": {
+    "category": "Category",
     "material": "Material",
     "company": "Company",
     "user": "User",

@@ -91,6 +91,7 @@ const ListingsPageContent: React.FC = () => {
   // Get filters from URL params
   const getInitialFilters = (): ListingsFilterData => {
     return {
+      categoryId: searchParams.get("categoryId") || undefined,
       materialId: searchParams.get("materialId") || undefined,
       companyId: searchParams.get("companyId") || undefined,
       userId: searchParams.get("userId") || undefined,
@@ -112,6 +113,7 @@ const ListingsPageContent: React.FC = () => {
     params.append("page", currentPageLocal.toString());
     params.append("limit", limit.toString());
 
+    if (filters.categoryId) params.append("categoryId", filters.categoryId);
     if (filters.materialId) params.append("materialId", filters.materialId);
     if (filters.companyId) params.append("companyId", filters.companyId);
     if (filters.userId) params.append("userId", filters.userId);
