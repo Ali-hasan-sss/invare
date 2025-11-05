@@ -17,6 +17,7 @@ import {
   CreateListingData,
   ListingPhotoInput,
   ListingAttributeInput,
+  Listing,
 } from "@/store/slices/listingsSlice";
 import { X, Plus } from "lucide-react";
 import { ImageUpload } from "@/components/ui/ImageUpload";
@@ -28,6 +29,7 @@ interface ListingFormDialogProps {
   onSubmit: (listingData: CreateListingData) => void;
   initialCategoryId?: string;
   initialMaterialId?: string;
+  editingListing?: Listing | null;
 }
 
 export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
@@ -36,6 +38,7 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
   onSubmit,
   initialCategoryId,
   initialMaterialId,
+  editingListing,
 }) => {
   const { t } = useTranslation();
   const { materials, getMaterials } = useMaterials();
@@ -71,20 +74,96 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
     if (open) {
       // Fetch categories when dialog opens
       getCategories();
-      // Set initial category and material if provided
-      if (initialCategoryId) {
-        setSelectedCategoryId(initialCategoryId);
-        setFormData((prev) => ({
-          ...prev,
-          materialId: initialMaterialId || "",
-        }));
+
+      // If editing an existing listing, populate form with listing data
+      if (editingListing) {
+        setFormData({
+          title: editingListing.title || "",
+          description: editingListing.description || "",
+          unitOfMeasure: editingListing.unitOfMeasure || "",
+          startingPrice: editingListing.startingPrice || "",
+          stockAmount: editingListing.stockAmount || 0,
+          status: editingListing.status || "active",
+          expiresAt: editingListing.expiresAt
+            ? new Date(editingListing.expiresAt).toISOString().slice(0, 16)
+            : "",
+          isBiddable: editingListing.isBiddable || false,
+          materialId: editingListing.materialId || "",
+          photos: [],
+          attributes: [],
+        });
+
+        // Set category and material from editing listing
+        if (editingListing.material?.id) {
+          // Find category for this material
+          // Note: We'll need to fetch materials first to get the category
+          setSelectedCategoryId(initialCategoryId || "");
+        } else if (initialCategoryId) {
+          setSelectedCategoryId(initialCategoryId);
+          setFormData((prev) => ({
+            ...prev,
+            materialId: initialMaterialId || "",
+          }));
+        } else {
+          setSelectedCategoryId("");
+        }
+
+        // Set photos
+        if (editingListing.photos && editingListing.photos.length > 0) {
+          setPhotos(
+            editingListing.photos.map((photo, index) => ({
+              url: photo.url,
+              isPrimary: index === 0, // First photo is primary
+            }))
+          );
+        } else {
+          setPhotos([]);
+        }
+
+        // Set attributes
+        if (editingListing.attributes && editingListing.attributes.length > 0) {
+          setAttributes(
+            editingListing.attributes.map((attr) => ({
+              attrKey: attr.name || "",
+              attrValue: attr.value || "",
+            }))
+          );
+        } else {
+          setAttributes([]);
+        }
       } else {
-        // Reset category selection when dialog opens
-        setSelectedCategoryId("");
+        // Reset form for new listing
+        setFormData({
+          title: "",
+          description: "",
+          unitOfMeasure: "",
+          startingPrice: "",
+          stockAmount: 0,
+          status: "active",
+          expiresAt: "",
+          isBiddable: false,
+          materialId: "",
+          photos: [],
+          attributes: [],
+        });
+        setPhotos([]);
+        setAttributes([]);
+
+        // Set initial category and material if provided
+        if (initialCategoryId) {
+          setSelectedCategoryId(initialCategoryId);
+          setFormData((prev) => ({
+            ...prev,
+            materialId: initialMaterialId || "",
+          }));
+        } else {
+          // Reset category selection when dialog opens
+          setSelectedCategoryId("");
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, initialCategoryId, initialMaterialId]);
+  }, [open, initialCategoryId, initialMaterialId, editingListing]);
 
   // Fetch materials only when category is selected
   useEffect(() => {

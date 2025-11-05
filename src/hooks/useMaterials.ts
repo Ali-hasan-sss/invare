@@ -6,6 +6,9 @@ import {
   createMaterial,
   updateMaterial,
   deleteMaterial,
+  addFavoriteMaterial,
+  getFavoriteMaterials,
+  removeFavoriteMaterial,
   clearError,
   clearCurrentMaterial,
   setCurrentPage,
@@ -86,9 +89,31 @@ export const useMaterials = () => {
     [dispatch]
   );
 
+  // Add favorite material
+  const addFavorite = useCallback(
+    async (id: string) => {
+      return dispatch(addFavoriteMaterial(id));
+    },
+    [dispatch]
+  );
+
+  // Get favorite materials
+  const fetchFavorites = useCallback(async () => {
+    return dispatch(getFavoriteMaterials());
+  }, [dispatch]);
+
+  // Remove favorite material
+  const removeFavorite = useCallback(
+    async (id: string) => {
+      return dispatch(removeFavoriteMaterial(id));
+    },
+    [dispatch]
+  );
+
   return {
     // State
     materials: materialsState.materials,
+    favoriteMaterials: materialsState.favoriteMaterials,
     currentMaterial: materialsState.currentMaterial,
     isLoading: materialsState.isLoading,
     error: materialsState.error,
@@ -102,6 +127,9 @@ export const useMaterials = () => {
     createMaterial: addMaterial,
     updateMaterial: editMaterial,
     deleteMaterial: removeMaterial,
+    addFavoriteMaterial: addFavorite,
+    getFavoriteMaterials: fetchFavorites,
+    removeFavoriteMaterial: removeFavorite,
     clearError: clearMaterialsError,
     clearCurrentMaterial: clearMaterial,
     setCurrentPage: changePage,

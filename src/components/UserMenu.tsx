@@ -9,7 +9,16 @@ import {
   Divider,
   Box,
 } from "@mui/material";
-import { User, Settings, LogOut, ShoppingBag, Gavel, MessageCircle } from "lucide-react";
+import {
+  User,
+  LogOut,
+  ShoppingBag,
+  Gavel,
+  MessageCircle,
+  Tag,
+  LayoutDashboard,
+  Heart,
+} from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/hooks/useAuth";
@@ -31,8 +40,8 @@ const UserMenu: React.FC<UserMenuProps> = ({ anchorEl, open, onClose }) => {
     onClose();
   };
 
-  const handleSettingsClick = () => {
-    router.push("/settings");
+  const handleInterestsClick = () => {
+    router.push("/profile?tab=interests");
     onClose();
   };
 
@@ -47,7 +56,17 @@ const UserMenu: React.FC<UserMenuProps> = ({ anchorEl, open, onClose }) => {
   };
 
   const handleChatsClick = () => {
-    router.push("/chat");
+    router.push("/user/chat");
+    onClose();
+  };
+
+  const handleMyListingsClick = () => {
+    router.push("/user/listings");
+    onClose();
+  };
+
+  const handleDashboardClick = () => {
+    router.push("/user/dashboard");
     onClose();
   };
 
@@ -83,7 +102,8 @@ const UserMenu: React.FC<UserMenuProps> = ({ anchorEl, open, onClose }) => {
             minWidth: "200px",
             position: "fixed",
           },
-          className: "bg-white dark:bg-gray-800 text-black dark:text-white shadow-lg",
+          className:
+            "bg-white dark:bg-gray-800 text-black dark:text-white shadow-lg",
         },
       }}
     >
@@ -109,6 +129,16 @@ const UserMenu: React.FC<UserMenuProps> = ({ anchorEl, open, onClose }) => {
 
       {/* Menu Items */}
       <MenuItem
+        onClick={handleDashboardClick}
+        className="hover:bg-gray-50 dark:hover:bg-gray-700"
+      >
+        <ListItemIcon className="text-gray-600 dark:text-gray-300">
+          <LayoutDashboard size={20} />
+        </ListItemIcon>
+        <ListItemText primary={t("user.dashboard") || "لوحة التحكم"} />
+      </MenuItem>
+
+      <MenuItem
         onClick={handlePurchasesClick}
         className="hover:bg-gray-50 dark:hover:bg-gray-700"
       >
@@ -127,7 +157,15 @@ const UserMenu: React.FC<UserMenuProps> = ({ anchorEl, open, onClose }) => {
         </ListItemIcon>
         <ListItemText primary={t("user.myAuctions") || "مزاداتي"} />
       </MenuItem>
-
+      <MenuItem
+        onClick={handleMyListingsClick}
+        className="hover:bg-gray-50 dark:hover:bg-gray-700"
+      >
+        <ListItemIcon className="text-gray-600 dark:text-gray-300">
+          <Tag size={20} />
+        </ListItemIcon>
+        <ListItemText primary={t("user.myListings") || "عروضي"} />
+      </MenuItem>
       <MenuItem
         onClick={handleChatsClick}
         className="hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -149,13 +187,13 @@ const UserMenu: React.FC<UserMenuProps> = ({ anchorEl, open, onClose }) => {
       </MenuItem>
 
       <MenuItem
-        onClick={handleSettingsClick}
+        onClick={handleInterestsClick}
         className="hover:bg-gray-50 dark:hover:bg-gray-700"
       >
         <ListItemIcon className="text-gray-600 dark:text-gray-300">
-          <Settings size={20} />
+          <Heart size={20} />
         </ListItemIcon>
-        <ListItemText primary={t("user.settings")} />
+        <ListItemText primary={t("profile.interests") || "اهتماماتي"} />
       </MenuItem>
 
       <Divider className="my-1" />

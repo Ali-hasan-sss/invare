@@ -134,6 +134,18 @@ export default function RootLayout({
 
         {/* Canonical URL */}
         <link rel="canonical" href="https://invare.com" />
+
+        {/* Google Fonts */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Tajawal:wght@300;400;500;700&display=swap"
+          rel="stylesheet"
+        />
       </head>
       <body className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 transition-colors duration-200">
         <Provider store={store}>

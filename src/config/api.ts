@@ -1,5 +1,5 @@
 export const API_CONFIG = {
-  BASE_URL: "https://api.invare.sa",
+  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://72.61.112.229:3000",
   ENDPOINTS: {
     AUTH: {
       LOGIN: "/auth/login",
@@ -12,6 +12,9 @@ export const API_CONFIG = {
       BASE: "/materials",
       LIST: "/materials",
       DETAIL: (id: string) => `/materials/${id}`,
+      ADD_FAVORITE: (id: string) => `/materials/${id}/favorite`,
+      GET_FAVORITES: "/materials/favorites",
+      REMOVE_FAVORITE: (id: string) => `/materials/${id}/favorite`,
     },
     MATERIAL_CATEGORIES: {
       BASE: "/material-categories",
@@ -125,6 +128,12 @@ export const API_CONFIG = {
       LIST: "/advertisements",
       DETAIL: (id: string) => `/advertisements/${id}`,
       TOGGLE_ACTIVE: (id: string) => `/advertisements/${id}/toggle-active`,
+    },
+    NOTIFICATIONS: {
+      BASE: "/notifications",
+      LIST: "/notifications",
+      MARK_READ: (id: string) => `/notifications/${id}/read`,
+      MARK_ALL_READ: "/notifications/read-all",
     },
     UPLOADS: {
       IMAGE: "/uploads/image",

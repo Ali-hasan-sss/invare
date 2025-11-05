@@ -28,6 +28,7 @@ import {
   Gavel,
   Menu as MenuIcon,
   X,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -43,6 +44,8 @@ import ClientOnly from "./ClientOnly";
 import Image from "next/image";
 import { Avatar } from "@/components/ui/Avatar";
 import UserMenu from "@/components/UserMenu";
+import NotificationDropdown from "@/components/NotificationDropdown";
+import NotificationBell from "@/components/NotificationBell";
 
 const Header: React.FC = () => {
   const { t } = useTranslation();
@@ -93,6 +96,10 @@ const Header: React.FC = () => {
   const [userMenuAnchor, setUserMenuAnchor] =
     React.useState<null | HTMLElement>(null);
 
+  // Notification menu state
+  const [notificationMenuAnchor, setNotificationMenuAnchor] =
+    React.useState<null | HTMLElement>(null);
+
   // Desktop menu handlers
 
   const handleSupportClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -133,6 +140,16 @@ const Header: React.FC = () => {
 
   const handleUserMenuClose = () => {
     setUserMenuAnchor(null);
+  };
+
+  const handleNotificationMenuClick = (
+    event: React.MouseEvent<HTMLElement>
+  ) => {
+    setNotificationMenuAnchor(event.currentTarget);
+  };
+
+  const handleNotificationMenuClose = () => {
+    setNotificationMenuAnchor(null);
   };
 
   // Mobile drawer handlers
@@ -365,8 +382,8 @@ const Header: React.FC = () => {
               <Image
                 src="/images/logo.png"
                 alt="logo"
-                width={60}
-                height={60}
+                width={40}
+                height={40}
                 className="object-contain"
               />
             </div>
@@ -395,7 +412,10 @@ const Header: React.FC = () => {
                 fallback={
                   <div className="flex items-center text-black dark:text-white hover:opacity-80 transition-colors cursor-pointer font-medium">
                     <span>الدعم</span>
-                    <ChevronDown size={16} className="mr-1 text-black dark:text-white" />
+                    <ChevronDown
+                      size={16}
+                      className="mr-1 text-black dark:text-white"
+                    />
                   </div>
                 }
               >
@@ -404,7 +424,10 @@ const Header: React.FC = () => {
                   onClick={handleSupportClick}
                 >
                   <span>{t("navigation.support")}</span>
-                  <ChevronDown size={16} className="mr-1 text-black dark:text-white" />
+                  <ChevronDown
+                    size={16}
+                    className="mr-1 text-black dark:text-white"
+                  />
                 </Box>
               </ClientOnly>
 
@@ -412,7 +435,10 @@ const Header: React.FC = () => {
                 fallback={
                   <div className="flex items-center text-black dark:text-white hover:opacity-80 transition-colors cursor-pointer font-medium">
                     <span>المواد</span>
-                    <ChevronDown size={16} className="mr-1 text-black dark:text-white" />
+                    <ChevronDown
+                      size={16}
+                      className="mr-1 text-black dark:text-white"
+                    />
                   </div>
                 }
               >
@@ -421,7 +447,10 @@ const Header: React.FC = () => {
                   onClick={handleMaterialsClick}
                 >
                   <span>{t("navigation.materials")}</span>
-                  <ChevronDown size={16} className="mr-1 text-black dark:text-white" />
+                  <ChevronDown
+                    size={16}
+                    className="mr-1 text-black dark:text-white"
+                  />
                 </Box>
               </ClientOnly>
             </Box>
@@ -434,21 +463,25 @@ const Header: React.FC = () => {
                 {/* Mobile User Menu - Same as Desktop */}
                 <ClientOnly fallback={null}>
                   {isAuthenticated && user ? (
-                    <div
-                      className="flex items-center space-x-2 rtl:space-x-reverse cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg p-1.5 transition-colors"
-                      onClick={handleUserMenuClick}
-                    >
-                      <Avatar
-                        size="small"
-                        src={user.avatar}
-                        fallback={user.firstName + " " + user.lastName}
-                        alt={user.firstName}
-                        className="w-8 h-8"
-                      />
-                      <span className="text-black dark:text-white font-medium text-sm hidden sm:block">
-                        {user.firstName} {user.lastName}
-                      </span>
-                    </div>
+                    <>
+                      <div
+                        className="flex items-center space-x-2 rtl:space-x-reverse cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg p-1.5 transition-colors"
+                        onClick={handleUserMenuClick}
+                      >
+                        <Avatar
+                          size="small"
+                          src={user.avatar}
+                          fallback={user.firstName + " " + user.lastName}
+                          alt={user.firstName}
+                          className="w-8 h-8"
+                        />
+                        <span className="text-black dark:text-white font-medium text-sm hidden sm:block">
+                          {user.firstName} {user.lastName}
+                        </span>
+                      </div>
+                      {/* Notification Bell for Mobile */}
+                      <NotificationBell onClick={handleNotificationMenuClick} />
+                    </>
                   ) : (
                     <div className="flex items-center space-x-1 rtl:space-x-reverse">
                       <Button
@@ -470,7 +503,10 @@ const Header: React.FC = () => {
                   )}
                 </ClientOnly>
                 {/* Mobile Menu Button */}
-                <IconButton onClick={handleDrawerToggle} className="text-black dark:text-white">
+                <IconButton
+                  onClick={handleDrawerToggle}
+                  className="text-black dark:text-white"
+                >
                   <MenuIcon size={24} />
                 </IconButton>
               </>
@@ -504,20 +540,28 @@ const Header: React.FC = () => {
                   }
                 >
                   {isAuthenticated && user ? (
-                    <div
-                      className="flex items-center space-x-3 rtl:space-x-reverse cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg p-2 transition-colors"
-                      onClick={handleUserMenuClick}
-                    >
-                      <Avatar
-                        size="medium"
-                        src={user.avatar}
-                        fallback={user.firstName + " " + user.lastName}
-                        alt={user.firstName}
-                      />
-                      <span className="text-black dark:text-white font-medium">
-                        {user.firstName} {user.lastName}
-                      </span>
-                    </div>
+                    <>
+                      {/* Notification Bell */}
+                      <ClientOnly fallback={<div className="w-8 h-8" />}>
+                        <NotificationBell
+                          onClick={handleNotificationMenuClick}
+                        />
+                      </ClientOnly>
+                      <div
+                        className="flex items-center space-x-3 rtl:space-x-reverse cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg p-2 transition-colors"
+                        onClick={handleUserMenuClick}
+                      >
+                        <Avatar
+                          size="medium"
+                          src={user.avatar}
+                          fallback={user.firstName + " " + user.lastName}
+                          alt={user.firstName}
+                        />
+                        <span className="text-black dark:text-white font-medium">
+                          {user.firstName} {user.lastName}
+                        </span>
+                      </div>
+                    </>
                   ) : (
                     <div className="flex items-center space-x-2 rtl:space-x-reverse">
                       <Button
@@ -775,6 +819,15 @@ const Header: React.FC = () => {
         open={Boolean(userMenuAnchor)}
         onClose={handleUserMenuClose}
       />
+
+      {/* Notification Dropdown */}
+      {isAuthenticated && user && (
+        <NotificationDropdown
+          anchorEl={notificationMenuAnchor}
+          open={Boolean(notificationMenuAnchor)}
+          onClose={handleNotificationMenuClose}
+        />
+      )}
     </>
   );
 };

@@ -131,7 +131,13 @@
     "settings": "الإعدادات",
     "logout": "تسجيل الخروج",
     "myPurchases": "مشترياتي",
-    "myAuctions": "مزاداتي"
+    "myAuctions": "مزاداتي",
+    "myListings": "عروضي",
+    "manageListings": "إدارة عروضك",
+    "dashboard": "لوحة التحكم",
+    "welcomeBack": "مرحباً",
+    "viewPurchases": "عرض مشترياتك",
+    "viewAuctions": "عرض مزاداتك"
   },
   "listings": {
     "materialListings": "عروض المواد",
@@ -477,6 +483,7 @@
     "messageError": "فشل إرسال الرسالة",
     "sellerInfoNotAvailable": "معلومات البائع غير متوفرة حالياً",
     "myChats": "محادثاتي",
+    "viewChats": "عرض محادثاتك",
     "chats": "المحادثات",
     "noChats": "لا توجد محادثات",
     "noChatsDescription": "لم تبدأ أي محادثة بعد",
@@ -493,6 +500,14 @@
     "priceUpdateError": "فشل تحديث السعر",
     "currentPrice": "السعر الحالي",
     "update": "تحديث"
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "loading": "جاري التحميل...",
+    "noNotifications": "لا توجد إشعارات",
+    "markAsRead": "تحديد كمقروء",
+    "markAllRead": "تحديد الكل كمقروء",
+    "viewAll": "عرض الكل"
   },
   "currency": {
     "omr": "ر.ع"
@@ -546,6 +561,15 @@
     "addFirstAddress": "أضف عنوانك الأول",
     "deleteAddressConfirm": "هل أنت متأكد من حذف هذا العنوان؟",
     "save": "حفظ",
+    "interests": "اهتماماتي",
+    "addInterest": "إضافة اهتمام",
+    "selectMaterial": "يرجى اختيار مادة",
+    "materialAddedToFavorites": "تم إضافة المادة إلى الاهتمامات",
+    "materialRemovedFromFavorites": "تم إزالة المادة من الاهتمامات",
+    "errorAddingMaterial": "فشل إضافة المادة",
+    "errorRemovingMaterial": "فشل إزالة المادة",
+    "noInterests": "لا توجد اهتمامات",
+    "add": "إضافة",
     "cancel": "إلغاء",
     "loading": "جاري التحميل...",
     "selectCountry": "اختر الدولة",

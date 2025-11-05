@@ -4,17 +4,10 @@ import React, { useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import {
-  Mail,
-  Phone,
-  MapPin,
-  Facebook,
-  Twitter,
-  Instagram,
-  Linkedin,
-} from "lucide-react";
+import { Mail, Phone, MapPin, Instagram } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
+import WhatsApp from "@mui/icons-material/WhatsApp";
 
 const Footer: React.FC = () => {
   const { t, currentLanguage } = useTranslation();
@@ -81,35 +74,22 @@ const Footer: React.FC = () => {
     legal: [
       { key: "privacyPolicy", href: "/privacy" },
       { key: "termsOfService", href: "/terms" },
-      { key: "cookiePolicy", href: "/cookies" },
       { key: "refundPolicy", href: "/refund" },
     ],
   };
 
   const socialLinks = [
     {
-      name: "Facebook",
-      icon: Facebook,
-      href: "https://facebook.com/invare",
-      ariaLabel: "Facebook",
-    },
-    {
-      name: "Twitter",
-      icon: Twitter,
-      href: "https://twitter.com/invare",
-      ariaLabel: "Twitter",
-    },
-    {
       name: "Instagram",
       icon: Instagram,
-      href: "https://instagram.com/invare",
+      href: "https://www.instagram.com/invare_sa?igsh=MWc4OGFtZHU3c3Npdg==",
       ariaLabel: "Instagram",
     },
     {
-      name: "LinkedIn",
-      icon: Linkedin,
-      href: "https://linkedin.com/company/invare",
-      ariaLabel: "LinkedIn",
+      name: "whatsapp",
+      icon: WhatsApp,
+      href: "https://wa.me/+966532070220",
+      ariaLabel: "Whatsapp",
     },
   ];
 
@@ -253,7 +233,7 @@ const Footer: React.FC = () => {
             isRTL ? "md:flex-row-reverse" : ""
           )}
         >
-          <div className="flex flex-wrap items-center gap-6 text-sm text-gray-400">
+          {/* <div className="flex flex-wrap items-center gap-6 text-sm text-gray-400">
             <Link
               href="/privacy"
               className="hover:text-secondary-400 transition-colors"
@@ -266,13 +246,7 @@ const Footer: React.FC = () => {
             >
               {t("footer.termsOfService")}
             </Link>
-            <Link
-              href="/cookies"
-              className="hover:text-secondary-400 transition-colors"
-            >
-              {t("footer.cookiePolicy")}
-            </Link>
-          </div>
+          </div> */}
           <p className="text-sm text-gray-400">
             © {currentYear} {t("footer.companyName")}.{" "}
             {t("footer.allRightsReserved")}

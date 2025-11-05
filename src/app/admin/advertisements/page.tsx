@@ -154,7 +154,7 @@ export default function AdvertisementsPage() {
       </div>
 
       {/* Search Bar */}
-      <Card className="mb-4 p-3">
+      <Card className="mb-4 py-5 px-3">
         <div className="relative">
           <Search
             className={cn(

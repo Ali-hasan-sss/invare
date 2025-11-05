@@ -7,23 +7,13 @@ import {
   Plus,
   Search,
   Tag,
-  ArrowLeft,
-  ArrowRight,
   Image as ImageIcon,
   Calendar,
   DollarSign,
   ShoppingCart,
 } from "lucide-react";
-import { useTranslation } from "../../../../../hooks/useTranslation";
-import { useAppDispatch, useAppSelector } from "../../../../../store/hooks";
-import {
-  getMaterialCategories,
-  MaterialCategory,
-} from "../../../../../store/slices/materialCategoriesSlice";
-import {
-  getMaterials,
-  Material,
-} from "../../../../../store/slices/materialsSlice";
+import { useTranslation } from "../../../hooks/useTranslation";
+import { useAppDispatch, useAppSelector } from "../../../store/hooks";
 import {
   getListings,
   createListing,
@@ -33,47 +23,35 @@ import {
   Listing,
   CreateListingData,
   UpdateListingData,
-} from "../../../../../store/slices/listingsSlice";
+} from "../../../store/slices/listingsSlice";
 import {
   Card,
   CardContent,
   CardTitle,
   CardDescription,
-} from "../../../../../components/ui/Card";
-import { Button } from "../../../../../components/ui/Button";
-import { Input } from "../../../../../components/ui/Input";
-import { Badge } from "../../../../../components/ui/Badge";
-import { ListingFormDialog } from "../../../../../components/ListingFormDialog";
-import { DeleteConfirmDialog } from "../../../../../components/admin/DeleteConfirmDialog";
-import { Toast } from "../../../../../components/ui/Toast";
-import { cn } from "../../../../../lib/utils";
-import { useRouter, useParams } from "next/navigation";
+} from "../../../components/ui/Card";
+import { Button } from "../../../components/ui/Button";
+import { Input } from "../../../components/ui/Input";
+import { Badge } from "../../../components/ui/Badge";
+import { ListingFormDialog } from "../../../components/ListingFormDialog";
+import { DeleteConfirmDialog } from "../../../components/admin/DeleteConfirmDialog";
+import { Toast } from "../../../components/ui/Toast";
+import { cn } from "../../../lib/utils";
 import Image from "next/image";
-import { useAuth } from "../../../../../hooks/useAuth";
+import { useAuth } from "../../../hooks/useAuth";
 
-export default function ListingsPage() {
+export default function MyListingsPage() {
   const { t, currentLanguage } = useTranslation();
   const dispatch = useAppDispatch();
-  const router = useRouter();
-  const params = useParams();
-  const categoryId = params?.categoryId as string;
-  const materialId = params?.materialId as string;
   const { user, company } = useAuth();
   const isRTL = currentLanguage.code === "ar";
 
-  const { categories } = useAppSelector((state) => state.materialCategories);
-  const { materials } = useAppSelector((state) => state.materials);
   const {
     listings,
     isLoading: listingsLoading,
     error: listingsError,
   } = useAppSelector((state) => state.listings);
 
-  const [selectedCategory, setSelectedCategory] =
-    useState<MaterialCategory | null>(null);
-  const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(
-    null
-  );
   const [searchQuery, setSearchQuery] = useState("");
   const [listingFormOpen, setListingFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -85,32 +63,12 @@ export default function ListingsPage() {
     type: "success" | "error";
   } | null>(null);
 
-  // Fetch categories and materials
+  // Fetch user's listings
   useEffect(() => {
-    dispatch(getMaterialCategories());
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (categoryId && categories.length > 0) {
-      const category = categories.find((cat) => cat.id === categoryId);
-      if (category) {
-        setSelectedCategory(category);
-        // Fetch materials for this category
-        dispatch(getMaterials({ categoryId }));
-      }
+    if (user?.id) {
+      dispatch(getListings({ userId: user.id }));
     }
-  }, [categoryId, categories, dispatch]);
-
-  useEffect(() => {
-    if (materialId && materials.length > 0) {
-      const material = materials.find((mat) => mat.id === materialId);
-      if (material) {
-        setSelectedMaterial(material);
-        // Fetch listings for this material
-        dispatch(getListings({ materialId }));
-      }
-    }
-  }, [materialId, materials, dispatch]);
+  }, [user?.id, dispatch]);
 
   useEffect(() => {
     if (listingsError) {
@@ -136,15 +94,9 @@ export default function ListingsPage() {
 
   const handleSubmitListing = async (data: CreateListingData) => {
     try {
-      if (!selectedMaterial) {
-        setToast({ message: t("admin.error"), type: "error" });
-        return;
-      }
-
-      // Prepare listing data with materialId and seller info
+      // Prepare listing data with seller info
       const listingData: CreateListingData = {
         ...data,
-        materialId: selectedMaterial.id,
         // Add sellerCompanyId or sellerUserId based on what's available
         ...(company?.id ? { sellerCompanyId: company.id } : {}),
         ...(user?.id && !company?.id ? { sellerUserId: user.id } : {}),
@@ -177,8 +129,8 @@ export default function ListingsPage() {
       setListingFormOpen(false);
       setEditingListing(null);
       // Refresh listings
-      if (materialId) {
-        dispatch(getListings({ materialId }));
+      if (user?.id) {
+        dispatch(getListings({ userId: user.id }));
       }
     } catch (err: any) {
       setToast({
@@ -200,59 +152,36 @@ export default function ListingsPage() {
       });
       setDeleteDialogOpen(false);
       setDeletingListing(null);
-      if (materialId) {
-        dispatch(getListings({ materialId }));
+      // Refresh listings
+      if (user?.id) {
+        dispatch(getListings({ userId: user.id }));
       }
     } catch (err) {
       setToast({ message: t("admin.error"), type: "error" });
     }
   };
 
-  const handleBackToMaterials = () => {
-    router.push(`/admin/materials/${categoryId}`);
-  };
-
+  // Filter listings by search query
   const filteredListings = listings.filter(
     (listing) =>
       listing.seller?.companyName
         ?.toLowerCase()
         .includes(searchQuery.toLowerCase()) ||
       listing.startingPrice?.toString().includes(searchQuery) ||
-      listing.title?.toLowerCase().includes(searchQuery.toLowerCase())
+      listing.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      listing.material?.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (!selectedCategory || !selectedMaterial) {
-    return (
-      <div className="p-8 text-center text-gray-600 dark:text-gray-400">
-        {t("admin.loading")}
-      </div>
-    );
-  }
-
   return (
-    <div>
+    <div className="container mx-auto p-4 sm:p-6 lg:p-8">
       {/* Header */}
       <div className="mb-8">
-        <div className="flex items-center gap-4 mb-2">
-          <Button
-            variant="secondary"
-            onClick={handleBackToMaterials}
-            className="h-10 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 font-medium"
-          >
-            {isRTL ? (
-              <ArrowRight className="h-5 w-5 ml-2" />
-            ) : (
-              <ArrowLeft className="h-5 w-5 mr-2" />
-            )}
-            {t("admin.backToMaterials")}
-          </Button>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-            <Tag className="h-8 w-8 text-green-600" />
-            {selectedMaterial.name}
-          </h1>
-        </div>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+          <Tag className="h-8 w-8 text-purple-600" />
+          {t("user.myListings") || "عروضي"}
+        </h1>
         <p className="mt-2 text-gray-600 dark:text-gray-400">
-          {t("listings.title")}
+          {t("user.manageListings") || "إدارة عروضك"}
         </p>
       </div>
 
@@ -267,7 +196,7 @@ export default function ListingsPage() {
           />
           <Input
             type="text"
-            placeholder={t("admin.search")}
+            placeholder={t("admin.search") || "بحث"}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className={cn(
@@ -300,7 +229,7 @@ export default function ListingsPage() {
             style={{ color: "white" }}
           />
           <span style={{ color: "white", fontWeight: 600 }}>
-            {t("listing.addListing") || "Add Listing"}
+            {t("listing.addListing") || "إضافة عرض"}
           </span>
         </Button>
       </div>
@@ -309,11 +238,13 @@ export default function ListingsPage() {
       <div>
         {listingsLoading ? (
           <Card className="p-8 text-center text-gray-600 dark:text-gray-400">
-            {t("admin.loading")}
+            {t("admin.loading") || "جاري التحميل..."}
           </Card>
         ) : filteredListings.length === 0 ? (
           <Card className="p-8 text-center text-gray-600 dark:text-gray-400">
-            {t("listings.noListings")}
+            {searchQuery
+              ? t("admin.noResults") || "لا توجد نتائج"
+              : t("listings.noListings") || "لا توجد عروض"}
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -359,6 +290,14 @@ export default function ListingsPage() {
                     {listing.title || "N/A"}
                   </CardTitle>
 
+                  {/* Material Name */}
+                  {listing.material?.name && (
+                    <CardDescription className="mb-3 text-gray-600 dark:text-gray-400">
+                      <Tag className="h-4 w-4 inline mr-1" />
+                      {listing.material.name}
+                    </CardDescription>
+                  )}
+
                   {/* Company Name */}
                   {listing.seller?.companyName && (
                     <CardDescription className="mb-3 text-gray-600 dark:text-gray-400">
@@ -372,18 +311,18 @@ export default function ListingsPage() {
                     {/* Price */}
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {t("listings.price")}
+                        {t("listings.price") || "السعر"}
                       </span>
                       <span className="font-semibold text-green-600 dark:text-green-400">
                         <DollarSign className="h-4 w-4 inline" />
-                        {listing.startingPrice} {t("currency.omr")}
+                        {listing.startingPrice} {t("currency.omr") || "ريال"}
                       </span>
                     </div>
 
                     {/* Quantity */}
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {t("listings.quantity")}
+                        {t("listings.quantity") || "الكمية"}
                       </span>
                       <span className="font-medium text-gray-900 dark:text-white">
                         {listing.stockAmount} {listing.unitOfMeasure}
@@ -394,7 +333,7 @@ export default function ListingsPage() {
                     {listing.expiresAt && (
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {t("listing.expiresAt")}
+                          {t("listing.expiresAt") || "تاريخ الانتهاء"}
                         </span>
                         <span className="text-xs text-gray-500 dark:text-gray-500">
                           <Calendar className="h-3 w-3 inline mr-1" />
@@ -410,8 +349,8 @@ export default function ListingsPage() {
                         className="text-xs"
                       >
                         {listing.isBiddable
-                          ? t("listings.biddable")
-                          : t("listings.direct")}
+                          ? t("listings.biddable") || "قابل للمزايدة"
+                          : t("listings.direct") || "مباشر"}
                       </Badge>
                     </div>
                   </div>
@@ -423,20 +362,20 @@ export default function ListingsPage() {
                       variant="secondary"
                       onClick={() => handleEditListing(listing)}
                       className="flex-1"
-                      title={t("admin.edit")}
+                      title={t("admin.edit") || "تعديل"}
                     >
                       <Edit className="h-4 w-4 mr-2" />
-                      {t("admin.edit")}
+                      {t("admin.edit") || "تعديل"}
                     </Button>
                     <Button
                       size="sm"
                       variant="destructive"
                       onClick={() => handleDeleteListing(listing)}
                       className="flex-1"
-                      title={t("admin.delete")}
+                      title={t("admin.delete") || "حذف"}
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
-                      {t("admin.delete")}
+                      {t("admin.delete") || "حذف"}
                     </Button>
                   </div>
                 </CardContent>
@@ -454,16 +393,17 @@ export default function ListingsPage() {
           setEditingListing(null);
         }}
         onSubmit={handleSubmitListing}
-        initialCategoryId={categoryId}
-        initialMaterialId={materialId}
+        editingListing={editingListing}
       />
 
       <DeleteConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         onConfirm={handleConfirmDelete}
-        title={t("listing.deleteListing") || "Delete Listing"}
-        description={t("listing.deleteListingConfirm")}
+        title={t("listing.deleteListing") || "حذف العرض"}
+        description={
+          t("listing.deleteListingConfirm") || "هل أنت متأكد من حذف هذا العرض؟"
+        }
         isLoading={listingsLoading}
       />
 

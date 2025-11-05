@@ -12,8 +12,7 @@
   border-color: inherit;
 }
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap");
+/* Fonts are loaded via link tags in layout.tsx */
 
 :root {
   --foreground-rgb: 0, 0, 0;
@@ -39,6 +38,64 @@ html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
+}
+
+/* Font Families - Apply with higher specificity */
+html[dir="rtl"],
+html[dir="rtl"] body {
+  font-family: "Tajawal", "Segoe UI", "Tahoma", "Arial", sans-serif !important;
+  font-weight: 500; /* Medium weight similar to logo */
+}
+
+html[dir="ltr"],
+html[dir="ltr"] body {
+  font-family: "Space Grotesk", "Inter", "Segoe UI", "Arial", sans-serif !important;
+  letter-spacing: -0.01em; /* Tighter spacing like logo */
+}
+
+/* Apply font to all elements with !important */
+html[dir="rtl"] *:not(script):not(style) {
+  font-family: "Tajawal", "Segoe UI", "Tahoma", "Arial", sans-serif !important;
+}
+
+html[dir="ltr"] *:not(script):not(style) {
+  font-family: "Space Grotesk", "Inter", "Segoe UI", "Arial", sans-serif !important;
+}
+
+/* Fallback for body */
+body {
+  font-family: "Space Grotesk", "Tajawal", "Segoe UI", "Arial", sans-serif !important;
+}
+
+/* Headings - Semi-bold weight like logo */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 600;
+}
+
+html[dir="rtl"] h1,
+html[dir="rtl"] h2,
+html[dir="rtl"] h3,
+html[dir="rtl"] h4,
+html[dir="rtl"] h5,
+html[dir="rtl"] h6 {
+  font-family: "Tajawal", "Segoe UI", "Tahoma", "Arial", sans-serif !important;
+  font-weight: 700; /* Semi-bold for Arabic headings */
+}
+
+html[dir="ltr"] h1,
+html[dir="ltr"] h2,
+html[dir="ltr"] h3,
+html[dir="ltr"] h4,
+html[dir="ltr"] h5,
+html[dir="ltr"] h6 {
+  font-family: "Space Grotesk", "Inter", "Segoe UI", "Arial", sans-serif !important;
+  font-weight: 600; /* Semi-bold for English headings */
+  letter-spacing: -0.02em; /* Tighter spacing for headings */
 }
 
 body {

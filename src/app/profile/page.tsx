@@ -1,23 +1,33 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Card } from "@/components/ui/Card";
 import { Tabs, Tab, Box, CircularProgress, Alert } from "@mui/material";
-import { User, Building2, MapPin } from "lucide-react";
+import { User, Building2, MapPin, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import UserProfileForm from "@/components/profile/UserProfileForm";
 import CompanySection from "@/components/profile/CompanySection";
 import AddressesSection from "@/components/profile/AddressesSection";
+import InterestsSection from "@/components/profile/InterestsSection";
 
 export default function ProfilePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t, currentLanguage } = useTranslation();
   const { user, company, isAuthenticated, isLoading } = useAuth();
   const isRTL = currentLanguage.dir === "rtl";
   const [activeTab, setActiveTab] = useState(0);
+
+  // Handle tab query parameter
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "interests") {
+      setActiveTab(3);
+    }
+  }, [searchParams]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -43,14 +53,19 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className={cn("min-h-screen bg-gray-50 dark:bg-gray-900 py-8", isRTL ? "rtl" : "ltr")}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div
+      className={cn(
+        "min-h-screen bg-gray-50 dark:bg-gray-900 py-8",
+        isRTL ? "rtl" : "ltr"
+      )}
+    >
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
         {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+        <div className="mb-4 sm:mb-6 md:mb-8">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
             {t("profile.myProfile")}
           </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
             {user.email}
           </p>
         </div>
@@ -61,60 +76,118 @@ export default function ProfilePage() {
             <Tabs
               value={activeTab}
               onChange={handleTabChange}
-              variant="scrollable"
-              scrollButtons="auto"
-              className={cn(
-                "px-4",
-                isRTL && "flex-row-reverse"
-              )}
+              variant="standard"
+              className={cn("px-2 sm:px-4", isRTL && "flex-row-reverse")}
               sx={{
                 "& .MuiTabs-flexContainer": {
-                  flexDirection: isRTL ? "row-reverse" : "row",
+                  display: { xs: "grid", sm: "flex" },
+                  gridTemplateColumns: { xs: "repeat(2, 1fr)", sm: "none" },
+                  flexDirection: { sm: isRTL ? "row-reverse" : "row" },
+                  gap: { xs: 0, sm: 1 },
+                  width: "100%",
                 },
                 "& .MuiTab-root": {
                   textTransform: "none",
-                  minHeight: 64,
+                  minHeight: { xs: 48, sm: 56, md: 64 },
+                  padding: { xs: "8px 12px", sm: "12px 16px", md: "16px 20px" },
                   fontWeight: 600,
-                  fontSize: "1rem",
+                  fontSize: { xs: "0.75rem", sm: "0.875rem", md: "1rem" },
+                  width: { xs: "100%", sm: "auto" },
+                  maxWidth: { xs: "100%", sm: "none" },
+                  flex: { xs: "1 1 auto", sm: "0 1 auto" },
+                  "& .MuiTab-iconWrapper": {
+                    fontSize: { xs: "1rem", sm: "1.125rem", md: "1.25rem" },
+                    marginBottom: { xs: 0, sm: 0 },
+                  },
+                },
+                "& .MuiTabs-indicator": {
+                  display: { xs: "none", sm: "block" },
                 },
               }}
             >
               <Tab
-                icon={<User size={20} />}
+                icon={<User className="w-4 h-4 sm:w-5 sm:h-5" />}
                 iconPosition="start"
                 label={t("profile.personalInfo")}
                 sx={{
                   flexDirection: isRTL ? "row-reverse" : "row",
-                  gap: 1,
+                  gap: { xs: 0.5, sm: 1 },
+                  minWidth: { xs: "auto", sm: "auto" },
+                  borderBottom: {
+                    xs: activeTab === 0 ? "2px solid" : "none",
+                    sm: "none",
+                  },
+                  borderColor: { xs: "primary.main", sm: "transparent" },
+                  "&.Mui-selected": {
+                    borderBottom: { xs: "2px solid", sm: "none" },
+                    borderColor: { xs: "primary.main", sm: "transparent" },
+                  },
                 }}
               />
               <Tab
-                icon={<Building2 size={20} />}
+                icon={<Building2 className="w-4 h-4 sm:w-5 sm:h-5" />}
                 iconPosition="start"
                 label={t("profile.companyInfo")}
                 sx={{
                   flexDirection: isRTL ? "row-reverse" : "row",
-                  gap: 1,
+                  gap: { xs: 0.5, sm: 1 },
+                  minWidth: { xs: "auto", sm: "auto" },
+                  borderBottom: {
+                    xs: activeTab === 1 ? "2px solid" : "none",
+                    sm: "none",
+                  },
+                  borderColor: { xs: "primary.main", sm: "transparent" },
+                  "&.Mui-selected": {
+                    borderBottom: { xs: "2px solid", sm: "none" },
+                    borderColor: { xs: "primary.main", sm: "transparent" },
+                  },
                 }}
               />
               <Tab
-                icon={<MapPin size={20} />}
+                icon={<MapPin className="w-4 h-4 sm:w-5 sm:h-5" />}
                 iconPosition="start"
                 label={t("profile.addresses")}
                 sx={{
                   flexDirection: isRTL ? "row-reverse" : "row",
-                  gap: 1,
+                  gap: { xs: 0.5, sm: 1 },
+                  minWidth: { xs: "auto", sm: "auto" },
+                  borderBottom: {
+                    xs: activeTab === 2 ? "2px solid" : "none",
+                    sm: "none",
+                  },
+                  borderColor: { xs: "primary.main", sm: "transparent" },
+                  "&.Mui-selected": {
+                    borderBottom: { xs: "2px solid", sm: "none" },
+                    borderColor: { xs: "primary.main", sm: "transparent" },
+                  },
+                }}
+              />
+              <Tab
+                icon={<Heart className="w-4 h-4 sm:w-5 sm:h-5" />}
+                iconPosition="start"
+                label={t("profile.interests") || "الاهتمامات"}
+                sx={{
+                  flexDirection: isRTL ? "row-reverse" : "row",
+                  gap: { xs: 0.5, sm: 1 },
+                  minWidth: { xs: "auto", sm: "auto" },
+                  borderBottom: {
+                    xs: activeTab === 3 ? "2px solid" : "none",
+                    sm: "none",
+                  },
+                  borderColor: { xs: "primary.main", sm: "transparent" },
+                  "&.Mui-selected": {
+                    borderBottom: { xs: "2px solid", sm: "none" },
+                    borderColor: { xs: "primary.main", sm: "transparent" },
+                  },
                 }}
               />
             </Tabs>
           </Box>
 
           {/* Tab Panels */}
-          <Box className="p-6">
+          <Box className="p-3 sm:p-4 md:p-6">
             {/* Personal Info Tab */}
-            {activeTab === 0 && (
-              <UserProfileForm user={user} />
-            )}
+            {activeTab === 0 && <UserProfileForm user={user} />}
 
             {/* Company Info Tab */}
             {activeTab === 1 && (
@@ -125,10 +198,12 @@ export default function ProfilePage() {
             {activeTab === 2 && (
               <AddressesSection user={user} company={company} />
             )}
+
+            {/* Interests Tab */}
+            {activeTab === 3 && <InterestsSection userId={user.id} />}
           </Box>
         </Card>
       </div>
     </div>
   );
 }
-

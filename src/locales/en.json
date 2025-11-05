@@ -131,7 +131,13 @@
     "settings": "Settings",
     "logout": "Logout",
     "myPurchases": "My Purchases",
-    "myAuctions": "My Auctions"
+    "myAuctions": "My Auctions",
+    "myListings": "My Listings",
+    "manageListings": "Manage your listings",
+    "dashboard": "Dashboard",
+    "welcomeBack": "Welcome back",
+    "viewPurchases": "View your purchases",
+    "viewAuctions": "View your auctions"
   },
   "orders": {
     "order": "Order",
@@ -477,6 +483,7 @@
     "messageError": "Failed to send message",
     "sellerInfoNotAvailable": "Seller information is not available",
     "myChats": "My Chats",
+    "viewChats": "View your chats",
     "chats": "Chats",
     "noChats": "No chats",
     "noChatsDescription": "You haven't started any conversations yet",
@@ -493,6 +500,14 @@
     "priceUpdateError": "Failed to update price",
     "currentPrice": "Current Price",
     "update": "Update"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "loading": "Loading...",
+    "noNotifications": "No notifications",
+    "markAsRead": "Mark as read",
+    "markAllRead": "Mark all as read",
+    "viewAll": "View all"
   },
   "currency": {
     "omr": "OMR"
@@ -546,6 +561,15 @@
     "addFirstAddress": "Add your first address",
     "deleteAddressConfirm": "Are you sure you want to delete this address?",
     "save": "Save",
+    "interests": "My Interests",
+    "addInterest": "Add Interest",
+    "selectMaterial": "Please select a material",
+    "materialAddedToFavorites": "Material added to interests",
+    "materialRemovedFromFavorites": "Material removed from interests",
+    "errorAddingMaterial": "Failed to add material",
+    "errorRemovingMaterial": "Failed to remove material",
+    "noInterests": "No interests",
+    "add": "Add",
     "cancel": "Cancel",
     "loading": "Loading...",
     "selectCountry": "Select Country",

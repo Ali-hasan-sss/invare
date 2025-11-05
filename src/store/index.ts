@@ -21,6 +21,7 @@ import companiesReducer from "./slices/companiesSlice";
 import companyAddressesReducer from "./slices/companyAddressesSlice";
 import userAddressesReducer from "./slices/userAddressesSlice";
 import advertisementsReducer from "./slices/advertisementsSlice";
+import notificationsReducer from "./slices/notificationsSlice";
 
 export const store = configureStore({
   reducer: {
@@ -46,6 +47,7 @@ export const store = configureStore({
     companyAddresses: companyAddressesReducer,
     userAddresses: userAddressesReducer,
     advertisements: advertisementsReducer,
+    notifications: notificationsReducer,
   },
 });
 

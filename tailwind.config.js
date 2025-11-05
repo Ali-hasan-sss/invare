@@ -58,8 +58,9 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        arabic: ["Cairo", "system-ui", "sans-serif"],
+        sans: ["Space Grotesk", "Inter", "system-ui", "sans-serif"],
+        arabic: ["Tajawal", "Cairo", "system-ui", "sans-serif"],
+        english: ["Space Grotesk", "Inter", "system-ui", "sans-serif"],
       },
     },
   },

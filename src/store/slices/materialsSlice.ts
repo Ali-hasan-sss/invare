@@ -10,8 +10,15 @@ export interface Material {
   categoryId?: string;
 }
 
+export interface FavoriteMaterial {
+  id: string;
+  user: string;
+  material: Material;
+}
+
 export interface MaterialState {
   materials: Material[];
+  favoriteMaterials: Material[];
   currentMaterial: Material | null;
   isLoading: boolean;
   error: string | null;
@@ -41,6 +48,7 @@ export interface GetMaterialsParams {
 // Initial state
 const initialState: MaterialState = {
   materials: [],
+  favoriteMaterials: [],
   currentMaterial: null,
   isLoading: false,
   error: null,
@@ -147,6 +155,61 @@ export const deleteMaterial = createAsyncThunk<
       error.response?.data?.message ||
         error.message ||
         "Failed to delete material"
+    );
+  }
+});
+
+export const addFavoriteMaterial = createAsyncThunk<
+  FavoriteMaterial,
+  string,
+  { rejectValue: string }
+>("materials/addFavorite", async (id, { rejectWithValue }) => {
+  try {
+    const response = await apiClient.post(
+      API_CONFIG.ENDPOINTS.MATERIALS.ADD_FAVORITE(id)
+    );
+    return response.data;
+  } catch (error: any) {
+    return rejectWithValue(
+      error.response?.data?.message ||
+        error.message ||
+        "Failed to add material to favorites"
+    );
+  }
+});
+
+export const getFavoriteMaterials = createAsyncThunk<
+  Material[],
+  void,
+  { rejectValue: string }
+>("materials/getFavorites", async (_, { rejectWithValue }) => {
+  try {
+    const response = await apiClient.get(
+      API_CONFIG.ENDPOINTS.MATERIALS.GET_FAVORITES
+    );
+    return response.data;
+  } catch (error: any) {
+    return rejectWithValue(
+      error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch favorite materials"
+    );
+  }
+});
+
+export const removeFavoriteMaterial = createAsyncThunk<
+  string,
+  string,
+  { rejectValue: string }
+>("materials/removeFavorite", async (id, { rejectWithValue }) => {
+  try {
+    await apiClient.delete(API_CONFIG.ENDPOINTS.MATERIALS.REMOVE_FAVORITE(id));
+    return id;
+  } catch (error: any) {
+    return rejectWithValue(
+      error.response?.data?.message ||
+        error.message ||
+        "Failed to remove material from favorites"
     );
   }
 });
@@ -272,6 +335,67 @@ const materialsSlice = createSlice({
       .addCase(deleteMaterial.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload || "Failed to delete material";
+      })
+
+      // Add Favorite Material
+      .addCase(addFavoriteMaterial.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(
+        addFavoriteMaterial.fulfilled,
+        (state, action: PayloadAction<FavoriteMaterial>) => {
+          state.isLoading = false;
+          // Add to favorites if not already present
+          if (
+            !state.favoriteMaterials.find(
+              (m) => m.id === action.payload.material.id
+            )
+          ) {
+            state.favoriteMaterials.push(action.payload.material);
+          }
+          state.error = null;
+        }
+      )
+      .addCase(addFavoriteMaterial.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || "Failed to add material to favorites";
+      })
+
+      // Get Favorite Materials
+      .addCase(getFavoriteMaterials.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(
+        getFavoriteMaterials.fulfilled,
+        (state, action: PayloadAction<Material[]>) => {
+          state.isLoading = false;
+          state.favoriteMaterials = action.payload;
+          state.error = null;
+        }
+      )
+      .addCase(getFavoriteMaterials.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || "Failed to fetch favorite materials";
+      })
+
+      // Remove Favorite Material
+      .addCase(removeFavoriteMaterial.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(removeFavoriteMaterial.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.favoriteMaterials = state.favoriteMaterials.filter(
+          (m) => m.id !== action.payload
+        );
+        state.error = null;
+      })
+      .addCase(removeFavoriteMaterial.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error =
+          action.payload || "Failed to remove material from favorites";
       });
   },
 });
