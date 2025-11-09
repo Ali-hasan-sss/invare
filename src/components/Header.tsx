@@ -8,7 +8,6 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  ListItemIcon,
   ListItemText,
   Drawer,
   List,
@@ -18,25 +17,12 @@ import {
   useMediaQuery,
   useTheme as useMuiTheme,
 } from "@mui/material";
-import {
-  ChevronDown,
-  LogIn,
-  LogOut,
-  User,
-  Settings,
-  ShoppingBag,
-  Gavel,
-  Menu as MenuIcon,
-  X,
-  Bell,
-} from "lucide-react";
+import { ChevronDown, LogIn, Menu as MenuIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAppSelector } from "@/store/hooks";
-import { useMaterialsList } from "@/hooks/useMaterials";
-import { useMaterialCategoriesList } from "@/hooks/useMaterialCategories";
 import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -51,16 +37,6 @@ const Header: React.FC = () => {
   const { t } = useTranslation();
   const { currentLanguage } = useAppSelector((state) => state.language);
   const { user, isAuthenticated, logout: logoutUser } = useAuth();
-  const {
-    materials,
-    isLoading: materialsLoading,
-    getMaterials,
-  } = useMaterialsList();
-  const {
-    categories,
-    isLoading: categoriesLoading,
-    getCategories,
-  } = useMaterialCategoriesList();
   const router = useRouter();
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down("md"));
@@ -70,27 +46,8 @@ const Header: React.FC = () => {
   const [supportAnchor, setSupportAnchor] = React.useState<null | HTMLElement>(
     null
   );
-  const [materialsAnchor, setMaterialsAnchor] =
-    React.useState<null | HTMLElement>(null);
-
   // Mobile drawer state
   const [mobileOpen, setMobileOpen] = React.useState(false);
-
-  // Materials and categories loading state
-  const [categoriesFetched, setCategoriesFetched] = React.useState(false);
-  const [selectedCategoryId, setSelectedCategoryId] = React.useState<
-    string | null
-  >(null);
-  const [categorySubmenuAnchor, setCategorySubmenuAnchor] =
-    React.useState<null | HTMLElement>(null);
-
-  // Mobile drawer materials state
-  const [mobileCategoriesFetched, setMobileCategoriesFetched] =
-    React.useState(false);
-  const [mobileShowCategories, setMobileShowCategories] = React.useState(false);
-  const [mobileSelectedCategoryId, setMobileSelectedCategoryId] =
-    React.useState<string | null>(null);
-  const [mobileShowMaterials, setMobileShowMaterials] = React.useState(false);
 
   // User menu state
   const [userMenuAnchor, setUserMenuAnchor] =
@@ -105,33 +62,8 @@ const Header: React.FC = () => {
   const handleSupportClick = (event: React.MouseEvent<HTMLElement>) => {
     setSupportAnchor(event.currentTarget);
   };
-  const handleMaterialsClick = (event: React.MouseEvent<HTMLElement>) => {
-    setMaterialsAnchor(event.currentTarget);
-
-    // Fetch categories if not already fetched
-    if (!categoriesFetched && !categoriesLoading) {
-      getCategories();
-      setCategoriesFetched(true);
-    }
-  };
-
-  const handleCategoryClick = (
-    event: React.MouseEvent<HTMLElement>,
-    categoryId: string
-  ) => {
-    event.stopPropagation();
-    setCategorySubmenuAnchor(event.currentTarget);
-    setSelectedCategoryId(categoryId);
-
-    // Fetch materials for this category
-    getMaterials({ categoryId });
-  };
-
   const handleClose = () => {
     setSupportAnchor(null);
-    setMaterialsAnchor(null);
-    setCategorySubmenuAnchor(null);
-    setSelectedCategoryId(null);
   };
 
   const handleUserMenuClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -155,30 +87,6 @@ const Header: React.FC = () => {
   // Mobile drawer handlers
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
-  };
-
-  const handleMobileMaterialsClick = () => {
-    // Fetch categories if not already fetched
-    if (!mobileCategoriesFetched && !categoriesLoading) {
-      getCategories();
-      setMobileCategoriesFetched(true);
-    }
-    // Toggle categories visibility
-    setMobileShowCategories(!mobileShowCategories);
-    setMobileShowMaterials(false);
-    setMobileSelectedCategoryId(null);
-  };
-
-  const handleMobileCategoryClick = (categoryId: string) => {
-    setMobileSelectedCategoryId(categoryId);
-    setMobileShowMaterials(true);
-    // Fetch materials for this category
-    getMaterials({ categoryId });
-  };
-
-  const handleMobileBackToCategories = () => {
-    setMobileShowMaterials(false);
-    setMobileSelectedCategoryId(null);
   };
 
   // Mobile drawer content
@@ -230,120 +138,14 @@ const Header: React.FC = () => {
         <ListItem disablePadding>
           <ListItemButton
             className="rounded-lg mb-2"
-            onClick={handleMobileMaterialsClick}
+            onClick={() => {
+              router.push("/materials");
+              handleDrawerToggle();
+            }}
           >
             <MuiListItemText primary={t("navigation.materials")} />
-            <ChevronDown
-              size={16}
-              className={`transition-transform ${
-                mobileShowCategories ? "rotate-180" : ""
-              }`}
-            />
           </ListItemButton>
         </ListItem>
-
-        {/* Categories in mobile */}
-        {mobileShowCategories && (
-          <Box className="ml-4 mb-2">
-            {/* Loading state */}
-            {categoriesLoading && (
-              <Box className="flex items-center py-2 px-3 text-black dark:text-white">
-                <Box className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600 mr-2" />
-                {t("common.loading")}...
-              </Box>
-            )}
-
-            {/* Categories list */}
-            {categories.length > 0 &&
-              !categoriesLoading &&
-              !mobileShowMaterials &&
-              categories.map((category) => (
-                <ListItem key={category.id} disablePadding>
-                  <ListItemButton
-                    className="rounded-lg mb-1 py-2"
-                    onClick={() => handleMobileCategoryClick(category.id)}
-                  >
-                    <MuiListItemText
-                      primary={category.name}
-                      className="text-sm"
-                    />
-                    <ChevronDown size={14} className="transform -rotate-90" />
-                  </ListItemButton>
-                </ListItem>
-              ))}
-
-            {/* Materials view */}
-            {mobileShowMaterials && mobileSelectedCategoryId && (
-              <Box>
-                {/* Back button */}
-                <ListItem disablePadding>
-                  <ListItemButton
-                    className="rounded-lg mb-2 py-2"
-                    onClick={handleMobileBackToCategories}
-                  >
-                    <ChevronDown
-                      size={14}
-                      className="transform rotate-90 mr-2"
-                    />
-                    <MuiListItemText
-                      primary={t("common.back")}
-                      className="text-sm text-black dark:text-white"
-                    />
-                  </ListItemButton>
-                </ListItem>
-
-                {/* Materials loading */}
-                {materialsLoading && (
-                  <Box className="flex items-center py-2 px-3 text-black dark:text-white">
-                    <Box className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600 mr-2" />
-                    {t("common.loading")}...
-                  </Box>
-                )}
-
-                {/* Materials list */}
-                {materials.length > 0 &&
-                  !materialsLoading &&
-                  materials.map((material) => (
-                    <ListItem key={material.id} disablePadding>
-                      <ListItemButton
-                        className="rounded-lg mb-1 py-2"
-                        onClick={() => {
-                          router.push(`/listings/${material.id}`);
-                          handleDrawerToggle();
-                        }}
-                      >
-                        <Box>
-                          <MuiListItemText
-                            primary={material.name}
-                            className="text-sm"
-                          />
-                          <span className="text-xs text-black dark:text-white opacity-70">
-                            {material.unitOfMeasure}
-                          </span>
-                        </Box>
-                      </ListItemButton>
-                    </ListItem>
-                  ))}
-
-                {/* No materials found */}
-                {materials.length === 0 && !materialsLoading && (
-                  <Box className="py-2 px-3 text-gray-500 dark:text-gray-400 text-sm">
-                    {t("common.noDataFound")}
-                  </Box>
-                )}
-              </Box>
-            )}
-
-            {/* No categories found */}
-            {categories.length === 0 &&
-              !categoriesLoading &&
-              mobileCategoriesFetched && (
-                <Box className="py-2 px-3 text-black dark:text-white text-sm">
-                  {t("common.noDataFound")}
-                </Box>
-              )}
-          </Box>
-        )}
       </List>
 
       {/* Language and Theme Controls */}
@@ -407,7 +209,20 @@ const Header: React.FC = () => {
                   <span>{t("listings.allListings")}</span>
                 </Link>
               </ClientOnly>
-
+              <ClientOnly
+                fallback={
+                  <div className="flex items-center text-black dark:text-white hover:opacity-80 transition-colors cursor-pointer font-medium">
+                    <span>{t("navigation.materials")}</span>
+                  </div>
+                }
+              >
+                <Link
+                  href="/materials"
+                  className="flex items-center text-black dark:text-white hover:opacity-80 transition-colors font-medium"
+                >
+                  <span>{t("navigation.materials")}</span>
+                </Link>
+              </ClientOnly>
               <ClientOnly
                 fallback={
                   <div className="flex items-center text-black dark:text-white hover:opacity-80 transition-colors cursor-pointer font-medium">
@@ -424,29 +239,6 @@ const Header: React.FC = () => {
                   onClick={handleSupportClick}
                 >
                   <span>{t("navigation.support")}</span>
-                  <ChevronDown
-                    size={16}
-                    className="mr-1 text-black dark:text-white"
-                  />
-                </Box>
-              </ClientOnly>
-
-              <ClientOnly
-                fallback={
-                  <div className="flex items-center text-black dark:text-white hover:opacity-80 transition-colors cursor-pointer font-medium">
-                    <span>المواد</span>
-                    <ChevronDown
-                      size={16}
-                      className="mr-1 text-black dark:text-white"
-                    />
-                  </div>
-                }
-              >
-                <Box
-                  className="flex items-center text-black dark:text-white hover:opacity-80 transition-colors cursor-pointer font-medium"
-                  onClick={handleMaterialsClick}
-                >
-                  <span>{t("navigation.materials")}</span>
                   <ChevronDown
                     size={16}
                     className="mr-1 text-black dark:text-white"
@@ -638,154 +430,6 @@ const Header: React.FC = () => {
           >
             <ListItemText primary={t("navigation.faq")} />
           </MenuItem>
-        </Menu>
-
-        <Menu
-          anchorEl={materialsAnchor}
-          open={Boolean(materialsAnchor)}
-          onClose={handleClose}
-          anchorOrigin={{
-            vertical: "bottom",
-            horizontal: "left",
-          }}
-          transformOrigin={{
-            vertical: "top",
-            horizontal: "left",
-          }}
-          disableScrollLock={true}
-          slotProps={{
-            paper: {
-              style: {
-                maxHeight: "300px",
-                overflow: "auto",
-                position: "fixed",
-              },
-              className: "bg-white dark:bg-gray-800 text-black dark:text-white",
-            },
-          }}
-        >
-          {/* Loading state */}
-          {categoriesLoading && (
-            <MenuItem disabled>
-              <ListItemText
-                primary={
-                  <Box className="flex items-center">
-                    <Box className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600 mr-2" />
-                    {t("common.loading")}...
-                  </Box>
-                }
-              />
-            </MenuItem>
-          )}
-
-          {/* Categories list */}
-          {categories.length > 0 &&
-            !categoriesLoading &&
-            categories.map((category) => (
-              <MenuItem
-                key={category.id}
-                onClick={(event) => handleCategoryClick(event, category.id)}
-                className="hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between"
-              >
-                <ListItemText
-                  primary={category.name}
-                  className="text-black dark:text-white"
-                />
-                <ChevronDown
-                  size={16}
-                  className="transform -rotate-90 text-black dark:text-white"
-                />
-              </MenuItem>
-            ))}
-
-          {/* No categories found */}
-          {categories.length === 0 &&
-            !categoriesLoading &&
-            categoriesFetched && (
-              <MenuItem disabled>
-                <ListItemText
-                  primary={t("common.noDataFound")}
-                  className="text-black dark:text-white"
-                />
-              </MenuItem>
-            )}
-        </Menu>
-
-        {/* Category Submenu */}
-        <Menu
-          anchorEl={categorySubmenuAnchor}
-          open={Boolean(categorySubmenuAnchor)}
-          onClose={() => {
-            setCategorySubmenuAnchor(null);
-            setSelectedCategoryId(null);
-          }}
-          anchorOrigin={{
-            vertical: "top",
-            horizontal: "right",
-          }}
-          transformOrigin={{
-            vertical: "top",
-            horizontal: "left",
-          }}
-          disableScrollLock={true}
-          slotProps={{
-            paper: {
-              style: {
-                maxHeight: "300px",
-                overflow: "auto",
-                position: "fixed",
-                minWidth: "200px",
-              },
-              className: "bg-white dark:bg-gray-800 text-black dark:text-white",
-            },
-          }}
-        >
-          {/* Loading state for materials */}
-          {materialsLoading && (
-            <MenuItem disabled>
-              <ListItemText
-                primary={
-                  <Box className="flex items-center">
-                    <Box className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600 mr-2" />
-                    {t("common.loading")}...
-                  </Box>
-                }
-              />
-            </MenuItem>
-          )}
-
-          {/* Materials for selected category */}
-          {materials.length > 0 &&
-            !materialsLoading &&
-            selectedCategoryId &&
-            materials.map((material) => (
-              <MenuItem
-                key={material.id}
-                onClick={() => {
-                  router.push(`/listings/${material.id}`);
-                  handleClose();
-                }}
-                className="hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                <ListItemText
-                  primary={material.name}
-                  secondary={material.unitOfMeasure}
-                  className="text-black dark:text-white"
-                />
-              </MenuItem>
-            ))}
-
-          {/* No materials found for category */}
-          {materials.length === 0 &&
-            !materialsLoading &&
-            selectedCategoryId && (
-              <MenuItem disabled>
-                <ListItemText
-                  primary={t("common.noDataFound")}
-                  className="text-black dark:text-white"
-                />
-              </MenuItem>
-            )}
         </Menu>
       </ClientOnly>
 

@@ -24,6 +24,9 @@ export const API_CONFIG = {
     LISTINGS: {
       BASE: "/listings",
       LIST: "/listings",
+      ME: "/listings/me",
+      ME_USER: "/listings/me/user",
+      ME_COMPANY: "/listings/me/company",
       DETAIL: (id: string) => `/listings/${id}`,
     },
     LISTING_PHOTOS: {

@@ -44,7 +44,7 @@ const HelpCenterPage: React.FC = () => {
 
         <Grid container spacing={3}>
           <Grid item xs={12} md={4}>
-            <Box className="p-4 rounded-lg bg-gray-50 dark:bg-gray-900/40 h-full border border-gray-200 dark:border-gray-700">
+            <Box className="p-4 rounded-lg mt-4 bg-gray-50 dark:bg-gray-900/40 h-full border border-gray-200 dark:border-gray-700">
               <Box className="flex items-center mb-2">
                 <Rocket
                   size={18}
@@ -61,7 +61,7 @@ const HelpCenterPage: React.FC = () => {
             </Box>
           </Grid>
           <Grid item xs={12} md={4}>
-            <Box className="p-4 rounded-lg bg-gray-50 dark:bg-gray-900/40 h-full border border-gray-200 dark:border-gray-700">
+            <Box className="p-4 rounded-lg mt-4 bg-gray-50 dark:bg-gray-900/40 h-full border border-gray-200 dark:border-gray-700">
               <Box className="flex items-center mb-2">
                 <ShoppingBag
                   size={18}
@@ -73,12 +73,12 @@ const HelpCenterPage: React.FC = () => {
               </Box>
               <Typography className="text-gray-700 dark:text-gray-300">
                 {t("help.buyingText") ||
-                  "استخدم زر اشترِ الآن للدفع الآمن عبر ثواني، أو شارك في المزادات."}
+                  "استخدم زر اشترِ الآن للدفع الآمن عبر ادفع باي، أو شارك في المزادات."}
               </Typography>
             </Box>
           </Grid>
           <Grid item xs={12} md={4}>
-            <Box className="p-4 rounded-lg bg-gray-50 dark:bg-gray-900/40 h-full border border-gray-200 dark:border-gray-700">
+            <Box className="p-4 rounded-lg mt-4 bg-gray-50 dark:bg-gray-900/40 h-full border border-gray-200 dark:border-gray-700">
               <Box className="flex items-center mb-2">
                 <CreditCard
                   size={18}
@@ -90,7 +90,7 @@ const HelpCenterPage: React.FC = () => {
               </Box>
               <Typography className="text-gray-700 dark:text-gray-300">
                 {t("help.paymentsText") ||
-                  "ندعم الدفع عبر ثواني. بعد الدفع ستعود تلقائيًا إلى الصفحة الأصلية."}
+                  "ندعم الدفع عبر ادفع باي. بعد الدفع ستعود تلقائيًا إلى الصفحة الأصلية."}
               </Typography>
             </Box>
           </Grid>

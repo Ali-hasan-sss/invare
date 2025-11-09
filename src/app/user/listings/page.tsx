@@ -13,13 +13,8 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import { useTranslation } from "../../../hooks/useTranslation";
-import { useAppDispatch, useAppSelector } from "../../../store/hooks";
+import { useListings } from "../../../hooks/useListings";
 import {
-  getListings,
-  createListing,
-  updateListing,
-  deleteListing,
-  clearError as clearListingError,
   Listing,
   CreateListingData,
   UpdateListingData,
@@ -33,6 +28,8 @@ import {
 import { Button } from "../../../components/ui/Button";
 import { Input } from "../../../components/ui/Input";
 import { Badge } from "../../../components/ui/Badge";
+import { Select, SelectOption } from "../../../components/ui/Select";
+import { Pagination, Box } from "@mui/material";
 import { ListingFormDialog } from "../../../components/ListingFormDialog";
 import { DeleteConfirmDialog } from "../../../components/admin/DeleteConfirmDialog";
 import { Toast } from "../../../components/ui/Toast";
@@ -42,7 +39,6 @@ import { useAuth } from "../../../hooks/useAuth";
 
 export default function MyListingsPage() {
   const { t, currentLanguage } = useTranslation();
-  const dispatch = useAppDispatch();
   const { user, company } = useAuth();
   const isRTL = currentLanguage.code === "ar";
 
@@ -50,9 +46,19 @@ export default function MyListingsPage() {
     listings,
     isLoading: listingsLoading,
     error: listingsError,
-  } = useAppSelector((state) => state.listings);
+    totalCount,
+    currentPage,
+    limit,
+    getMyListings,
+    createListing,
+    updateListing,
+    deleteListing,
+    clearError,
+    setCurrentPage,
+  } = useListings();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [listingFormOpen, setListingFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingListing, setEditingListing] = useState<Listing | null>(null);
@@ -66,16 +72,20 @@ export default function MyListingsPage() {
   // Fetch user's listings
   useEffect(() => {
     if (user?.id) {
-      dispatch(getListings({ userId: user.id }));
+      getMyListings({
+        page: currentPage,
+        limit: limit,
+        status: statusFilter || undefined,
+      });
     }
-  }, [user?.id, dispatch]);
+  }, [user?.id, currentPage, limit, statusFilter, getMyListings]);
 
   useEffect(() => {
     if (listingsError) {
       setToast({ message: listingsError, type: "error" });
-      dispatch(clearListingError());
+      clearError();
     }
-  }, [listingsError, dispatch]);
+  }, [listingsError, clearError]);
 
   const handleAddListing = () => {
     setEditingListing(null);
@@ -104,12 +114,10 @@ export default function MyListingsPage() {
 
       if (editingListing) {
         // Update existing listing
-        await dispatch(
-          updateListing({
-            id: editingListing.id,
-            data: listingData as UpdateListingData,
-          })
-        ).unwrap();
+        await updateListing(
+          editingListing.id,
+          listingData as UpdateListingData
+        );
         setToast({
           message:
             t("listing.listingUpdatedSuccess") ||
@@ -118,7 +126,7 @@ export default function MyListingsPage() {
         });
       } else {
         // Create new listing
-        await dispatch(createListing(listingData)).unwrap();
+        await createListing(listingData);
         setToast({
           message:
             t("listing.listingCreatedSuccess") ||
@@ -130,7 +138,11 @@ export default function MyListingsPage() {
       setEditingListing(null);
       // Refresh listings
       if (user?.id) {
-        dispatch(getListings({ userId: user.id }));
+        getMyListings({
+          page: currentPage,
+          limit: limit,
+          status: statusFilter || undefined,
+        });
       }
     } catch (err: any) {
       setToast({
@@ -144,7 +156,7 @@ export default function MyListingsPage() {
     if (!deletingListing) return;
 
     try {
-      await dispatch(deleteListing(deletingListing.id)).unwrap();
+      await deleteListing(deletingListing.id);
       setToast({
         message:
           t("listing.listingDeletedSuccess") || "Listing deleted successfully",
@@ -154,7 +166,11 @@ export default function MyListingsPage() {
       setDeletingListing(null);
       // Refresh listings
       if (user?.id) {
-        dispatch(getListings({ userId: user.id }));
+        getMyListings({
+          page: currentPage,
+          limit: limit,
+          status: statusFilter || undefined,
+        });
       }
     } catch (err) {
       setToast({ message: t("admin.error"), type: "error" });
@@ -185,25 +201,71 @@ export default function MyListingsPage() {
         </p>
       </div>
 
-      {/* Search Bar */}
-      <Card className="mb-4 py-5 px-3">
-        <div className="relative">
-          <Search
-            className={cn(
-              "absolute top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400",
-              isRTL ? "left-3" : "right-3"
-            )}
-          />
-          <Input
-            type="text"
-            placeholder={t("admin.search") || "بحث"}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={cn(
-              "h-10 border-0 focus:ring-0 shadow-none",
-              isRTL ? "pr-11" : "pl-11"
-            )}
-          />
+      {/* Search and Filter Bar */}
+      <Card className="mb-6 py-6 px-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Search */}
+          <div className="relative">
+            <label
+              htmlFor="search-input"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              {t("admin.search") || "بحث"}
+            </label>
+            <div className="relative">
+              <Search
+                className={cn(
+                  "absolute top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400",
+                  isRTL ? "left-3" : "right-3"
+                )}
+              />
+              <Input
+                id="search-input"
+                type="text"
+                placeholder={t("admin.search") || "بحث"}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={cn(
+                  "h-10 border-0 focus:ring-0 shadow-none",
+                  isRTL ? "pr-11" : "pl-11"
+                )}
+              />
+            </div>
+          </div>
+          {/* Status Filter */}
+          <div>
+            <label
+              htmlFor="status-filter"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              {t("listings.filterByStatus") || "فلترة حسب الحالة"}
+            </label>
+            <Select
+              id="status-filter"
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1); // Reset to first page when filter changes
+              }}
+              className="h-10 w-full"
+            >
+              <SelectOption value="">
+                {t("listings.allStatuses") || "جميع الحالات"}
+              </SelectOption>
+              <SelectOption value="draft">
+                {t("listings.status.draft") || "مسودة"}
+              </SelectOption>
+              <SelectOption value="active">
+                {t("listings.status.active") || "نشط"}
+              </SelectOption>
+              <SelectOption value="closed">
+                {t("listings.status.closed") || "مغلق"}
+              </SelectOption>
+              <SelectOption value="cancelled">
+                {t("listings.status.cancelled") || "ملغي"}
+              </SelectOption>
+            </Select>
+          </div>
         </div>
       </Card>
 
@@ -384,6 +446,22 @@ export default function MyListingsPage() {
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {!listingsLoading &&
+        filteredListings.length > 0 &&
+        totalCount > limit && (
+          <Box className="mt-6 flex justify-center">
+            <Pagination
+              count={Math.ceil(totalCount / limit)}
+              page={currentPage}
+              onChange={(_, page) => setCurrentPage(page)}
+              color="primary"
+              size="large"
+              dir={isRTL ? "rtl" : "ltr"}
+            />
+          </Box>
+        )}
 
       {/* Dialogs */}
       <ListingFormDialog

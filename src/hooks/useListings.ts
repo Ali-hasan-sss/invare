@@ -6,6 +6,9 @@ import {
   createListing,
   updateListing,
   deleteListing,
+  getMyListings,
+  getMyUserListings,
+  getMyCompanyListings,
   clearError,
   clearCurrentListing,
   setCurrentPage,
@@ -86,6 +89,30 @@ export const useListings = () => {
     [dispatch]
   );
 
+  // Get my listings
+  const fetchMyListings = useCallback(
+    async (params?: { page?: number; limit?: number; status?: string }) => {
+      return dispatch(getMyListings(params || {}));
+    },
+    [dispatch]
+  );
+
+  // Get my user listings
+  const fetchMyUserListings = useCallback(
+    async (params?: { page?: number; limit?: number; status?: string }) => {
+      return dispatch(getMyUserListings(params || {}));
+    },
+    [dispatch]
+  );
+
+  // Get my company listings
+  const fetchMyCompanyListings = useCallback(
+    async (params?: { page?: number; limit?: number; status?: string }) => {
+      return dispatch(getMyCompanyListings(params || {}));
+    },
+    [dispatch]
+  );
+
   return {
     // State
     listings: listingsState.listings,
@@ -106,6 +133,9 @@ export const useListings = () => {
     clearCurrentListing: clearListing,
     setCurrentPage: changePage,
     setLimit: changeLimit,
+    getMyListings: fetchMyListings,
+    getMyUserListings: fetchMyUserListings,
+    getMyCompanyListings: fetchMyCompanyListings,
   };
 };
 

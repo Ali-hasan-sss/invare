@@ -113,17 +113,26 @@ export default function RegisterPage() {
         countryId: formData.countryId || undefined, // Send countryId if selected, otherwise undefined
       });
 
-      // Check if the result is fulfilled (registration successful)
-      if (result && "payload" in result && result.type.includes("fulfilled")) {
-        // Store token and user data in localStorage after successful registration
-        if (typeof window !== "undefined" && result.payload) {
-          const { accessToken, user } = result.payload as any;
+      const isFulfilled =
+        result && "payload" in result && result.type.includes("fulfilled");
+
+      if (isFulfilled && result.payload) {
+        const { accessToken, user } = result.payload as any;
+
+        if (accessToken && user && typeof window !== "undefined") {
           localStorage.setItem("accessToken", accessToken);
           localStorage.setItem("user", JSON.stringify(user));
         }
 
         showToast(t("common.success"), "success");
-        router.push("/"); // Redirect to home page after successful registration
+
+        if (accessToken && user) {
+          router.replace("/onboarding/interests");
+          return;
+        }
+
+        router.replace("/auth/login?redirect=/onboarding/interests");
+        return;
       } else if (authError) {
         showToast(authError, "error");
       } else {

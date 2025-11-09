@@ -12,15 +12,8 @@ import {
 import { TextField, Button, Snackbar, Alert } from "@mui/material";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
-import {
-  Mail,
-  Phone,
-  MapPin,
-  Facebook,
-  Twitter,
-  Instagram,
-  Linkedin,
-} from "lucide-react";
+import { Mail, Phone, MapPin, Instagram } from "lucide-react";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 
 const ContactPage: React.FC = () => {
   const { t } = useTranslation();
@@ -55,12 +48,12 @@ const ContactPage: React.FC = () => {
             "يسعدنا تواصلك معنا. تجد أدناه طرق التواصل."}
         </Typography>
 
-        <Divider className="my-4" />
+        <Divider className="my-5" />
 
         <Grid container spacing={3}>
           {/* Contact info cards */}
           <Grid item xs={12} md={4}>
-            <Box className="p-4 rounded-lg bg-gray-50 dark:bg-gray-900/40 h-full border border-gray-200 dark:border-gray-700">
+            <Box className="p-4 rounded-lg mt-4 bg-gray-50 dark:bg-gray-900/40 h-full border border-gray-200 dark:border-gray-700">
               <Box className="flex items-center mb-2">
                 <Mail
                   size={18}
@@ -71,12 +64,12 @@ const ContactPage: React.FC = () => {
                 </Typography>
               </Box>
               <Typography className="text-gray-700 dark:text-gray-300">
-                {t("contact.email")}
+                {t("contact.email") || "info@invare.sa"}
               </Typography>
             </Box>
           </Grid>
           <Grid item xs={12} md={4}>
-            <Box className="p-4 rounded-lg bg-gray-50 dark:bg-gray-900/40 h-full border border-gray-200 dark:border-gray-700">
+            <Box className="p-4 rounded-lg mt-4 bg-gray-50 dark:bg-gray-900/40 h-full border border-gray-200 dark:border-gray-700">
               <Box className="flex items-center mb-2">
                 <Phone
                   size={18}
@@ -87,12 +80,12 @@ const ContactPage: React.FC = () => {
                 </Typography>
               </Box>
               <Typography className="text-gray-700 dark:text-gray-300">
-                {t("contact.phone")}
+                {t("contact.phone") || "+966 53 207 0220"}
               </Typography>
             </Box>
           </Grid>
           <Grid item xs={12} md={4}>
-            <Box className="p-4 rounded-lg bg-gray-50 dark:bg-gray-900/40 h-full border border-gray-200 dark:border-gray-700">
+            <Box className="p-4 rounded-lg mt-4 bg-gray-50 dark:bg-gray-900/40 h-full border border-gray-200 dark:border-gray-700">
               <Box className="flex items-center mb-2">
                 <MapPin
                   size={18}
@@ -190,36 +183,22 @@ const ContactPage: React.FC = () => {
               </Typography>
               <Box className="flex items-center space-x-4 rtl:space-x-reverse">
                 <a
-                  href="https://facebook.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600"
-                >
-                  <Facebook size={20} />
-                </a>
-                <a
-                  href="https://twitter.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-gray-600 dark:text-gray-300 hover:text-sky-500"
-                >
-                  <Twitter size={20} />
-                </a>
-                <a
-                  href="https://instagram.com"
+                  href="https://www.instagram.com/invare_sa?igsh=MWc4OGFtZHU3c3Npdg=="
                   target="_blank"
                   rel="noreferrer"
                   className="text-gray-600 dark:text-gray-300 hover:text-pink-500"
+                  aria-label="Instagram"
                 >
                   <Instagram size={20} />
                 </a>
                 <a
-                  href="https://linkedin.com"
+                  href="https://wa.me/+966532070220"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-gray-600 dark:text-gray-300 hover:text-blue-700"
+                  className="text-gray-600 dark:text-gray-300 hover:text-green-500"
+                  aria-label="WhatsApp"
                 >
-                  <Linkedin size={20} />
+                  <WhatsAppIcon fontSize="small" />
                 </a>
               </Box>
             </Box>

@@ -104,6 +104,7 @@ export interface GetListingsParams {
   companyId?: string;
   userId?: string;
   isBiddable?: boolean;
+  status?: string;
 }
 
 // Initial state
@@ -132,6 +133,9 @@ export const getListings = createAsyncThunk<
     if (params?.userId) queryParams.append("userId", params.userId);
     if (params?.isBiddable !== undefined) {
       queryParams.append("isBiddable", params.isBiddable.toString());
+    }
+    if (params?.status) {
+      queryParams.append("status", params.status);
     }
 
     const url = `${API_CONFIG.ENDPOINTS.LISTINGS.LIST}${
@@ -224,6 +228,81 @@ export const deleteListing = createAsyncThunk<
   }
 });
 
+export const getMyListings = createAsyncThunk<
+  Listing[],
+  { page?: number; limit?: number; status?: string },
+  { rejectValue: string }
+>("listings/getMyListings", async (params, { rejectWithValue }) => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.status) queryParams.append("status", params.status);
+
+    const url = `${API_CONFIG.ENDPOINTS.LISTINGS.ME}${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+    const response = await apiClient.get(url);
+    return response.data;
+  } catch (error: any) {
+    return rejectWithValue(
+      error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch my listings"
+    );
+  }
+});
+
+export const getMyUserListings = createAsyncThunk<
+  Listing[],
+  { page?: number; limit?: number; status?: string },
+  { rejectValue: string }
+>("listings/getMyUserListings", async (params, { rejectWithValue }) => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.status) queryParams.append("status", params.status);
+
+    const url = `${API_CONFIG.ENDPOINTS.LISTINGS.ME_USER}${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+    const response = await apiClient.get(url);
+    return response.data;
+  } catch (error: any) {
+    return rejectWithValue(
+      error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch my user listings"
+    );
+  }
+});
+
+export const getMyCompanyListings = createAsyncThunk<
+  Listing[],
+  { page?: number; limit?: number; status?: string },
+  { rejectValue: string }
+>("listings/getMyCompanyListings", async (params, { rejectWithValue }) => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.status) queryParams.append("status", params.status);
+
+    const url = `${API_CONFIG.ENDPOINTS.LISTINGS.ME_COMPANY}${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+    const response = await apiClient.get(url);
+    return response.data;
+  } catch (error: any) {
+    return rejectWithValue(
+      error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch my company listings"
+    );
+  }
+});
+
 // Listings slice
 const listingsSlice = createSlice({
   name: "listings",
@@ -260,6 +339,60 @@ const listingsSlice = createSlice({
       .addCase(getListings.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload || "Failed to fetch listings";
+      })
+
+      // Get My Listings
+      .addCase(getMyListings.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(
+        getMyListings.fulfilled,
+        (state, action: PayloadAction<Listing[]>) => {
+          state.isLoading = false;
+          state.listings = action.payload;
+          state.error = null;
+        }
+      )
+      .addCase(getMyListings.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || "Failed to fetch my listings";
+      })
+
+      // Get My User Listings
+      .addCase(getMyUserListings.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(
+        getMyUserListings.fulfilled,
+        (state, action: PayloadAction<Listing[]>) => {
+          state.isLoading = false;
+          state.listings = action.payload;
+          state.error = null;
+        }
+      )
+      .addCase(getMyUserListings.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || "Failed to fetch my user listings";
+      })
+
+      // Get My Company Listings
+      .addCase(getMyCompanyListings.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(
+        getMyCompanyListings.fulfilled,
+        (state, action: PayloadAction<Listing[]>) => {
+          state.isLoading = false;
+          state.listings = action.payload;
+          state.error = null;
+        }
+      )
+      .addCase(getMyCompanyListings.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || "Failed to fetch my company listings";
       })
 
       // Get Listing By ID

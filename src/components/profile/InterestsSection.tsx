@@ -9,6 +9,7 @@ import {
   FormControl,
   Select,
   MenuItem,
+  Checkbox,
 } from "@mui/material";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -16,9 +17,11 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useMaterials } from "@/hooks/useMaterials";
 import { useMaterialCategories } from "@/hooks/useMaterialCategories";
 import { useToast } from "@/components/ui/Toast";
-import { Plus, X, Package, Trash2 } from "lucide-react";
+import { Plus, Package, Trash2, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Material } from "@/store/slices/materialsSlice";
+import { useUsers } from "@/hooks/useUsers";
+import { Input } from "@/components/ui/Input";
 
 interface InterestsSectionProps {
   userId?: string;
@@ -40,6 +43,11 @@ const InterestsSection: React.FC<InterestsSectionProps> = ({ userId }) => {
   } = useMaterials();
 
   const { categories, getCategories } = useMaterialCategories();
+  const { currentUser, getUserById, updateUser } = useUsers();
+
+  const [notifyWhatsApp, setNotifyWhatsApp] = useState(false);
+  const [phoneInput, setPhoneInput] = useState("");
+  const [isSavingPhone, setIsSavingPhone] = useState(false);
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
@@ -49,7 +57,20 @@ const InterestsSection: React.FC<InterestsSectionProps> = ({ userId }) => {
   useEffect(() => {
     getFavoriteMaterials();
     getCategories();
-  }, [getFavoriteMaterials, getCategories]);
+    if (userId) {
+      getUserById(userId);
+    }
+  }, [getFavoriteMaterials, getCategories, getUserById, userId]);
+
+  useEffect(() => {
+    if (currentUser?.phone) {
+      setPhoneInput(currentUser.phone);
+      setNotifyWhatsApp(false);
+    } else {
+      setPhoneInput("");
+      setNotifyWhatsApp(false);
+    }
+  }, [currentUser?.phone]);
 
   // Fetch materials when category is selected
   useEffect(() => {
@@ -115,6 +136,47 @@ const InterestsSection: React.FC<InterestsSectionProps> = ({ userId }) => {
     setAddDialogOpen(false);
     setSelectedCategoryId("");
     setSelectedMaterialId("");
+  };
+
+  const handleToggleWhatsApp = (checked: boolean) => {
+    setNotifyWhatsApp(checked);
+    if (!checked && currentUser?.phone) {
+      setPhoneInput(currentUser.phone);
+    }
+  };
+
+  const handleSavePhone = async () => {
+    if (!userId) return;
+    if (!phoneInput.trim()) {
+      showToast(
+        t("onboarding.phoneRequired") || "يرجى إدخال رقم الهاتف",
+        "error"
+      );
+      return;
+    }
+
+    try {
+      setIsSavingPhone(true);
+      const result = await updateUser(userId, { phone: phoneInput.trim() });
+      if (result.meta.requestStatus === "fulfilled") {
+        showToast(
+          t("onboarding.phoneSavedSuccess") || "تم حفظ رقم الواتساب بنجاح",
+          "success"
+        );
+        getUserById(userId);
+      } else {
+        throw new Error(result.payload as string);
+      }
+    } catch (error: any) {
+      showToast(
+        error?.message ||
+          t("onboarding.phoneSaveError") ||
+          "فشل حفظ رقم الواتساب",
+        "error"
+      );
+    } finally {
+      setIsSavingPhone(false);
+    }
   };
 
   return (
@@ -204,6 +266,66 @@ const InterestsSection: React.FC<InterestsSectionProps> = ({ userId }) => {
           ))}
         </div>
       )}
+
+      {/* WhatsApp notifications */}
+      <div className="mt-8 border border-dashed border-blue-200 dark:border-blue-800 rounded-2xl p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <Checkbox
+              checked={notifyWhatsApp}
+              onChange={(_, checked) => handleToggleWhatsApp(checked)}
+              id="notify-whatsapp"
+            />
+            <label
+              htmlFor="notify-whatsapp"
+              className="text-gray-800 dark:text-gray-200 font-medium leading-6"
+            >
+              {t("onboarding.notifyViaWhatsApp") ||
+                "إرسال إشعارات العروض المتعلقة باهتماماتي إلى الواتساب"}
+            </label>
+          </div>
+          {currentUser?.phone && (
+            <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm">
+              <CheckCircle2 className="h-4 w-4" />
+              <span>{currentUser.phone}</span>
+            </div>
+          )}
+        </div>
+
+        {notifyWhatsApp && (
+          <div className="mt-4 space-y-3">
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                {t("onboarding.phoneInputLabel") || "رقم الواتساب"}
+              </label>
+              <Input
+                value={phoneInput}
+                onChange={(e) => setPhoneInput(e.target.value)}
+                placeholder={
+                  t("onboarding.phoneInputPlaceholder") || "مثال: 9665XXXXXXX"
+                }
+                disabled={isSavingPhone}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {t("onboarding.phoneHint") ||
+                  "سيتم استخدام هذا الرقم لإرسال إشعارات العروض المتطابقة مع اهتماماتك"}
+              </p>
+            </div>
+            <div className="flex justify-end">
+              <Button
+                onClick={handleSavePhone}
+                className="px-4 !bg-[#2563eb] hover:!bg-[#1d4ed8] text-white [&_*]:text-white"
+                loading={isSavingPhone}
+              >
+                {" "}
+                <span style={{ color: "white", fontWeight: 600 }}>
+                  {t("common.save") || "حفظ"}
+                </span>
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Add Interest Dialog */}
       <Dialog

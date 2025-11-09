@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useToast } from "@/components/ui/Toast";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import EmailVerification from "@/components/EmailVerification";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,6 +23,7 @@ export default function LoginPage() {
     error: authError,
     isAuthenticated,
   } = useAuth();
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<"email" | "otp">("email");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -83,7 +84,8 @@ export default function LoginPage() {
         if (userData?.isAdmin) {
           router.push("/admin"); // Redirect to admin dashboard
         } else {
-          router.push("/"); // Redirect to home page
+          const redirect = searchParams.get("redirect");
+          router.push(redirect ? redirect : "/");
         }
       } else if (authError) {
         showToast(authError, "error");

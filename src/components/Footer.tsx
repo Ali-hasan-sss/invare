@@ -121,19 +121,19 @@ const Footer: React.FC = () => {
               <div className="flex items-center gap-3 text-gray-300">
                 <Phone className="h-5 w-5 text-secondary-400 flex-shrink-0" />
                 <a
-                  href="tel:+96812345678"
+                  href="tel:+966532070220"
                   className="text-sm hover:text-secondary-400 transition-colors"
                 >
-                  {t("footer.phone")}
+                  {t("footer.phone") || "+966 53 207 0220"}
                 </a>
               </div>
               <div className="flex items-center gap-3 text-gray-300">
                 <Mail className="h-5 w-5 text-secondary-400 flex-shrink-0" />
                 <a
-                  href="mailto:info@invare.com"
+                  href="mailto:info@invare.sa"
                   className="text-sm hover:text-secondary-400 transition-colors"
                 >
-                  {t("footer.email")}
+                  {t("footer.email") || "info@invare.sa"}
                 </a>
               </div>
             </div>
