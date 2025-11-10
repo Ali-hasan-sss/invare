@@ -16,27 +16,39 @@ import {
   CreateMaterialData,
   UpdateMaterialData,
   GetMaterialsParams,
+  GetMaterialByIdParams,
 } from "../store/slices/materialsSlice";
 
 // Main materials hook
 export const useMaterials = () => {
   const dispatch = useAppDispatch();
   const materialsState = useAppSelector((state) => state.materials);
+  const currentLanguage = useAppSelector(
+    (state) => state.language.currentLanguage
+  );
 
   // Get materials list
   const fetchMaterials = useCallback(
     async (params?: GetMaterialsParams) => {
-      return dispatch(getMaterials(params));
+      const payload: GetMaterialsParams = {
+        ...params,
+        lang: params?.lang ?? currentLanguage.code,
+      };
+      return dispatch(getMaterials(payload));
     },
-    [dispatch]
+    [dispatch, currentLanguage.code]
   );
 
   // Get material by ID
   const fetchMaterialById = useCallback(
-    async (id: string) => {
-      return dispatch(getMaterialById(id));
+    async (id: string, lang?: string) => {
+      const payload: GetMaterialByIdParams = {
+        id,
+        lang: lang ?? currentLanguage.code,
+      };
+      return dispatch(getMaterialById(payload));
     },
-    [dispatch]
+    [dispatch, currentLanguage.code]
   );
 
   // Create material

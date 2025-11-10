@@ -18,7 +18,7 @@ export default function LoginPage() {
   const router = useRouter();
   const {
     login,
-    requestOtp,
+    // requestOtp,
     isLoading: authLoading,
     error: authError,
     isAuthenticated,
@@ -28,45 +28,41 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const sendOtp = async () => {
     if (!email) {
       showToast(t("auth.enterEmail"), "error");
-      return;
+      return false;
     }
 
     if (!email.includes("@")) {
       showToast("Please enter a valid email", "error");
-      return;
+      return false;
     }
 
-    setLoading(true);
-    // Temporarily skip OTP request - directly move to OTP step
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      setLoading(true);
+      // Temporary bypass for OTP request
+      // const result = await requestOtp(email);
+      // if (result && "payload" in result && result.type.includes("fulfilled")) {
       setStep("otp");
       showToast(t("auth.otpSent"), "success");
-    }, 1000);
+      return true;
+      // } else if (authError) {
+      //   showToast(authError, "error");
+      // } else {
+      //   showToast("Failed to send OTP", "error");
+      // }
+    } catch (error) {
+      showToast("Failed to proceed to verification", "error");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // OTP Request Code - Commented out for testing
-    // try {
-    //   // Request OTP
-    //   const result = await requestOtp(email);
-    //
-    //   // Check if the result is fulfilled (OTP sent successfully)
-    //   if (result && "payload" in result && result.type.includes("fulfilled")) {
-    //     setStep("otp");
-    //     showToast(t("auth.otpSent"), "success");
-    //   } else if (authError) {
-    //     showToast(authError, "error");
-    //   } else {
-    //     showToast("Failed to send OTP", "error");
-    //   }
-    // } catch (error) {
-    //   showToast("Failed to send OTP", "error");
-    // } finally {
-    //   setLoading(false);
-    // }
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await sendOtp();
   };
 
   const handleOtpSubmit = async (otp: string) => {
@@ -103,8 +99,11 @@ export default function LoginPage() {
     setStep("email");
   };
 
-  const handleResendOtp = () => {
-    showToast(t("auth.resendOTP"), "info");
+  const handleResendOtp = async () => {
+    const success = await sendOtp();
+    if (success) {
+      showToast(t("auth.otpSent"), "success");
+    }
   };
 
   const handleGoogleSignIn = () => {

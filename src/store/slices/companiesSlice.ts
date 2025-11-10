@@ -24,6 +24,7 @@ export interface Company {
 export interface CompaniesState {
   companies: Company[];
   currentCompany: Company | null;
+  myCompanies: Company[];
   isLoading: boolean;
   error: string | null;
   totalCount: number;
@@ -47,6 +48,18 @@ export interface UpdateCompanyData {
   countryId?: string;
 }
 
+export interface CreateCompanyWithUserData {
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  userCountryId?: string;
+  companyName: string;
+  vatNumber?: string;
+  website?: string;
+  companyCountryId?: string;
+}
+
 export interface GetCompaniesParams {
   page?: number;
   limit?: number;
@@ -56,6 +69,7 @@ export interface GetCompaniesParams {
 const initialState: CompaniesState = {
   companies: [],
   currentCompany: null,
+  myCompanies: [],
   isLoading: false,
   error: null,
   totalCount: 0,
@@ -164,6 +178,43 @@ export const deleteCompany = createAsyncThunk<
   }
 });
 
+export const createCompanyWithUser = createAsyncThunk<
+  Company,
+  CreateCompanyWithUserData,
+  { rejectValue: string }
+>("companies/createCompanyWithUser", async (payload, { rejectWithValue }) => {
+  try {
+    const response = await apiClient.post(
+      API_CONFIG.ENDPOINTS.COMPANIES.ADMIN_CREATE_WITH_USER,
+      payload
+    );
+    return response.data;
+  } catch (error: any) {
+    return rejectWithValue(
+      error.response?.data?.message ||
+        error.message ||
+        "Failed to create company"
+    );
+  }
+});
+
+export const getMyCompanies = createAsyncThunk<
+  Company[],
+  void,
+  { rejectValue: string }
+>("companies/getMyCompanies", async (_, { rejectWithValue }) => {
+  try {
+    const response = await apiClient.get(API_CONFIG.ENDPOINTS.COMPANIES.ME);
+    return response.data;
+  } catch (error: any) {
+    return rejectWithValue(
+      error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch companies"
+    );
+  }
+});
+
 // Companies slice
 const companiesSlice = createSlice({
   name: "companies",
@@ -253,6 +304,12 @@ const companiesSlice = createSlice({
           if (index !== -1) {
             state.companies[index] = action.payload;
           }
+          const myIndex = state.myCompanies.findIndex(
+            (c) => c.id === action.payload.id
+          );
+          if (myIndex !== -1) {
+            state.myCompanies[myIndex] = action.payload;
+          }
           if (state.currentCompany?.id === action.payload.id) {
             state.currentCompany = action.payload;
           }
@@ -279,12 +336,52 @@ const companiesSlice = createSlice({
           if (state.currentCompany?.id === action.payload) {
             state.currentCompany = null;
           }
+          state.myCompanies = state.myCompanies.filter(
+            (c) => c.id !== action.payload
+          );
           state.error = null;
         }
       )
       .addCase(deleteCompany.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload || "Failed to delete company";
+      })
+
+      // Create Company With User
+      .addCase(createCompanyWithUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(
+        createCompanyWithUser.fulfilled,
+        (state, action: PayloadAction<Company>) => {
+          state.isLoading = false;
+          state.companies.unshift(action.payload);
+          state.myCompanies.unshift(action.payload);
+          state.error = null;
+        }
+      )
+      .addCase(createCompanyWithUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || "Failed to create company";
+      })
+
+      // Get My Companies
+      .addCase(getMyCompanies.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(
+        getMyCompanies.fulfilled,
+        (state, action: PayloadAction<Company[]>) => {
+          state.isLoading = false;
+          state.myCompanies = action.payload;
+          state.error = null;
+        }
+      )
+      .addCase(getMyCompanies.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || "Failed to fetch companies";
       });
   },
 });

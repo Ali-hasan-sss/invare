@@ -3,11 +3,27 @@ import apiClient from "../../lib/apiClient";
 import { API_CONFIG } from "../../config/api";
 
 // Types
+export interface MaterialTranslation {
+  name?: string;
+  unitOfMeasure?: string;
+}
+
+export interface MaterialTranslations {
+  [lang: string]: MaterialTranslation | undefined;
+}
+
+export interface MaterialCategorySummary {
+  id: string;
+  name?: string;
+}
+
 export interface Material {
   id: string;
   name: string;
-  unitOfMeasure: string;
+  unitOfMeasure?: string;
   categoryId?: string;
+  category?: MaterialCategorySummary | null;
+  i18n?: MaterialTranslations;
 }
 
 export interface FavoriteMaterial {
@@ -31,18 +47,26 @@ export interface CreateMaterialData {
   name: string;
   unitOfMeasure: string;
   categoryId: string;
+  i18n?: MaterialTranslations;
 }
 
 export interface UpdateMaterialData {
   name?: string;
   unitOfMeasure?: string;
   categoryId?: string;
+  i18n?: MaterialTranslations;
 }
 
 export interface GetMaterialsParams {
   page?: number;
   limit?: number;
   categoryId?: string;
+  lang?: string;
+}
+
+export interface GetMaterialByIdParams {
+  id: string;
+  lang?: string;
 }
 
 // Initial state
@@ -68,6 +92,7 @@ export const getMaterials = createAsyncThunk<
     if (params?.page) queryParams.append("page", params.page.toString());
     if (params?.limit) queryParams.append("limit", params.limit.toString());
     if (params?.categoryId) queryParams.append("categoryId", params.categoryId);
+    if (params?.lang) queryParams.append("lang", params.lang);
 
     const url = `${API_CONFIG.ENDPOINTS.MATERIALS.LIST}${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
@@ -85,13 +110,16 @@ export const getMaterials = createAsyncThunk<
 
 export const getMaterialById = createAsyncThunk<
   Material,
-  string,
+  GetMaterialByIdParams,
   { rejectValue: string }
->("materials/getMaterialById", async (id, { rejectWithValue }) => {
+>("materials/getMaterialById", async ({ id, lang }, { rejectWithValue }) => {
   try {
-    const response = await apiClient.get(
-      API_CONFIG.ENDPOINTS.MATERIALS.DETAIL(id)
-    );
+    const queryParams = new URLSearchParams();
+    if (lang) queryParams.append("lang", lang);
+    const url = `${API_CONFIG.ENDPOINTS.MATERIALS.DETAIL(id)}${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+    const response = await apiClient.get(url);
     return response.data;
   } catch (error: any) {
     return rejectWithValue(

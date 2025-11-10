@@ -15,6 +15,7 @@ import {
   MaterialCategory,
   CreateMaterialCategoryData,
   UpdateMaterialCategoryData,
+  MaterialCategoryTranslations,
 } from "../../store/slices/materialCategoriesSlice";
 
 interface CategoryFormDialogProps {
@@ -25,6 +26,11 @@ interface CategoryFormDialogProps {
   isLoading?: boolean;
 }
 
+type CategoryFormState = {
+  nameEn: string;
+  nameAr: string;
+};
+
 export const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
   open,
   onOpenChange,
@@ -33,25 +39,48 @@ export const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
   isLoading = false,
 }) => {
   const { t } = useTranslation();
-  const [formData, setFormData] = useState<CreateMaterialCategoryData>({
-    name: "",
+  const [formData, setFormData] = useState<CategoryFormState>({
+    nameEn: "",
+    nameAr: "",
   });
 
   useEffect(() => {
     if (category) {
       setFormData({
-        name: category.name || "",
+        nameEn: category.i18n?.en?.name || category.name || "",
+        nameAr: category.i18n?.ar?.name || "",
       });
     } else {
       setFormData({
-        name: "",
+        nameEn: "",
+        nameAr: "",
       });
     }
   }, [category, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit(formData);
+    const i18n: MaterialCategoryTranslations = {};
+    if (formData.nameEn) {
+      i18n.en = { name: formData.nameEn };
+    }
+    if (formData.nameAr) {
+      i18n.ar = { name: formData.nameAr };
+    }
+
+    if (category) {
+      const payload: UpdateMaterialCategoryData = {
+        name: formData.nameEn || formData.nameAr || category.name,
+        i18n: Object.keys(i18n).length ? i18n : undefined,
+      };
+      await onSubmit(payload);
+    } else {
+      const payload: CreateMaterialCategoryData = {
+        name: formData.nameEn || formData.nameAr || "",
+        i18n: Object.keys(i18n).length ? i18n : undefined,
+      };
+      await onSubmit(payload);
+    }
   };
 
   const handleChange = (
@@ -73,17 +102,31 @@ export const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t("admin.categoryName")}
-            </label>
-            <Input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {t("admin.categoryNameEn") || "Category Name (English)"}
+              </label>
+              <Input
+                type="text"
+                name="nameEn"
+                value={formData.nameEn}
+                onChange={handleChange}
+                required={!formData.nameAr}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {t("admin.categoryNameAr") || "Category Name (Arabic)"}
+              </label>
+              <Input
+                type="text"
+                name="nameAr"
+                value={formData.nameAr}
+                onChange={handleChange}
+                required={!formData.nameEn}
+              />
+            </div>
           </div>
 
           <DialogFooter>

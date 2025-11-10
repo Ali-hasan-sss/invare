@@ -18,10 +18,30 @@ import {
   ListingPhotoInput,
   ListingAttributeInput,
   Listing,
+  ListingTranslations,
 } from "@/store/slices/listingsSlice";
 import { X, Plus } from "lucide-react";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { useToast } from "@/components/ui/Toast";
+
+const UNIT_OPTIONS = ["ton", "liter", "piece"] as const;
+
+const CONDITION_OPTIONS = [
+  "first_grade",
+  "second_grade",
+  "third_grade",
+] as const;
+
+const COLOR_OPTIONS: { value: string; hex: string }[] = [
+  { value: "black", hex: "#000000" },
+  { value: "blue", hex: "#dbeafe" },
+  { value: "green", hex: "#dcfce7" },
+  { value: "orange", hex: "#ffedd4" },
+  { value: "purple", hex: "#f3e8ff" },
+  { value: "red", hex: "#ffe2e2" },
+  { value: "white", hex: "#f5f5f5" },
+  { value: "yellow", hex: "#fef9c2" },
+];
 
 interface ListingFormDialogProps {
   open: boolean;
@@ -40,7 +60,7 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
   initialMaterialId,
   editingListing,
 }) => {
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const { materials, getMaterials } = useMaterials();
   const { categories, getCategories } = useMaterialCategories();
   const { showToast } = useToast();
@@ -55,8 +75,17 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
     expiresAt: "",
     isBiddable: false,
     materialId: "",
+    condition: undefined,
+    materialColor: undefined,
     photos: [],
     attributes: [],
+  });
+
+  const [translations, setTranslations] = useState({
+    titleEn: "",
+    titleAr: "",
+    descriptionEn: "",
+    descriptionAr: "",
   });
 
   const [photos, setPhotos] = useState<
@@ -77,9 +106,26 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
 
       // If editing an existing listing, populate form with listing data
       if (editingListing) {
+        const englishTitle =
+          editingListing.i18n?.en?.title ||
+          (currentLanguage.code === "en" ? editingListing.title || "" : "");
+        const arabicTitle =
+          editingListing.i18n?.ar?.title ||
+          (currentLanguage.code === "ar" ? editingListing.title || "" : "");
+        const englishDescription =
+          editingListing.i18n?.en?.description ||
+          (currentLanguage.code === "en"
+            ? editingListing.description || ""
+            : "");
+        const arabicDescription =
+          editingListing.i18n?.ar?.description ||
+          (currentLanguage.code === "ar"
+            ? editingListing.description || ""
+            : "");
+
         setFormData({
-          title: editingListing.title || "",
-          description: editingListing.description || "",
+          title: englishTitle || arabicTitle || "",
+          description: englishDescription || arabicDescription || "",
           unitOfMeasure: editingListing.unitOfMeasure || "",
           startingPrice: editingListing.startingPrice || "",
           stockAmount: editingListing.stockAmount || 0,
@@ -89,8 +135,17 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
             : "",
           isBiddable: editingListing.isBiddable || false,
           materialId: editingListing.materialId || "",
+          condition: editingListing.condition || undefined,
+          materialColor: editingListing.materialColor || undefined,
           photos: [],
           attributes: [],
+        });
+
+        setTranslations({
+          titleEn: englishTitle,
+          titleAr: arabicTitle,
+          descriptionEn: englishDescription,
+          descriptionAr: arabicDescription,
         });
 
         // Set category and material from editing listing
@@ -143,8 +198,16 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
           expiresAt: "",
           isBiddable: false,
           materialId: "",
+          condition: undefined,
+          materialColor: undefined,
           photos: [],
           attributes: [],
+        });
+        setTranslations({
+          titleEn: "",
+          titleAr: "",
+          descriptionEn: "",
+          descriptionAr: "",
         });
         setPhotos([]);
         setAttributes([]);
@@ -163,7 +226,13 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, initialCategoryId, initialMaterialId, editingListing]);
+  }, [
+    open,
+    initialCategoryId,
+    initialMaterialId,
+    editingListing,
+    currentLanguage.code,
+  ]);
 
   // Fetch materials only when category is selected
   useEffect(() => {
@@ -192,6 +261,19 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
       setFormData((prev) => ({ ...prev, [name]: numValue }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleTranslationChange = (
+    field: keyof typeof translations,
+    value: string
+  ) => {
+    setTranslations((prev) => ({ ...prev, [field]: value }));
+    if (field === "titleEn") {
+      setFormData((prev) => ({ ...prev, title: value }));
+    }
+    if (field === "descriptionEn") {
+      setFormData((prev) => ({ ...prev, description: value }));
     }
   };
 
@@ -295,9 +377,46 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
     // Filter out photos without URLs (empty upload slots)
     const validPhotos = photos.filter((p) => p.url);
 
+    const baseTitle =
+      translations.titleEn || translations.titleAr || formData.title;
+
+    if (!baseTitle) {
+      showToast(
+        t("listing.enterTitle") || "Please provide at least one title",
+        "error"
+      );
+      return;
+    }
+
+    const baseDescription =
+      translations.descriptionEn ||
+      translations.descriptionAr ||
+      formData.description ||
+      "";
+
+    const i18n: ListingTranslations = {};
+
+    if (translations.titleEn || translations.descriptionEn) {
+      i18n.en = {
+        title: translations.titleEn || undefined,
+        description: translations.descriptionEn || undefined,
+      };
+    }
+
+    if (translations.titleAr || translations.descriptionAr) {
+      i18n.ar = {
+        title: translations.titleAr || undefined,
+        description: translations.descriptionAr || undefined,
+      };
+    }
+
     // Prepare final data with photos and attributes
     const finalData: CreateListingData = {
       ...formData,
+      title: baseTitle,
+      description: baseDescription || undefined,
+      condition: formData.condition || undefined,
+      materialColor: formData.materialColor || undefined,
       photos:
         validPhotos.length > 0
           ? validPhotos.map((p, index) => ({
@@ -311,6 +430,7 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
         attributes.every((attr) => attr.attrKey && attr.attrValue)
           ? attributes
           : undefined,
+      i18n: Object.keys(i18n).length ? i18n : undefined,
     };
 
     onSubmit(finalData);
@@ -326,12 +446,20 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
       expiresAt: "",
       isBiddable: false,
       materialId: "",
+      condition: undefined,
+      materialColor: undefined,
       photos: [],
       attributes: [],
     });
     setPhotos([]);
     setAttributes([]);
     setSelectedCategoryId("");
+    setTranslations({
+      titleEn: "",
+      titleAr: "",
+      descriptionEn: "",
+      descriptionAr: "",
+    });
   };
 
   return (
@@ -366,20 +494,47 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
           className="bg-white dark:bg-gray-900"
         >
           <div className="space-y-4">
-            {/* Title */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+            {/* Title (Multilingual) */}
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200">
                 {t("listing.title")} <span className="text-red-500">*</span>
               </label>
-              <Input
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                required
-                placeholder={t("listing.enterTitle")}
-                className="text-gray-900 dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <Input
+                    type="text"
+                    value={translations.titleEn}
+                    onChange={(e) =>
+                      handleTranslationChange("titleEn", e.target.value)
+                    }
+                    required={!translations.titleAr}
+                    placeholder={t("listing.enterTitleEn")}
+                    className="text-gray-900 dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+                  />
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {t("listing.titleEnHelper")}
+                  </p>
+                </div>
+                <div>
+                  <Input
+                    type="text"
+                    value={translations.titleAr}
+                    onChange={(e) =>
+                      setTranslations((prev) => ({
+                        ...prev,
+                        titleAr: e.target.value,
+                      }))
+                    }
+                    required={!translations.titleEn}
+                    placeholder={t("listing.enterTitleAr")}
+                    dir="rtl"
+                    className="text-gray-900 dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+                  />
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 text-right">
+                    {t("listing.titleArHelper")}
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Category and Material */}
@@ -436,19 +591,39 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
               </div>
             </div>
 
-            {/* Description */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+            {/* Description (Multilingual) */}
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200">
                 {t("listing.description")}
               </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                rows={3}
-                placeholder={t("listing.enterDescription")}
-                className="w-full px-3 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:border-blue-500 dark:focus:border-blue-400"
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <textarea
+                    value={translations.descriptionEn}
+                    onChange={(e) =>
+                      handleTranslationChange("descriptionEn", e.target.value)
+                    }
+                    rows={3}
+                    placeholder={t("listing.enterDescriptionEn")}
+                    className="w-full px-3 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:border-blue-500 dark:focus:border-blue-400"
+                  />
+                </div>
+                <div>
+                  <textarea
+                    value={translations.descriptionAr}
+                    onChange={(e) =>
+                      setTranslations((prev) => ({
+                        ...prev,
+                        descriptionAr: e.target.value,
+                      }))
+                    }
+                    rows={3}
+                    dir="rtl"
+                    placeholder={t("listing.enterDescriptionAr")}
+                    className="w-full px-3 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:border-blue-500 dark:focus:border-blue-400"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Grid: Unit of Measure & Stock Amount */}
@@ -458,15 +633,22 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
                   {t("listing.unitOfMeasure")}{" "}
                   <span className="text-red-500">*</span>
                 </label>
-                <Input
-                  type="text"
+                <Select
                   name="unitOfMeasure"
                   value={formData.unitOfMeasure}
                   onChange={handleChange}
                   required
-                  placeholder={t("listing.enterUnitOfMeasure")}
                   className="text-gray-900 dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
-                />
+                >
+                  <SelectOption value="">
+                    {t("listing.selectUnitOfMeasure")}
+                  </SelectOption>
+                  {UNIT_OPTIONS.map((option) => (
+                    <SelectOption key={option} value={option}>
+                      {t(`listing.unitOptions.${option}`)}
+                    </SelectOption>
+                  ))}
+                </Select>
               </div>
 
               <div>
@@ -483,6 +665,60 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
                   placeholder={t("listing.enterStockAmount")}
                   className="text-gray-900 dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
                 />
+              </div>
+            </div>
+
+            {/* Condition & Material Color */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                  {t("listing.condition")}
+                </label>
+                <Select
+                  name="condition"
+                  value={formData.condition || ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      condition: e.target.value || undefined,
+                    }))
+                  }
+                  className="text-gray-900 dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+                >
+                  <SelectOption value="">
+                    {t("listing.selectCondition")}
+                  </SelectOption>
+                  {CONDITION_OPTIONS.map((option) => (
+                    <SelectOption key={option} value={option}>
+                      {t(`listing.conditionOptions.${option}`)}
+                    </SelectOption>
+                  ))}
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                  {t("listing.materialColor")}
+                </label>
+                <Select
+                  name="materialColor"
+                  value={formData.materialColor || ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      materialColor: e.target.value || undefined,
+                    }))
+                  }
+                  className="text-gray-900 dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+                >
+                  <SelectOption value="">
+                    {t("listing.selectMaterialColor")}
+                  </SelectOption>
+                  {COLOR_OPTIONS.map((option) => (
+                    <SelectOption key={option.value} value={option.value}>
+                      {t(`listing.materialColorOptions.${option.value}`)}
+                    </SelectOption>
+                  ))}
+                </Select>
               </div>
             </div>
 

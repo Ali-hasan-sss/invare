@@ -79,7 +79,10 @@ const ContactPage: React.FC = () => {
                   {t("contact.phoneLabel") || "رقم الهاتف"}
                 </Typography>
               </Box>
-              <Typography className="text-gray-700 dark:text-gray-300">
+              <Typography
+                dir="ltr"
+                className="text-gray-700 ltr:text-start rtl:text-end dark:text-gray-300"
+              >
                 {t("contact.phone") || "+966 53 207 0220"}
               </Typography>
             </Box>

@@ -18,6 +18,7 @@ import {
 import { useOrders } from "./useOrders";
 import { useListings } from "./useListings";
 import { useAuth } from "./useAuth";
+import { useTranslation } from "@/hooks/useTranslation";
 import type { Listing } from "@/store/slices/listingsSlice";
 import type { Order } from "@/store/slices/ordersSlice";
 
@@ -25,6 +26,9 @@ export const usePayments = () => {
   const dispatch = useAppDispatch();
   const { payments, currentPayment, isLoading, error } = useAppSelector(
     (state) => state.payments
+  );
+  const currentLanguage = useAppSelector(
+    (state) => state.language.currentLanguage
   );
 
   const getOrderPaymentsHandler = useCallback(
@@ -119,6 +123,7 @@ export const usePaymentProcessing = () => {
   const { createOrder, getOrderById } = useOrders();
   const { getListingById } = useListings();
   const { user, company } = useAuth();
+  const { currentLanguage } = useTranslation();
 
   /**
    * Start EdfaPay checkout session
@@ -169,7 +174,10 @@ export const usePaymentProcessing = () => {
     ) => {
       try {
         // Step 1: Get listing details to extract sellerCompanyId
-        const listingResult = await getListingById(listingId);
+        const listingResult = await getListingById(
+          listingId,
+          currentLanguage.code
+        );
 
         if (listingResult.type !== "listings/getListingById/fulfilled") {
           const errorMessage =

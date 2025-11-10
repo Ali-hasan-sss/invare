@@ -3,15 +3,18 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   getCompanies,
   getCompanyById,
+  getMyCompanies,
   createCompany,
   updateCompany,
   deleteCompany,
+  createCompanyWithUser,
   clearError,
   clearCurrentCompany,
   setCurrentPage,
   setLimit,
   CreateCompanyData,
   UpdateCompanyData,
+  CreateCompanyWithUserData,
   GetCompaniesParams,
 } from "../store/slices/companiesSlice";
 
@@ -60,6 +63,19 @@ export const useCompanies = () => {
     [dispatch]
   );
 
+  // Create company with user
+  const addCompanyWithUser = useCallback(
+    async (data: CreateCompanyWithUserData) => {
+      return dispatch(createCompanyWithUser(data));
+    },
+    [dispatch]
+  );
+
+  // Get current user's companies
+  const fetchMyCompanies = useCallback(async () => {
+    return dispatch(getMyCompanies());
+  }, [dispatch]);
+
   // Clear error
   const clearCompaniesError = useCallback(() => {
     dispatch(clearError());
@@ -90,6 +106,7 @@ export const useCompanies = () => {
     // State
     companies: companiesState.companies,
     currentCompany: companiesState.currentCompany,
+    myCompanies: companiesState.myCompanies,
     isLoading: companiesState.isLoading,
     error: companiesState.error,
     totalCount: companiesState.totalCount,
@@ -99,9 +116,11 @@ export const useCompanies = () => {
     // Actions
     getCompanies: fetchCompanies,
     getCompanyById: fetchCompanyById,
+    getMyCompanies: fetchMyCompanies,
     createCompany: addCompany,
     updateCompany: editCompany,
     deleteCompany: removeCompany,
+    createCompanyWithUser: addCompanyWithUser,
     clearError: clearCompaniesError,
     clearCurrentCompany: clearCompany,
     setCurrentPage: changePage,
@@ -142,13 +161,21 @@ export const useCurrentCompany = () => {
 
 // Hook for company actions only
 export const useCompanyActions = () => {
-  const { createCompany, updateCompany, deleteCompany, clearError } =
-    useCompanies();
+  const {
+    createCompany,
+    updateCompany,
+    deleteCompany,
+    createCompanyWithUser,
+    getMyCompanies,
+    clearError,
+  } = useCompanies();
 
   return {
     createCompany,
     updateCompany,
     deleteCompany,
+    createCompanyWithUser,
+    getMyCompanies,
     clearError,
   };
 };

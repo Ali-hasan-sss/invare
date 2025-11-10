@@ -103,6 +103,8 @@ const UserAuctionsContent: React.FC = () => {
                   status={l.status}
                   isBiddable={l.isBiddable}
                   expiresAt={l.expiresAt}
+                  condition={l.condition}
+                  materialColor={l.materialColor}
                   photos={l.photos}
                   seller={l.seller}
                   material={l.material}

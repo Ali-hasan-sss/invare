@@ -22,21 +22,33 @@ import {
 export const useListings = () => {
   const dispatch = useAppDispatch();
   const listingsState = useAppSelector((state) => state.listings);
+  const currentLanguage = useAppSelector(
+    (state) => state.language.currentLanguage
+  );
 
   // Get listings list
   const fetchListings = useCallback(
     async (params?: GetListingsParams) => {
-      return dispatch(getListings(params));
+      const payload: GetListingsParams = {
+        ...params,
+        lang: params?.lang ?? currentLanguage.code,
+      };
+      return dispatch(getListings(payload));
     },
-    [dispatch]
+    [dispatch, currentLanguage.code]
   );
 
   // Get listing by ID
   const fetchListingById = useCallback(
-    async (id: string) => {
-      return dispatch(getListingById(id));
+    async (id: string, lang?: string) => {
+      return dispatch(
+        getListingById({
+          id,
+          lang: lang ?? currentLanguage.code,
+        })
+      );
     },
-    [dispatch]
+    [dispatch, currentLanguage.code]
   );
 
   // Create listing
@@ -91,26 +103,56 @@ export const useListings = () => {
 
   // Get my listings
   const fetchMyListings = useCallback(
-    async (params?: { page?: number; limit?: number; status?: string }) => {
-      return dispatch(getMyListings(params || {}));
+    async (params?: {
+      page?: number;
+      limit?: number;
+      status?: string;
+      lang?: string;
+    }) => {
+      return dispatch(
+        getMyListings({
+          lang: params?.lang ?? currentLanguage.code,
+          ...params,
+        })
+      );
     },
-    [dispatch]
+    [dispatch, currentLanguage.code]
   );
 
   // Get my user listings
   const fetchMyUserListings = useCallback(
-    async (params?: { page?: number; limit?: number; status?: string }) => {
-      return dispatch(getMyUserListings(params || {}));
+    async (params?: {
+      page?: number;
+      limit?: number;
+      status?: string;
+      lang?: string;
+    }) => {
+      return dispatch(
+        getMyUserListings({
+          lang: params?.lang ?? currentLanguage.code,
+          ...params,
+        })
+      );
     },
-    [dispatch]
+    [dispatch, currentLanguage.code]
   );
 
   // Get my company listings
   const fetchMyCompanyListings = useCallback(
-    async (params?: { page?: number; limit?: number; status?: string }) => {
-      return dispatch(getMyCompanyListings(params || {}));
+    async (params?: {
+      page?: number;
+      limit?: number;
+      status?: string;
+      lang?: string;
+    }) => {
+      return dispatch(
+        getMyCompanyListings({
+          lang: params?.lang ?? currentLanguage.code,
+          ...params,
+        })
+      );
     },
-    [dispatch]
+    [dispatch, currentLanguage.code]
   );
 
   return {

@@ -24,6 +24,17 @@ import { Avatar } from "./Avatar";
 import { useTranslation } from "@/hooks/useTranslation";
 import type { Photo, Seller, Material } from "@/store/slices/listingsSlice";
 
+const COLOR_HEX_MAP: Record<string, string> = {
+  black: "#000000",
+  blue: "#dbeafe",
+  green: "#dcfce7",
+  orange: "#ffedd4",
+  purple: "#f3e8ff",
+  red: "#ffe2e2",
+  white: "#f5f5f5",
+  yellow: "#fef9c2",
+};
+
 export interface ListingCardProps {
   id: string;
   title: string;
@@ -34,6 +45,8 @@ export interface ListingCardProps {
   status: string;
   isBiddable: boolean;
   expiresAt?: string;
+  condition?: string;
+  materialColor?: string;
   photos?: Photo[];
   seller?: Seller;
   material?: Material;
@@ -60,6 +73,8 @@ const ListingCard: React.FC<ListingCardProps> = ({
   status,
   isBiddable,
   expiresAt,
+  condition,
+  materialColor,
   photos,
   seller,
   material,
@@ -116,6 +131,14 @@ const ListingCard: React.FC<ListingCardProps> = ({
 
   const hasImages = photos && photos.length > 0;
   const primaryImage = hasImages ? photos[0] : null;
+  const conditionLabel = condition
+    ? t(`listing.conditionOptions.${condition}`)
+    : undefined;
+  const materialColorLabel = materialColor
+    ? t(`listing.materialColorOptions.${materialColor}`)
+    : undefined;
+  const materialColorHex =
+    (materialColor && COLOR_HEX_MAP[materialColor]) || undefined;
 
   const handleCardClick = () => {
     if (onClick) {
@@ -242,6 +265,35 @@ const ListingCard: React.FC<ListingCardProps> = ({
               / {unitOfMeasure}
             </Typography>
           </Box>
+
+          {(conditionLabel || materialColorLabel) && (
+            <Box className="flex flex-wrap items-center gap-2">
+              {conditionLabel && (
+                <Chip
+                  size="small"
+                  label={conditionLabel}
+                  className="bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-200 text-xs"
+                />
+              )}
+              {materialColorLabel && (
+                <Chip
+                  size="small"
+                  className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+                  label={
+                    <Box className="flex items-center gap-2">
+                      {materialColorHex && (
+                        <span
+                          className="inline-block h-3 w-3 rounded-full border border-gray-300"
+                          style={{ backgroundColor: materialColorHex }}
+                        />
+                      )}
+                      <span>{materialColorLabel}</span>
+                    </Box>
+                  }
+                />
+              )}
+            </Box>
+          )}
 
           {/* Title */}
           <Typography

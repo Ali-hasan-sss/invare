@@ -9,21 +9,13 @@ import {
   CircularProgress,
   Alert,
   Grid,
-  Button,
 } from "@mui/material";
 import { Package, ArrowLeft } from "lucide-react";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useMaterialCategories } from "@/hooks/useMaterialCategories";
 import { useMaterials } from "@/hooks/useMaterials";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/Card";
+import { Card, CardContent } from "@/components/ui/Card";
 
 const CategoryMaterialsPage: React.FC = () => {
   const router = useRouter();
@@ -120,17 +112,25 @@ const CategoryMaterialsPage: React.FC = () => {
             </Typography>
           )}
         </div>
-        <Button
-          variant="text"
+        <span
+          role="button"
+          tabIndex={0}
           onClick={handleBack}
-          startIcon={!isRTL ? <ArrowLeft className="h-4 w-4" /> : undefined}
-          endIcon={
-            isRTL ? <ArrowLeft className="h-4 w-4 rotate-180" /> : undefined
-          }
-          className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              handleBack();
+            }
+          }}
+          className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 cursor-pointer"
         >
+          {isRTL ? (
+            <ArrowLeft className="h-4 w-4 rotate-180" />
+          ) : (
+            <ArrowLeft className="h-4 w-4" />
+          )}
           {t("materials.backToCategories") || "عودة إلى الفئات"}
-        </Button>
+        </span>
       </Box>
 
       {showLoader ? (
@@ -156,31 +156,30 @@ const CategoryMaterialsPage: React.FC = () => {
             "لا توجد مواد لهذه الفئة حالياً."}
         </Alert>
       ) : (
-        <Grid container spacing={3}>
+        <Grid container spacing={3} className="mt-2">
           {materials.map((material) => (
             <Grid item xs={12} sm={6} md={4} key={material.id}>
-              <Card className="h-full flex flex-col border border-blue-100 dark:border-blue-900/50 bg-white/90 dark:bg-gray-900/70 backdrop-blur">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg flex items-center gap-2 text-gray-900 dark:text-gray-100">
-                    <Package className="h-5 w-5 text-blue-500" />
-                    <span>{material.name}</span>
-                  </CardTitle>
-                  <CardDescription className="text-gray-600 dark:text-gray-400">
-                    {material.unitOfMeasure}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex-1" />
-                <CardFooter className="pt-0">
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    className="!bg-[#2563eb] hover:!bg-[#1d4ed8] dark:!bg-blue-600 dark:hover:!bg-blue-500 font-semibold shadow-md hover:shadow-lg transition-all"
-                    onClick={() => handleMaterialSelect(material.id)}
+              <Card
+                role="button"
+                tabIndex={0}
+                onClick={() => handleMaterialSelect(material.id)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    handleMaterialSelect(material.id);
+                  }
+                }}
+                className="h-full border border-blue-100 dark:border-blue-900/50 bg-white/90 dark:bg-gray-900/70 backdrop-blur cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 transition-transform hover:-translate-y-1"
+              >
+                <CardContent className="flex items-center gap-3 py-6">
+                  <Package className="h-6 w-6 text-blue-500" />
+                  <Typography
+                    variant="h6"
+                    className="font-semibold text-gray-900 dark:text-gray-100"
                   >
-                    {t("materials.viewMaterialListings") ||
-                      "عرض العروض لهذه المادة"}
-                  </Button>
-                </CardFooter>
+                    {material.name}
+                  </Typography>
+                </CardContent>
               </Card>
             </Grid>
           ))}

@@ -87,8 +87,8 @@ export default function ListingsPage() {
 
   // Fetch categories and materials
   useEffect(() => {
-    dispatch(getMaterialCategories());
-  }, [dispatch]);
+    dispatch(getMaterialCategories({ lang: currentLanguage.code }));
+  }, [dispatch, currentLanguage.code]);
 
   useEffect(() => {
     if (categoryId && categories.length > 0) {
@@ -96,10 +96,10 @@ export default function ListingsPage() {
       if (category) {
         setSelectedCategory(category);
         // Fetch materials for this category
-        dispatch(getMaterials({ categoryId }));
+        dispatch(getMaterials({ categoryId, lang: currentLanguage.code }));
       }
     }
-  }, [categoryId, categories, dispatch]);
+  }, [categoryId, categories, dispatch, currentLanguage.code]);
 
   useEffect(() => {
     if (materialId && materials.length > 0) {
@@ -107,10 +107,10 @@ export default function ListingsPage() {
       if (material) {
         setSelectedMaterial(material);
         // Fetch listings for this material
-        dispatch(getListings({ materialId }));
+        dispatch(getListings({ materialId, lang: currentLanguage.code }));
       }
     }
-  }, [materialId, materials, dispatch]);
+  }, [materialId, materials, dispatch, currentLanguage.code]);
 
   useEffect(() => {
     if (listingsError) {
@@ -178,7 +178,7 @@ export default function ListingsPage() {
       setEditingListing(null);
       // Refresh listings
       if (materialId) {
-        dispatch(getListings({ materialId }));
+        dispatch(getListings({ materialId, lang: currentLanguage.code }));
       }
     } catch (err: any) {
       setToast({
@@ -201,7 +201,7 @@ export default function ListingsPage() {
       setDeleteDialogOpen(false);
       setDeletingListing(null);
       if (materialId) {
-        dispatch(getListings({ materialId }));
+        dispatch(getListings({ materialId, lang: currentLanguage.code }));
       }
     } catch (err) {
       setToast({ message: t("admin.error"), type: "error" });

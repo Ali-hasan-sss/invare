@@ -76,8 +76,8 @@ export default function MaterialsPage() {
 
   // Fetch categories and find selected category
   useEffect(() => {
-    dispatch(getMaterialCategories());
-  }, [dispatch]);
+    dispatch(getMaterialCategories({ lang: currentLanguage.code }));
+  }, [dispatch, currentLanguage.code]);
 
   useEffect(() => {
     if (categoryId && categories.length > 0) {
@@ -85,10 +85,10 @@ export default function MaterialsPage() {
       if (category) {
         setSelectedCategory(category);
         // Fetch materials for this category
-        dispatch(getMaterials({ categoryId }));
+        dispatch(getMaterials({ categoryId, lang: currentLanguage.code }));
       }
     }
-  }, [categoryId, categories, dispatch]);
+  }, [categoryId, categories, dispatch, currentLanguage.code]);
 
   useEffect(() => {
     if (materialsError) {
@@ -140,7 +140,7 @@ export default function MaterialsPage() {
       }
       setMaterialFormOpen(false);
       if (categoryId) {
-        dispatch(getMaterials({ categoryId }));
+        dispatch(getMaterials({ categoryId, lang: currentLanguage.code }));
       }
     } catch (err) {
       setToast({ message: t("admin.error"), type: "error" });
@@ -159,7 +159,7 @@ export default function MaterialsPage() {
       setDeleteDialogOpen(false);
       setDeletingMaterial(null);
       if (categoryId) {
-        dispatch(getMaterials({ categoryId }));
+        dispatch(getMaterials({ categoryId, lang: currentLanguage.code }));
       }
     } catch (err) {
       setToast({ message: t("admin.error"), type: "error" });
@@ -306,7 +306,11 @@ export default function MaterialsPage() {
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex justify-center">
-                      <Badge variant="info">{material.unitOfMeasure}</Badge>
+                      <Badge variant="info">
+                        {material.unitOfMeasure ||
+                          t("admin.notAvailable") ||
+                          "-"}
+                      </Badge>
                     </div>
                   </TableCell>
                   <TableCell className="text-center">

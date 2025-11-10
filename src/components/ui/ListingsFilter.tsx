@@ -18,12 +18,31 @@ import { useCompaniesList } from "@/hooks/useCompanies";
 import { useUsersList } from "@/hooks/useUsers";
 import { useMaterialCategoriesList } from "@/hooks/useMaterialCategories";
 
+const CONDITION_OPTIONS = [
+  "first_grade",
+  "second_grade",
+  "third_grade",
+] as const;
+
+const COLOR_OPTIONS: { value: string; hex: string }[] = [
+  { value: "black", hex: "#000000" },
+  { value: "blue", hex: "#dbeafe" },
+  { value: "green", hex: "#dcfce7" },
+  { value: "orange", hex: "#ffedd4" },
+  { value: "purple", hex: "#f3e8ff" },
+  { value: "red", hex: "#ffe2e2" },
+  { value: "white", hex: "#f5f5f5" },
+  { value: "yellow", hex: "#fef9c2" },
+];
+
 export interface ListingsFilterData {
   categoryId?: string;
   materialId?: string;
   companyId?: string;
   userId?: string;
   isBiddable?: boolean;
+  condition?: string;
+  materialColor?: string;
 }
 
 export interface ListingsFilterProps {
@@ -132,6 +151,22 @@ const ListingsFilter: React.FC<ListingsFilterProps> = ({
     onFilterChange({
       ...filters,
       isBiddable,
+    });
+  };
+
+  const handleConditionChange = (event: SelectChangeEvent<string>) => {
+    const value = event.target.value;
+    onFilterChange({
+      ...filters,
+      condition: value === "all" ? undefined : value,
+    });
+  };
+
+  const handleMaterialColorChange = (event: SelectChangeEvent<string>) => {
+    const value = event.target.value;
+    onFilterChange({
+      ...filters,
+      materialColor: value === "all" ? undefined : value,
     });
   };
 
@@ -372,6 +407,128 @@ const ListingsFilter: React.FC<ListingsFilterProps> = ({
             <MenuItem value="all">{t("filters.allListings")}</MenuItem>
             <MenuItem value="true">{t("listings.auction")}</MenuItem>
             <MenuItem value="false">{t("filters.buyNow")}</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
+
+      {/* Condition Filter */}
+      <Box className="space-y-2">
+        <Typography
+          variant="body2"
+          className="font-semibold text-gray-900 dark:text-white"
+        >
+          {t("filters.condition")}
+        </Typography>
+        <FormControl fullWidth size="small">
+          <Select
+            value={filters.condition || "all"}
+            onChange={handleConditionChange}
+            displayEmpty
+            className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            IconComponent={() => (
+              <ChevronDown
+                size={20}
+                className="text-gray-600 dark:text-gray-400 mr-2"
+              />
+            )}
+            sx={{
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "rgba(156, 163, 175, 0.5)",
+              },
+              "&:hover .MuiOutlinedInput-notchedOutline": {
+                borderColor: "rgba(156, 163, 175, 0.8)",
+              },
+              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#9333ea",
+              },
+              pr: 2,
+              pl: 2,
+              "& .MuiSelect-icon": {
+                right: 8,
+                left: "auto",
+              },
+              '[dir="rtl"] & .MuiSelect-icon': {
+                left: 8,
+                right: "auto",
+              },
+            }}
+            MenuProps={{
+              disableScrollLock: true,
+              PaperProps: {
+                className: "dark:bg-gray-700 dark:text-white",
+              },
+            }}
+          >
+            <MenuItem value="all">{t("filters.all")}</MenuItem>
+            {CONDITION_OPTIONS.map((option) => (
+              <MenuItem key={option} value={option}>
+                {t(`listing.conditionOptions.${option}`)}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
+
+      {/* Material Color Filter */}
+      <Box className="space-y-2">
+        <Typography
+          variant="body2"
+          className="font-semibold text-gray-900 dark:text-white"
+        >
+          {t("filters.materialColor")}
+        </Typography>
+        <FormControl fullWidth size="small">
+          <Select
+            value={filters.materialColor || "all"}
+            onChange={handleMaterialColorChange}
+            displayEmpty
+            className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            IconComponent={() => (
+              <ChevronDown
+                size={20}
+                className="text-gray-600 dark:text-gray-400 mr-2"
+              />
+            )}
+            sx={{
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "rgba(156, 163, 175, 0.5)",
+              },
+              "&:hover .MuiOutlinedInput-notchedOutline": {
+                borderColor: "rgba(156, 163, 175, 0.8)",
+              },
+              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#9333ea",
+              },
+              pr: 2,
+              pl: 2,
+              "& .MuiSelect-icon": {
+                right: 8,
+                left: "auto",
+              },
+              '[dir="rtl"] & .MuiSelect-icon': {
+                left: 8,
+                right: "auto",
+              },
+            }}
+            MenuProps={{
+              disableScrollLock: true,
+              PaperProps: {
+                className: "dark:bg-gray-700 dark:text-white",
+              },
+            }}
+          >
+            <MenuItem value="all">{t("filters.all")}</MenuItem>
+            {COLOR_OPTIONS.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                <Box className="flex items-center gap-2">
+                  <Box
+                    className="h-4 w-4 rounded-full border border-gray-300"
+                    sx={{ backgroundColor: option.hex }}
+                  />
+                  {t(`listing.materialColorOptions.${option.value}`)}
+                </Box>
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
       </Box>

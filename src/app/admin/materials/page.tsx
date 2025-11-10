@@ -57,8 +57,8 @@ export default function CategoriesPage() {
   } | null>(null);
 
   useEffect(() => {
-    dispatch(getMaterialCategories());
-  }, [dispatch]);
+    dispatch(getMaterialCategories({ lang: currentLanguage.code }));
+  }, [dispatch, currentLanguage.code]);
 
   useEffect(() => {
     if (categoriesError) {
@@ -111,7 +111,7 @@ export default function CategoriesPage() {
         });
       }
       setCategoryFormOpen(false);
-      dispatch(getMaterialCategories());
+      dispatch(getMaterialCategories({ lang: currentLanguage.code }));
     } catch (err) {
       setToast({ message: t("admin.error"), type: "error" });
     }
@@ -128,14 +128,14 @@ export default function CategoriesPage() {
       });
       setDeleteDialogOpen(false);
       setDeletingCategory(null);
-      dispatch(getMaterialCategories());
+      dispatch(getMaterialCategories({ lang: currentLanguage.code }));
     } catch (err) {
       setToast({ message: t("admin.error"), type: "error" });
     }
   };
 
   const filteredCategories = categories.filter((category) =>
-    category.name.toLowerCase().includes(searchQuery.toLowerCase())
+    (category.name || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (

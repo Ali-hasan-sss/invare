@@ -96,7 +96,7 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
   // Fetch listing details when dialog opens (for seller to see current price)
   useEffect(() => {
     if (open && effectiveListingId && isSeller) {
-      getListingById(effectiveListingId);
+      getListingById(effectiveListingId, currentLanguage.code);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, effectiveListingId, isSeller]);
@@ -448,7 +448,7 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
           setShowPriceForm(false);
           setNewPrice("");
           // Refresh listing to get updated price
-          await getListingById(effectiveListingId);
+          await getListingById(effectiveListingId, currentLanguage.code);
         } else {
           // Handle rejected action
           const errorMessage =

@@ -10,17 +10,29 @@ import {
   setCurrentCategory,
   CreateMaterialCategoryData,
   UpdateMaterialCategoryData,
+  GetMaterialCategoriesParams,
+  MaterialCategory,
 } from "../store/slices/materialCategoriesSlice";
 
 // Main material categories hook
 export const useMaterialCategories = () => {
   const dispatch = useAppDispatch();
   const categoriesState = useAppSelector((state) => state.materialCategories);
+  const currentLanguage = useAppSelector(
+    (state) => state.language.currentLanguage
+  );
 
   // Get material categories
-  const fetchCategories = useCallback(async () => {
-    return dispatch(getMaterialCategories());
-  }, [dispatch]);
+  const fetchCategories = useCallback(
+    async (params?: GetMaterialCategoriesParams) => {
+      const payload: GetMaterialCategoriesParams = {
+        ...params,
+        lang: params?.lang ?? currentLanguage.code,
+      };
+      return dispatch(getMaterialCategories(payload));
+    },
+    [dispatch, currentLanguage.code]
+  );
 
   // Create material category
   const addCategory = useCallback(
@@ -58,7 +70,7 @@ export const useMaterialCategories = () => {
 
   // Set current category
   const selectCategory = useCallback(
-    (category: any) => {
+    (category: MaterialCategory) => {
       dispatch(setCurrentCategory(category));
     },
     [dispatch]

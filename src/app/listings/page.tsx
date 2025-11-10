@@ -99,6 +99,8 @@ const ListingsPageContent: React.FC = () => {
         searchParams.get("isBiddable") === null
           ? undefined
           : searchParams.get("isBiddable") === "true",
+      condition: searchParams.get("condition") || undefined,
+      materialColor: searchParams.get("materialColor") || undefined,
     };
   };
 
@@ -120,6 +122,9 @@ const ListingsPageContent: React.FC = () => {
     if (filters.isBiddable !== undefined) {
       params.append("isBiddable", filters.isBiddable.toString());
     }
+    if (filters.condition) params.append("condition", filters.condition);
+    if (filters.materialColor)
+      params.append("materialColor", filters.materialColor);
 
     router.push(`/listings?${params.toString()}`);
   }, [filters, currentPageLocal, limit, router]);
@@ -172,6 +177,14 @@ const ListingsPageContent: React.FC = () => {
 
     if (filters.isBiddable === true) parts.push(t("listings.auction"));
     if (filters.isBiddable === false) parts.push(t("filters.buyNow"));
+
+    if (filters.condition) {
+      parts.push(t(`listing.conditionOptions.${filters.condition}`));
+    }
+
+    if (filters.materialColor) {
+      parts.push(t(`listing.materialColorOptions.${filters.materialColor}`));
+    }
 
     if (filters.materialId) {
       const m = materials.find((x) => x.id === filters.materialId);
@@ -467,6 +480,8 @@ const ListingsPageContent: React.FC = () => {
                       status={listing.status}
                       isBiddable={listing.isBiddable}
                       expiresAt={listing.expiresAt}
+                      condition={listing.condition}
+                      materialColor={listing.materialColor}
                       photos={listing.photos}
                       seller={listing.seller}
                       material={listing.material}

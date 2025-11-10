@@ -27,7 +27,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const {
     registerUser,
-    requestOtp,
+    // requestOtp,
     isLoading: authLoading,
     error: authError,
     isAuthenticated,
@@ -60,6 +60,26 @@ export default function RegisterPage() {
     }));
   };
 
+  const sendOtp = async () => {
+    try {
+      setLoading(true);
+      // Temporary bypass for OTP request
+      // const result = await requestOtp(formData.email);
+      // if (result && "payload" in result && result.type.includes("fulfilled")) {
+      setStep("verification");
+      showToast(t("auth.otpSent"), "success");
+      // } else if (authError) {
+      //   showToast(authError, "error");
+      // } else {
+      //   showToast("Failed to send OTP", "error");
+      // }
+    } catch (error) {
+      showToast("Failed to proceed to verification", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -73,33 +93,7 @@ export default function RegisterPage() {
       return;
     }
 
-    setLoading(true);
-    // Temporarily skip OTP request - directly move to verification step
-    setTimeout(() => {
-      setLoading(false);
-      setStep("verification");
-      showToast(t("auth.otpSent"), "success");
-    }, 1000);
-
-    // OTP Request Code - Commented out for testing
-    // try {
-    //   // Request OTP
-    //   const result = await requestOtp(formData.email);
-    //
-    //   // Check if the result is fulfilled (OTP sent successfully)
-    //   if (result && "payload" in result && result.type.includes("fulfilled")) {
-    //     setStep("verification");
-    //     showToast(t("auth.otpSent"), "success");
-    //   } else if (authError) {
-    //     showToast(authError, "error");
-    //   } else {
-    //     showToast("Failed to send OTP", "error");
-    //   }
-    // } catch (error) {
-    //   showToast("Failed to send OTP", "error");
-    // } finally {
-    //   setLoading(false);
-    // }
+    await sendOtp();
   };
 
   const handleVerification = async (otp: string) => {
@@ -145,8 +139,8 @@ export default function RegisterPage() {
     }
   };
 
-  const handleResendOtp = () => {
-    showToast(t("auth.resendOTP"), "info");
+  const handleResendOtp = async () => {
+    await sendOtp();
   };
 
   const handleBack = () => {

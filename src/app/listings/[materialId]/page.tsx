@@ -31,7 +31,7 @@ import { useBidding } from "@/hooks/useBids";
 const MaterialListingsPage: React.FC = () => {
   const { materialId } = useParams();
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const searchParams = useSearchParams();
   const {
     listings,
@@ -94,11 +94,22 @@ const MaterialListingsPage: React.FC = () => {
   useEffect(() => {
     if (materialId && typeof materialId === "string") {
       // Fetch material details
-      getMaterialById(materialId);
+      getMaterialById(materialId, currentLanguage.code);
       // Fetch listings for this material
-      getListings({ materialId, page: currentPageLocal, limit: 12 });
+      getListings({
+        materialId,
+        page: currentPageLocal,
+        limit: 12,
+        lang: currentLanguage.code,
+      });
     }
-  }, [materialId, currentPageLocal, getMaterialById, getListings]);
+  }, [
+    materialId,
+    currentPageLocal,
+    getMaterialById,
+    getListings,
+    currentLanguage.code,
+  ]);
 
   // Show purchase success toast if returned from payment
   useEffect(() => {
@@ -427,6 +438,8 @@ const MaterialListingsPage: React.FC = () => {
                   status={listing.status}
                   isBiddable={listing.isBiddable}
                   expiresAt={listing.expiresAt}
+                  condition={listing.condition}
+                  materialColor={listing.materialColor}
                   photos={listing.photos}
                   seller={listing.seller}
                   material={listing.material}

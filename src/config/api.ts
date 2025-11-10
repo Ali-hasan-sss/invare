@@ -80,6 +80,8 @@ export const API_CONFIG = {
       BASE: "/companies",
       LIST: "/companies",
       DETAIL: (id: string) => `/companies/${id}`,
+      ADMIN_CREATE_WITH_USER: "/companies/admin/create-company-and-user",
+      ME: "/companies/me",
     },
     COMPANY_ADDRESSES: {
       BASE: "/company-addresses",

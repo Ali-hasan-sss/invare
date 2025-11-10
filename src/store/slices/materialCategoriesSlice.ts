@@ -3,9 +3,18 @@ import apiClient from "../../lib/apiClient";
 import { API_CONFIG } from "../../config/api";
 
 // Types
+export interface MaterialCategoryTranslation {
+  name?: string;
+}
+
+export interface MaterialCategoryTranslations {
+  [lang: string]: MaterialCategoryTranslation | undefined;
+}
+
 export interface MaterialCategory {
   id: string;
   name: string;
+  i18n?: MaterialCategoryTranslations;
 }
 
 export interface MaterialCategoriesState {
@@ -17,10 +26,16 @@ export interface MaterialCategoriesState {
 
 export interface CreateMaterialCategoryData {
   name: string;
+  i18n?: MaterialCategoryTranslations;
 }
 
 export interface UpdateMaterialCategoryData {
-  name: string;
+  name?: string;
+  i18n?: MaterialCategoryTranslations;
+}
+
+export interface GetMaterialCategoriesParams {
+  lang?: string;
 }
 
 // Initial state
@@ -34,15 +49,19 @@ const initialState: MaterialCategoriesState = {
 // Async thunks
 export const getMaterialCategories = createAsyncThunk<
   MaterialCategory[],
-  void,
+  GetMaterialCategoriesParams | void,
   { rejectValue: string }
 >(
   "materialCategories/getMaterialCategories",
-  async (_, { rejectWithValue }) => {
+  async (params, { rejectWithValue }) => {
     try {
-      const response = await apiClient.get(
-        API_CONFIG.ENDPOINTS.MATERIAL_CATEGORIES.LIST
-      );
+      const queryParams = new URLSearchParams();
+      if (params?.lang) queryParams.append("lang", params.lang);
+
+      const url = `${API_CONFIG.ENDPOINTS.MATERIAL_CATEGORIES.LIST}${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`;
+      const response = await apiClient.get(url);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(

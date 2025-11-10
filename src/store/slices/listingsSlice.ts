@@ -6,6 +6,9 @@ import { API_CONFIG } from "../../config/api";
 export interface Material {
   id: string;
   name: string;
+  unitOfMeasure?: string;
+  categoryId?: string;
+  categoryName?: string;
 }
 
 export interface Seller {
@@ -25,6 +28,16 @@ export interface Attribute {
   value: string;
 }
 
+export interface ListingLocalization {
+  title?: string;
+  description?: string;
+  unitOfMeasure?: string;
+}
+
+export interface ListingTranslations {
+  [lang: string]: ListingLocalization | undefined;
+}
+
 export interface Listing {
   id: string;
   title: string;
@@ -35,6 +48,8 @@ export interface Listing {
   status: string;
   expiresAt?: string;
   isBiddable: boolean;
+  condition?: string;
+  materialColor?: string;
   materialId: string;
   material?: Material;
   sellerCompanyId?: string;
@@ -42,6 +57,7 @@ export interface Listing {
   seller?: Seller;
   photos?: Photo[];
   attributes?: Attribute[];
+  i18n?: ListingTranslations;
 }
 
 export interface ListingsState {
@@ -74,11 +90,14 @@ export interface CreateListingData {
   status: string;
   expiresAt?: string;
   isBiddable: boolean;
+  condition?: string;
+  materialColor?: string;
   materialId: string;
   sellerCompanyId?: string;
   sellerUserId?: string;
   photos?: ListingPhotoInput[];
   attributes?: ListingAttributeInput[];
+  i18n?: ListingTranslations;
 }
 
 export interface UpdateListingData {
@@ -90,11 +109,14 @@ export interface UpdateListingData {
   status?: string;
   expiresAt?: string;
   isBiddable?: boolean;
+  condition?: string;
+  materialColor?: string;
   materialId?: string;
   sellerCompanyId?: string;
   sellerUserId?: string;
   photos?: ListingPhotoInput[];
   attributes?: ListingAttributeInput[];
+  i18n?: ListingTranslations;
 }
 
 export interface GetListingsParams {
@@ -105,6 +127,21 @@ export interface GetListingsParams {
   userId?: string;
   isBiddable?: boolean;
   status?: string;
+  condition?: string;
+  materialColor?: string;
+  lang?: string;
+}
+
+export interface GetListingByIdParams {
+  id: string;
+  lang?: string;
+}
+
+export interface GetMyListingsParams {
+  page?: number;
+  limit?: number;
+  status?: string;
+  lang?: string;
 }
 
 // Initial state
@@ -137,6 +174,15 @@ export const getListings = createAsyncThunk<
     if (params?.status) {
       queryParams.append("status", params.status);
     }
+    if (params?.condition) {
+      queryParams.append("condition", params.condition);
+    }
+    if (params?.materialColor) {
+      queryParams.append("materialColor", params.materialColor);
+    }
+    if (params?.lang) {
+      queryParams.append("lang", params.lang);
+    }
 
     const url = `${API_CONFIG.ENDPOINTS.LISTINGS.LIST}${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
@@ -154,13 +200,16 @@ export const getListings = createAsyncThunk<
 
 export const getListingById = createAsyncThunk<
   Listing,
-  string,
+  GetListingByIdParams,
   { rejectValue: string }
->("listings/getListingById", async (id, { rejectWithValue }) => {
+>("listings/getListingById", async ({ id, lang }, { rejectWithValue }) => {
   try {
-    const response = await apiClient.get(
-      API_CONFIG.ENDPOINTS.LISTINGS.DETAIL(id)
-    );
+    const queryParams = new URLSearchParams();
+    if (lang) queryParams.append("lang", lang);
+    const url = `${API_CONFIG.ENDPOINTS.LISTINGS.DETAIL(id)}${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+    const response = await apiClient.get(url);
     return response.data;
   } catch (error: any) {
     return rejectWithValue(
@@ -230,7 +279,7 @@ export const deleteListing = createAsyncThunk<
 
 export const getMyListings = createAsyncThunk<
   Listing[],
-  { page?: number; limit?: number; status?: string },
+  GetMyListingsParams | undefined,
   { rejectValue: string }
 >("listings/getMyListings", async (params, { rejectWithValue }) => {
   try {
@@ -238,8 +287,9 @@ export const getMyListings = createAsyncThunk<
     if (params?.page) queryParams.append("page", params.page.toString());
     if (params?.limit) queryParams.append("limit", params.limit.toString());
     if (params?.status) queryParams.append("status", params.status);
+    if (params?.lang) queryParams.append("lang", params.lang);
 
-    const url = `${API_CONFIG.ENDPOINTS.LISTINGS.ME}${
+    const url = `${API_CONFIG.ENDPOINTS.LISTINGS.ME_USER}${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`;
     const response = await apiClient.get(url);
@@ -255,7 +305,7 @@ export const getMyListings = createAsyncThunk<
 
 export const getMyUserListings = createAsyncThunk<
   Listing[],
-  { page?: number; limit?: number; status?: string },
+  GetMyListingsParams | undefined,
   { rejectValue: string }
 >("listings/getMyUserListings", async (params, { rejectWithValue }) => {
   try {
@@ -263,6 +313,7 @@ export const getMyUserListings = createAsyncThunk<
     if (params?.page) queryParams.append("page", params.page.toString());
     if (params?.limit) queryParams.append("limit", params.limit.toString());
     if (params?.status) queryParams.append("status", params.status);
+    if (params?.lang) queryParams.append("lang", params.lang);
 
     const url = `${API_CONFIG.ENDPOINTS.LISTINGS.ME_USER}${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
@@ -280,7 +331,7 @@ export const getMyUserListings = createAsyncThunk<
 
 export const getMyCompanyListings = createAsyncThunk<
   Listing[],
-  { page?: number; limit?: number; status?: string },
+  GetMyListingsParams | undefined,
   { rejectValue: string }
 >("listings/getMyCompanyListings", async (params, { rejectWithValue }) => {
   try {
@@ -288,6 +339,7 @@ export const getMyCompanyListings = createAsyncThunk<
     if (params?.page) queryParams.append("page", params.page.toString());
     if (params?.limit) queryParams.append("limit", params.limit.toString());
     if (params?.status) queryParams.append("status", params.status);
+    if (params?.lang) queryParams.append("lang", params.lang);
 
     const url = `${API_CONFIG.ENDPOINTS.LISTINGS.ME_COMPANY}${
       queryParams.toString() ? `?${queryParams.toString()}` : ""

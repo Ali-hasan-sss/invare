@@ -15,6 +15,7 @@ import {
   Material,
   CreateMaterialData,
   UpdateMaterialData,
+  MaterialTranslations,
 } from "../../store/slices/materialsSlice";
 
 interface MaterialFormDialogProps {
@@ -26,6 +27,13 @@ interface MaterialFormDialogProps {
   isLoading?: boolean;
 }
 
+type MaterialFormState = {
+  nameEn: string;
+  unitEn: string;
+  nameAr: string;
+  unitAr: string;
+};
+
 export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({
   open,
   onOpenChange,
@@ -35,31 +43,65 @@ export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({
   isLoading = false,
 }) => {
   const { t } = useTranslation();
-  const [formData, setFormData] = useState<CreateMaterialData>({
-    name: "",
-    unitOfMeasure: "",
-    categoryId: categoryId,
+  const [formData, setFormData] = useState<MaterialFormState>({
+    nameEn: "",
+    unitEn: "",
+    nameAr: "",
+    unitAr: "",
   });
 
   useEffect(() => {
     if (material) {
       setFormData({
-        name: material.name || "",
-        unitOfMeasure: material.unitOfMeasure || "",
-        categoryId: material.categoryId || categoryId,
+        nameEn: (material.i18n?.en?.name ?? material.name ?? "") || "",
+        unitEn:
+          (material.i18n?.en?.unitOfMeasure ?? material.unitOfMeasure ?? "") ||
+          "",
+        nameAr: (material.i18n?.ar?.name ?? "") || "",
+        unitAr: (material.i18n?.ar?.unitOfMeasure ?? "") || "",
       });
     } else {
       setFormData({
-        name: "",
-        unitOfMeasure: "",
-        categoryId: categoryId,
+        nameEn: "",
+        unitEn: "",
+        nameAr: "",
+        unitAr: "",
       });
     }
   }, [material, categoryId, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit(formData);
+    const i18n: MaterialTranslations = {};
+    if (formData.nameEn || formData.unitEn) {
+      i18n.en = {
+        name: formData.nameEn || undefined,
+        unitOfMeasure: formData.unitEn || undefined,
+      };
+    }
+    if (formData.nameAr || formData.unitAr) {
+      i18n.ar = {
+        name: formData.nameAr || undefined,
+        unitOfMeasure: formData.unitAr || undefined,
+      };
+    }
+
+    if (material) {
+      const payload: UpdateMaterialData = {
+        name: formData.nameEn || material.name,
+        unitOfMeasure: formData.unitEn || material.unitOfMeasure,
+        i18n: Object.keys(i18n).length ? i18n : undefined,
+      };
+      await onSubmit(payload);
+    } else {
+      const payload: CreateMaterialData = {
+        name: formData.nameEn || formData.nameAr || "",
+        unitOfMeasure: formData.unitEn || formData.unitAr || "",
+        categoryId,
+        i18n: Object.keys(i18n).length ? i18n : undefined,
+      };
+      await onSubmit(payload);
+    }
   };
 
   const handleChange = (
@@ -73,7 +115,10 @@ export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent onClose={() => onOpenChange(false)}>
+      <DialogContent
+        onClose={() => onOpenChange(false)}
+        className="bg-white dark:bg-gray-900"
+      >
         <DialogHeader>
           <DialogTitle>
             {material ? t("admin.editMaterial") : t("admin.addMaterial")}
@@ -81,31 +126,62 @@ export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t("admin.materialName")}
-            </label>
-            <Input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                {t("admin.materialNameEn") || "Material Name (English)"}
+              </h4>
+              <Input
+                type="text"
+                name="nameEn"
+                value={formData.nameEn}
+                onChange={handleChange}
+                placeholder="Aluminum"
+                required={!formData.nameAr}
+              />
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                {t("admin.materialNameAr") || "اسم المادة (العربية)"}
+              </h4>
+              <Input
+                type="text"
+                name="nameAr"
+                value={formData.nameAr}
+                onChange={handleChange}
+                placeholder="ألمنيوم"
+                required={!formData.nameEn}
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t("admin.unitOfMeasure")}
-            </label>
-            <Input
-              type="text"
-              name="unitOfMeasure"
-              value={formData.unitOfMeasure}
-              onChange={handleChange}
-              required
-              placeholder="kg, m, ton..."
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                {t("admin.unitOfMeasureEn") || "Unit of Measure (English)"}
+              </h4>
+              <Input
+                type="text"
+                name="unitEn"
+                value={formData.unitEn}
+                onChange={handleChange}
+                placeholder="kg, m, ton..."
+                required={!formData.unitAr}
+              />
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                {t("admin.unitOfMeasureAr") || "وحدة القياس (العربية)"}
+              </h4>
+              <Input
+                type="text"
+                name="unitAr"
+                value={formData.unitAr}
+                onChange={handleChange}
+                placeholder="كغم، م، طن..."
+                required={!formData.unitEn}
+              />
+            </div>
           </div>
 
           <DialogFooter>
@@ -126,4 +202,3 @@ export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({
     </Dialog>
   );
 };
-

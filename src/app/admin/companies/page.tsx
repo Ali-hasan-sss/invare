@@ -6,8 +6,8 @@ import { useTranslation } from "../../../hooks/useTranslation";
 import { useCompanies } from "../../../hooks/useCompanies";
 import {
   Company,
-  CreateCompanyData,
   UpdateCompanyData,
+  CreateCompanyWithUserData,
 } from "../../../store/slices/companiesSlice";
 import { Card } from "../../../components/ui/Card";
 import { Button } from "../../../components/ui/Button";
@@ -22,6 +22,7 @@ import {
   TableCell,
 } from "../../../components/ui/Table";
 import { CompanyFormDialog } from "../../../components/admin/CompanyFormDialog";
+import { CreateCompanyWithUserDialog } from "../../../components/admin/CreateCompanyWithUserDialog";
 import { DeleteConfirmDialog } from "../../../components/admin/DeleteConfirmDialog";
 import { Toast } from "../../../components/ui/Toast";
 import { cn } from "../../../lib/utils";
@@ -34,14 +35,15 @@ export default function CompaniesManagement() {
     isLoading,
     error,
     getCompanies,
-    createCompany,
+    createCompanyWithUser,
     updateCompany,
     deleteCompany,
     clearError,
   } = useCompanies();
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [companyFormOpen, setCompanyFormOpen] = useState(false);
+  const [editCompanyFormOpen, setEditCompanyFormOpen] = useState(false);
+  const [createCompanyDialogOpen, setCreateCompanyDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [toast, setToast] = useState<{
@@ -62,12 +64,12 @@ export default function CompaniesManagement() {
 
   const handleAddCompany = () => {
     setSelectedCompany(null);
-    setCompanyFormOpen(true);
+    setCreateCompanyDialogOpen(true);
   };
 
   const handleEditCompany = (company: Company) => {
     setSelectedCompany(company);
-    setCompanyFormOpen(true);
+    setEditCompanyFormOpen(true);
   };
 
   const handleDeleteCompany = (company: Company) => {
@@ -75,34 +77,41 @@ export default function CompaniesManagement() {
     setDeleteDialogOpen(true);
   };
 
-  const handleSubmitCompany = async (
-    data: CreateCompanyData | UpdateCompanyData
-  ) => {
+  const handleSubmitCompany = async (data: UpdateCompanyData) => {
     try {
-      if (selectedCompany) {
-        const result = await updateCompany(
-          selectedCompany.id,
-          data as UpdateCompanyData
-        );
-        if (result.type.endsWith("/rejected")) {
-          throw new Error("Update failed");
-        }
-        setToast({
-          message: t("admin.companyUpdatedSuccess"),
-          type: "success",
-        });
-      } else {
-        const result = await createCompany(data as CreateCompanyData);
-        if (result.type.endsWith("/rejected")) {
-          throw new Error("Create failed");
-        }
-        setToast({
-          message: t("admin.companyCreatedSuccess"),
-          type: "success",
-        });
+      if (!selectedCompany) return;
+      const result = await updateCompany(selectedCompany.id, data);
+      if (result.type.endsWith("/rejected")) {
+        throw new Error("Update failed");
       }
-      setCompanyFormOpen(false);
+      setToast({
+        message: t("admin.companyUpdatedSuccess"),
+        type: "success",
+      });
+      setEditCompanyFormOpen(false);
       setSelectedCompany(null);
+      await getCompanies();
+    } catch (err: any) {
+      const errorMessage = err?.message || error || t("admin.error");
+      setToast({
+        message:
+          typeof errorMessage === "string" ? errorMessage : t("admin.error"),
+        type: "error",
+      });
+    }
+  };
+
+  const handleSubmitCreateCompany = async (data: CreateCompanyWithUserData) => {
+    try {
+      const result = await createCompanyWithUser(data);
+      if (result.type.endsWith("/rejected")) {
+        throw new Error("Create failed");
+      }
+      setToast({
+        message: t("admin.companyCreatedSuccess"),
+        type: "success",
+      });
+      setCreateCompanyDialogOpen(false);
       await getCompanies();
     } catch (err: any) {
       const errorMessage = err?.message || error || t("admin.error");
@@ -322,10 +331,17 @@ export default function CompaniesManagement() {
 
       {/* Dialogs */}
       <CompanyFormDialog
-        open={companyFormOpen}
-        onOpenChange={setCompanyFormOpen}
+        open={editCompanyFormOpen}
+        onOpenChange={setEditCompanyFormOpen}
         company={selectedCompany}
         onSubmit={handleSubmitCompany}
+        isLoading={isLoading}
+      />
+
+      <CreateCompanyWithUserDialog
+        open={createCompanyDialogOpen}
+        onOpenChange={setCreateCompanyDialogOpen}
+        onSubmit={handleSubmitCreateCompany}
         isLoading={isLoading}
       />
 

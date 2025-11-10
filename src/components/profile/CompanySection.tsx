@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, ChangeEvent, FormEvent } from "react";
+import { useState, useEffect, ChangeEvent, FormEvent, useMemo } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,25 +11,43 @@ import { Select, SelectOption } from "@/components/ui/Select";
 import { Alert, Snackbar } from "@mui/material";
 import { Save, Loader2, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { User, Company } from "@/store/slices/authSlice";
+import type { User, Company as AuthCompany } from "@/store/slices/authSlice";
+import type { Company as StoreCompany } from "@/store/slices/companiesSlice";
 
 interface CompanySectionProps {
   user: User;
-  company: Company | null;
+  company: AuthCompany | null;
 }
+
+type AnyCompany = (AuthCompany & { countryId?: string }) | StoreCompany | null;
 
 export default function CompanySection({ user, company }: CompanySectionProps) {
   const { t, currentLanguage } = useTranslation();
   const { registerCompany } = useAuth();
-  const { updateCompany, isLoading } = useCompanies();
+  const { updateCompany, isLoading, myCompanies, getMyCompanies } =
+    useCompanies();
   const { countries, getCountries } = useCountries();
   const isRTL = currentLanguage.dir === "rtl";
 
-  const [isEditing, setIsEditing] = useState(!company);
+  const primaryCompany: AnyCompany = useMemo(() => {
+    if (company) return company;
+    if (myCompanies.length > 0) return myCompanies[0] as AnyCompany;
+    return null;
+  }, [company, myCompanies]);
+
+  const otherCompanies = useMemo(
+    () =>
+      myCompanies.filter(
+        (companyItem) => companyItem.id !== (primaryCompany?.id ?? "")
+      ),
+    [myCompanies, primaryCompany?.id]
+  );
+
+  const [isEditing, setIsEditing] = useState(!primaryCompany);
   const [formData, setFormData] = useState({
-    companyName: company?.companyName || "",
-    vatNumber: company?.vatNumber || "",
-    website: company?.website || "",
+    companyName: primaryCompany?.companyName || "",
+    vatNumber: primaryCompany?.vatNumber || "",
+    website: primaryCompany?.website || "",
     countryId: "",
   });
 
@@ -41,7 +59,33 @@ export default function CompanySection({ user, company }: CompanySectionProps) {
 
   useEffect(() => {
     getCountries();
-  }, [getCountries]);
+    getMyCompanies();
+  }, [getCountries, getMyCompanies]);
+
+  useEffect(() => {
+    if (primaryCompany) {
+      const resolvedCountryId =
+        (primaryCompany as StoreCompany | null)?.country?.id ??
+        (primaryCompany as StoreCompany | null)?.countryId ??
+        "";
+
+      setFormData({
+        companyName: primaryCompany.companyName || "",
+        vatNumber: primaryCompany.vatNumber || "",
+        website: primaryCompany.website || "",
+        countryId: resolvedCountryId,
+      });
+      setIsEditing(false);
+    } else {
+      setFormData({
+        companyName: "",
+        vatNumber: "",
+        website: "",
+        countryId: "",
+      });
+      setIsEditing(true);
+    }
+  }, [primaryCompany]);
 
   const handleChange = (
     e:
@@ -56,9 +100,9 @@ export default function CompanySection({ user, company }: CompanySectionProps) {
     e.preventDefault();
 
     try {
-      if (company) {
+      if (primaryCompany) {
         // Update existing company
-        const result = await updateCompany(company.id, {
+        const result = await updateCompany(primaryCompany.id, {
           companyName: formData.companyName,
           vatNumber: formData.vatNumber,
           website: formData.website,
@@ -86,15 +130,14 @@ export default function CompanySection({ user, company }: CompanySectionProps) {
           setToastSeverity("success");
           setToastOpen(true);
           setIsEditing(false);
-          // Reload page to fetch new company data
-          window.location.reload();
+          await getMyCompanies();
         } else {
           throw new Error("Registration failed");
         }
       }
     } catch (error) {
       setToastMessage(
-        company
+        primaryCompany
           ? t("profile.companyUpdateError")
           : t("profile.companyRegistrationError")
       );
@@ -103,7 +146,7 @@ export default function CompanySection({ user, company }: CompanySectionProps) {
     }
   };
 
-  if (!isEditing && company) {
+  if (!isEditing && primaryCompany) {
     return (
       <div className="max-w-2xl">
         <div className="flex items-center justify-between mb-6">
@@ -125,37 +168,61 @@ export default function CompanySection({ user, company }: CompanySectionProps) {
               {t("profile.companyName")}
             </p>
             <p className="text-lg font-semibold text-gray-900 dark:text-white">
-              {company.companyName}
+              {primaryCompany.companyName}
             </p>
           </div>
 
-          {company.vatNumber && (
+          {primaryCompany.vatNumber && (
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
                 {t("profile.vatNumber")}
               </p>
               <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                {company.vatNumber}
+                {primaryCompany.vatNumber}
               </p>
             </div>
           )}
 
-          {company.website && (
+          {primaryCompany.website && (
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
                 {t("profile.website")}
               </p>
               <a
-                href={company.website}
+                href={primaryCompany.website}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-lg font-semibold text-blue-600 dark:text-blue-400 hover:underline"
               >
-                {company.website}
+                {primaryCompany.website}
               </a>
             </div>
           )}
         </div>
+
+        {otherCompanies.length > 0 && (
+          <div className="mt-8 space-y-3">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {t("profile.linkedCompanies") || "الشركات المرتبطة بحسابك"}
+            </h3>
+            {otherCompanies.map((companyItem) => (
+              <div
+                key={companyItem.id}
+                className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800"
+              >
+                <p className="text-base font-semibold text-gray-900 dark:text-white">
+                  {companyItem.companyName}
+                </p>
+                {companyItem.owner?.email && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {t("profile.ownerEmail") || "البريد المرتبط"}:{" "}
+                    {companyItem.owner.email}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
@@ -163,10 +230,12 @@ export default function CompanySection({ user, company }: CompanySectionProps) {
   return (
     <div className="max-w-2xl">
       <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-        {company ? t("profile.editCompany") : t("profile.companyRegistration")}
+        {primaryCompany
+          ? t("profile.editCompany")
+          : t("profile.companyRegistration")}
       </h2>
 
-      {!company && (
+      {!primaryCompany && (
         <Alert severity="info" className="mb-6">
           {t("profile.registerCompanyDesc")}
         </Alert>
@@ -258,7 +327,7 @@ export default function CompanySection({ user, company }: CompanySectionProps) {
         </div>
 
         {/* Country (only for new registration) */}
-        {!company && (
+        {!primaryCompany && (
           <div>
             <label
               htmlFor="countryId"
@@ -300,7 +369,7 @@ export default function CompanySection({ user, company }: CompanySectionProps) {
                 <Loader2 className="animate-spin" size={20} />
                 <span>{t("profile.loading")}</span>
               </>
-            ) : company ? (
+            ) : primaryCompany ? (
               <>
                 <Save size={20} />
                 <span>{t("profile.save")}</span>
@@ -313,18 +382,24 @@ export default function CompanySection({ user, company }: CompanySectionProps) {
             )}
           </Button>
 
-          {company && (
+          {primaryCompany && (
             <Button
               type="button"
               variant="outline"
               onClick={() => {
                 setIsEditing(false);
-                setFormData({
-                  companyName: company.companyName,
-                  vatNumber: company.vatNumber || "",
-                  website: company.website || "",
-                  countryId: "",
-                });
+                if (primaryCompany) {
+                  const resolvedCountryId =
+                    (primaryCompany as StoreCompany | null)?.country?.id ??
+                    (primaryCompany as StoreCompany | null)?.countryId ??
+                    "";
+                  setFormData({
+                    companyName: primaryCompany.companyName,
+                    vatNumber: primaryCompany.vatNumber || "",
+                    website: primaryCompany.website || "",
+                    countryId: resolvedCountryId,
+                  });
+                }
               }}
             >
               {t("profile.cancel")}

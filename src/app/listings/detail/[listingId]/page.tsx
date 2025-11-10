@@ -61,10 +61,21 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import ClientOnly from "@/components/ClientOnly";
 import { ChatDialog } from "@/components/ChatDialog";
 
+const COLOR_HEX_MAP: Record<string, string> = {
+  black: "#000000",
+  blue: "#dbeafe",
+  green: "#dcfce7",
+  orange: "#ffedd4",
+  purple: "#f3e8ff",
+  red: "#ffe2e2",
+  white: "#f5f5f5",
+  yellow: "#fef9c2",
+};
+
 const ListingDetailPage: React.FC = () => {
   const { listingId } = useParams();
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const { getListingById, currentListing, isLoading, error } = useListings();
   const { isAuthenticated, user, company } = useAuth();
   const {
@@ -119,9 +130,9 @@ const ListingDetailPage: React.FC = () => {
 
   useEffect(() => {
     if (listingId && typeof listingId === "string") {
-      getListingById(listingId);
+      getListingById(listingId, currentLanguage.code);
     }
-  }, [listingId, getListingById]);
+  }, [listingId, getListingById, currentLanguage.code]);
 
   const handleBackClick = () => {
     router.back();
@@ -765,6 +776,57 @@ const ListingDetailPage: React.FC = () => {
                         className="font-medium text-gray-900 dark:text-white"
                       >
                         {listing.material.name}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+
+                {listing.condition && (
+                  <Box className="flex items-center gap-3">
+                    <Gavel
+                      size={20}
+                      className="text-gray-500 dark:text-gray-400"
+                    />
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        className="text-gray-600 dark:text-gray-400"
+                      >
+                        {t("listing.condition")}
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        className="font-medium text-gray-900 dark:text-white"
+                      >
+                        {t(`listing.conditionOptions.${listing.condition}`)}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+
+                {listing.materialColor && (
+                  <Box className="flex items-center gap-3">
+                    <Box
+                      className="h-5 w-5 rounded-full border border-gray-300"
+                      sx={{
+                        backgroundColor:
+                          COLOR_HEX_MAP[listing.materialColor] || "#f5f5f5",
+                      }}
+                    />
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        className="text-gray-600 dark:text-gray-400"
+                      >
+                        {t("listing.materialColor")}
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        className="font-medium text-gray-900 dark:text-white"
+                      >
+                        {t(
+                          `listing.materialColorOptions.${listing.materialColor}`
+                        )}
                       </Typography>
                     </Box>
                   </Box>
