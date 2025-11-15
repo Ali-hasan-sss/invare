@@ -130,10 +130,10 @@ const Footer: React.FC = () => {
               <div className="flex items-center gap-3 text-gray-300">
                 <Mail className="h-5 w-5 text-secondary-400 flex-shrink-0" />
                 <a
-                  href="mailto:info@invare.sa"
+                  href="mailto:sales@invare.sa"
                   className="text-sm hover:text-secondary-400 transition-colors"
                 >
-                  {t("footer.email") || "info@invare.sa"}
+                  {t("footer.email") || "sales@invare.sa"}
                 </a>
               </div>
             </div>

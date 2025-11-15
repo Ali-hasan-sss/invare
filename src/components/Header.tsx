@@ -184,8 +184,8 @@ const Header: React.FC = () => {
               <Image
                 src="/images/logo.png"
                 alt="logo"
-                width={40}
-                height={40}
+                width={50}
+                height={50}
                 className="object-contain"
               />
             </div>

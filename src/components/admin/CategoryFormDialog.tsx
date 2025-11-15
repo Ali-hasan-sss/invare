@@ -22,7 +22,9 @@ interface CategoryFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   category?: MaterialCategory | null;
-  onSubmit: (data: CreateMaterialCategoryData | UpdateMaterialCategoryData) => Promise<void>;
+  onSubmit: (
+    data: CreateMaterialCategoryData | UpdateMaterialCategoryData
+  ) => Promise<void>;
   isLoading?: boolean;
 }
 
@@ -60,24 +62,35 @@ export const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate that at least one name is provided
+    if (!formData.nameEn && !formData.nameAr) {
+      return;
+    }
+
     const i18n: MaterialCategoryTranslations = {};
-    if (formData.nameEn) {
-      i18n.en = { name: formData.nameEn };
+    if (formData.nameEn?.trim()) {
+      i18n.en = { name: formData.nameEn.trim() };
     }
-    if (formData.nameAr) {
-      i18n.ar = { name: formData.nameAr };
+    if (formData.nameAr?.trim()) {
+      i18n.ar = { name: formData.nameAr.trim() };
     }
+
+    // Build clean payload without undefined values
+    const cleanI18n = Object.keys(i18n).length > 0 ? i18n : undefined;
+    const categoryName =
+      formData.nameEn?.trim() || formData.nameAr?.trim() || "";
 
     if (category) {
       const payload: UpdateMaterialCategoryData = {
-        name: formData.nameEn || formData.nameAr || category.name,
-        i18n: Object.keys(i18n).length ? i18n : undefined,
+        name: categoryName || category.name,
+        ...(cleanI18n && { i18n: cleanI18n }),
       };
       await onSubmit(payload);
     } else {
       const payload: CreateMaterialCategoryData = {
-        name: formData.nameEn || formData.nameAr || "",
-        i18n: Object.keys(i18n).length ? i18n : undefined,
+        name: categoryName,
+        ...(cleanI18n && { i18n: cleanI18n }),
       };
       await onSubmit(payload);
     }
@@ -147,4 +160,3 @@ export const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
     </Dialog>
   );
 };
-

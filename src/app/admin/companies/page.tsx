@@ -148,12 +148,14 @@ export default function CompaniesManagement() {
     }
   };
 
-  const filteredCompanies = companies.filter(
-    (company) =>
-      company.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      company.vatNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      company.website?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredCompanies = companies.filter((company) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      company.companyName?.toLowerCase().includes(query) ||
+      company.vatNumber?.toLowerCase().includes(query) ||
+      company.website?.toLowerCase().includes(query)
+    );
+  });
 
   const getVerificationBadge = (status?: string) => {
     switch (status) {

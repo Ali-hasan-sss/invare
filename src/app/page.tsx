@@ -378,7 +378,7 @@ export default function HomePage() {
           {/* Add Advertisement Button */}
           <div className="text-center mt-8">
             <Button
-              onClick={handleAddAdvertisement}
+              onClick={handlePostListing}
               size="lg"
               className="!bg-gradient-to-r from-secondary-600 to-accent-600 hover:from-secondary-700 hover:to-accent-700 !text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
             >

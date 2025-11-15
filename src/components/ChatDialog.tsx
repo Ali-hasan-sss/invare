@@ -6,6 +6,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -24,7 +26,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { ChatMessage } from "@/store/slices/chatSlice";
+import type { ChatMessage, Chat } from "@/store/slices/chatSlice";
 
 interface ChatDialogProps {
   open: boolean;
@@ -70,6 +72,8 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesLoadedRef = useRef<string | null>(null); // Track which chat's messages have been loaded
   const isRTL = currentLanguage.dir === "rtl";
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   // Extract listingId from currentChat or use prop
   const effectiveListingId = useMemo(() => {
@@ -81,8 +85,19 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
     return listingId;
   }, [currentChat?.listing?.id, listingId]);
 
+  // Get seller user ID from listing or props
+  const effectiveSellerUserId = useMemo(() => {
+    // First try to get from currentChat.listing.sellerUser.id (from API response)
+    if (currentChat?.listing?.sellerUser?.id) {
+      return currentChat.listing.sellerUser.id;
+    }
+    // Fallback to prop
+    return sellerUserId;
+  }, [currentChat?.listing?.sellerUser?.id, sellerUserId]);
+
   // Check if current user is the seller
-  const isSeller = user?.id && String(user.id) === String(sellerUserId);
+  const isSeller =
+    user?.id && String(user.id) === String(effectiveSellerUserId);
 
   // Reset messages loaded ref and price form when dialog closes
   useEffect(() => {
@@ -483,13 +498,28 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
       onClose={onClose}
       maxWidth="sm"
       fullWidth
+      fullScreen={isMobile}
       PaperProps={{
         sx: {
           backgroundColor: "rgb(var(--background) / 1)",
           backgroundImage: "none",
           color: "var(--foreground)",
-          borderRadius: "16px",
-          maxHeight: "80vh",
+          borderRadius: {
+            xs: "0px",
+            sm: "16px",
+          },
+          maxHeight: {
+            xs: "100vh",
+            sm: "80vh",
+          },
+          height: {
+            xs: "100vh",
+            sm: "auto",
+          },
+          margin: {
+            xs: 0,
+            sm: "32px",
+          },
         },
         className: "bg-white dark:bg-gray-900",
       }}
@@ -500,25 +530,28 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
           fontWeight: 600,
           fontSize: "1.125rem",
           borderBottom: "1px solid",
-          p: 3,
+          p: {
+            xs: 2,
+            sm: 3,
+          },
         }}
         className="text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 bg-gradient-to-r from-secondary-50 to-accent-50 dark:from-gray-800 dark:to-gray-800"
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-secondary-600 dark:bg-secondary-500 rounded-full">
-              <MessageCircle className="h-5 w-5 text-white" />
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <div className="p-1.5 sm:p-2 bg-secondary-600 dark:bg-secondary-500 rounded-full flex-shrink-0">
+              <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 dark:text-white">
+            <div className="min-w-0 flex-1">
+              <h3 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base truncate">
                 {sellerName}
               </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate hidden sm:block">
                 {listingTitle}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             {/* View Listing Button - Shown to both buyer and seller */}
             {effectiveListingId && (
               <button
@@ -528,11 +561,13 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
                   router.push(`/listings/detail/${effectiveListingId}`);
                   onClose();
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors text-secondary-600 dark:text-secondary-400 text-sm font-medium"
+                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors text-secondary-600 dark:text-secondary-400 text-sm font-medium"
                 title={t("chat.viewListing")}
               >
                 <ExternalLink className="h-4 w-4" />
-                <span>{t("chat.viewListing")}</span>
+                <span className="hidden sm:inline">
+                  {t("chat.viewListing")}
+                </span>
               </button>
             )}
             {/* Update Price Button - Only visible to seller */}
@@ -546,16 +581,18 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
                     setNewPrice(currentListing.startingPrice);
                   }
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors text-secondary-600 dark:text-secondary-400 text-sm font-medium"
+                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors text-secondary-600 dark:text-secondary-400 text-sm font-medium"
                 title={t("chat.updatePrice")}
               >
                 <DollarSign className="h-4 w-4" />
-                <span>{t("chat.updatePrice")}</span>
+                <span className="hidden sm:inline">
+                  {t("chat.updatePrice")}
+                </span>
               </button>
             )}
             <button
               onClick={onClose}
-              className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
+              className="p-1.5 sm:p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors flex-shrink-0"
             >
               <X className="h-5 w-5 text-gray-500 dark:text-gray-400" />
             </button>
@@ -565,17 +602,17 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
 
       {/* Price Update Form */}
       {isSeller && showPriceForm && (
-        <div className="px-4 py-3 bg-secondary-50 dark:bg-secondary-900/20 border-b border-secondary-200 dark:border-secondary-800">
+        <div className="px-3 sm:px-4 py-2 sm:py-3 bg-secondary-50 dark:bg-secondary-900/20 border-b border-secondary-200 dark:border-secondary-800">
           <form
             onSubmit={(e) => {
               e.preventDefault();
               handleUpdatePrice(e as any);
             }}
-            className="flex items-center gap-3"
+            className="flex items-center gap-2 sm:gap-3"
           >
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               {currentListing?.startingPrice && (
-                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                <p className="text-xs text-gray-600 dark:text-gray-400 mb-1 sm:mb-2 truncate">
                   {t("chat.currentPrice")}: {currentListing.startingPrice}{" "}
                   {t("common.currency")}
                 </p>
@@ -592,7 +629,7 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
                   }
                 }}
                 placeholder={t("chat.enterNewPrice")}
-                className="text-gray-900 dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                className="text-gray-900 dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-sm sm:text-base"
               />
             </div>
             <Button
@@ -601,15 +638,15 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
                 !newPrice.trim() || isUpdatingPrice || !effectiveListingId
               }
               size="sm"
-              className="!bg-secondary-600 hover:!bg-secondary-700 dark:!bg-secondary-500 dark:hover:!bg-secondary-600 !text-white font-semibold"
+              className="!bg-secondary-600 hover:!bg-secondary-700 dark:!bg-secondary-500 dark:hover:!bg-secondary-600 !text-white font-semibold flex-shrink-0"
             >
               {isUpdatingPrice ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                  {t("chat.update")}
+                  <span className="hidden sm:inline">{t("chat.update")}</span>
                 </>
               ) : (
-                t("chat.update")
+                <span className="hidden sm:inline">{t("chat.update")}</span>
               )}
             </Button>
             <button
@@ -618,7 +655,7 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
                 setShowPriceForm(false);
                 setNewPrice("");
               }}
-              className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="p-1.5 sm:p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors flex-shrink-0"
             >
               <X className="h-4 w-4 text-gray-500 dark:text-gray-400" />
             </button>
@@ -627,10 +664,22 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
       )}
 
       {/* Messages Container */}
-      <DialogContent sx={{ p: 0 }} className="bg-gray-50 dark:bg-gray-900">
+      <DialogContent
+        sx={{
+          p: 0,
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          minHeight: 0,
+        }}
+        className="bg-gray-50 dark:bg-gray-900"
+      >
         <div
           ref={messagesContainerRef}
-          className="h-96 overflow-y-auto p-4 space-y-3"
+          className={cn(
+            "flex-1 overflow-y-auto p-3 sm:p-4 space-y-3",
+            isMobile ? "h-[calc(100vh-200px)]" : "h-96"
+          )}
         >
           {isInitializing || isLoading ? (
             <div className="flex items-center justify-center h-full">
@@ -666,7 +715,7 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
                   >
                     <div
                       className={cn(
-                        "max-w-[75%] rounded-2xl px-4 py-2.5 shadow-sm transition-opacity duration-300",
+                        "max-w-[85%] sm:max-w-[75%] rounded-2xl px-3 py-2 sm:px-4 sm:py-2.5 shadow-sm transition-opacity duration-300",
                         isPending && "opacity-60",
                         isOwnMessage
                           ? "bg-secondary-600 text-white"
@@ -717,7 +766,10 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
       {/* Input Area */}
       <DialogActions
         sx={{
-          p: 3,
+          p: {
+            xs: 2,
+            sm: 3,
+          },
           borderTop: "1px solid",
         }}
         className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
@@ -730,17 +782,21 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
             onKeyPress={handleKeyPress}
             placeholder={t("chat.typeMessage")}
             disabled={isInitializing || !currentChat}
-            className="flex-1 text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+            className="flex-1 text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-sm sm:text-base"
           />
           <Button
             onClick={handleSendMessage}
             disabled={!message.trim() || isInitializing || !currentChat}
-            className="!bg-blue-600 hover:!bg-blue-700 dark:!bg-blue-500 dark:hover:!bg-blue-600 !text-white font-semibold px-4"
+            className="!bg-blue-600 hover:!bg-blue-700 dark:!bg-blue-500 dark:hover:!bg-blue-600 !text-white font-semibold px-3 sm:px-4"
+            size={isMobile ? "sm" : "md"}
           >
             <Send
-              className={cn("h-5 w-5", isRTL ? "ml-2 rotate-180" : "mr-2")}
+              className={cn(
+                "h-4 w-4 sm:h-5 sm:w-5",
+                isRTL ? "ml-1 sm:ml-2 rotate-180" : "mr-1 sm:mr-2"
+              )}
             />
-            {t("chat.send")}
+            <span className="hidden sm:inline">{t("chat.send")}</span>
           </Button>
         </div>
       </DialogActions>

@@ -28,6 +28,12 @@ export interface Chat {
   listing?: {
     id: string;
     title: string;
+    sellerUser?: {
+      id: string;
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+    };
   };
   status: string;
   messages?: ChatMessage[];

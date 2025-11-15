@@ -218,6 +218,7 @@ export default function LoginPage() {
                   <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                     {t("auth.dontHaveAccount")}{" "}
                     <Button
+                      onClick={() => router.push("/auth/register")}
                       variant="ghost"
                       className="p-0 h-auto text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-xs sm:text-sm"
                     >

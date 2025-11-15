@@ -64,7 +64,7 @@ const ContactPage: React.FC = () => {
                 </Typography>
               </Box>
               <Typography className="text-gray-700 dark:text-gray-300">
-                {t("contact.email") || "info@invare.sa"}
+                {t("contact.email") || "sales@invare.sa"}
               </Typography>
             </Box>
           </Grid>
