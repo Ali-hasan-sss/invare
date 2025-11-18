@@ -18,6 +18,7 @@ import {
   Tag,
   LayoutDashboard,
   Heart,
+  Settings,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -30,10 +31,62 @@ interface UserMenuProps {
   onClose: () => void;
 }
 
+// Helper function to check if user is admin
+const isAdminUser = (user: any): boolean => {
+  if (!user) return false;
+
+  // Method 1: Check if user has isAdmin flag
+  if (user.isAdmin === true) {
+    return true;
+  }
+
+  // Method 2: Check if user has admin role in roles array
+  if (user.roles && Array.isArray(user.roles) && user.roles.length > 0) {
+    const hasAdminRole = user.roles.some((role: any) => {
+      const roleName = role?.name?.toLowerCase() || "";
+      return (
+        roleName === "admin" ||
+        roleName === "administrator" ||
+        roleName === "ادمن" ||
+        roleName === "مشرف" ||
+        roleName?.includes("admin")
+      );
+    });
+    if (hasAdminRole) return true;
+  }
+
+  // Method 3: Check roleIds if roles array is not available
+  if (user.roleIds && Array.isArray(user.roleIds) && user.roleIds.length > 0) {
+    // If you know the admin role ID(s), check here
+    // Example: return user.roleIds.includes("admin-role-id");
+    // For now, we'll log for debugging
+    if (process.env.NODE_ENV === "development") {
+      console.log("User has roleIds:", user.roleIds);
+    }
+  }
+
+  // Debug: Log user data to help identify admin users
+  if (process.env.NODE_ENV === "development") {
+    console.log("Checking admin status for user in UserMenu:", {
+      id: user.id,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      roles: user.roles,
+      roleIds: user.roleIds,
+      fullUser: user,
+    });
+  }
+
+  return false;
+};
+
 const UserMenu: React.FC<UserMenuProps> = ({ anchorEl, open, onClose }) => {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const router = useRouter();
+
+  // Check if current user is admin
+  const isAdmin = user ? isAdminUser(user) : false;
 
   const handleProfileClick = () => {
     router.push("/profile");
@@ -67,6 +120,11 @@ const UserMenu: React.FC<UserMenuProps> = ({ anchorEl, open, onClose }) => {
 
   const handleDashboardClick = () => {
     router.push("/user/dashboard");
+    onClose();
+  };
+
+  const handleAdminDashboardClick = () => {
+    router.push("/admin");
     onClose();
   };
 
@@ -137,6 +195,19 @@ const UserMenu: React.FC<UserMenuProps> = ({ anchorEl, open, onClose }) => {
         </ListItemIcon>
         <ListItemText primary={t("user.dashboard") || "لوحة التحكم"} />
       </MenuItem>
+
+      {/* Admin Dashboard - Only show if user is admin */}
+      {isAdmin && (
+        <MenuItem
+          onClick={handleAdminDashboardClick}
+          className="hover:bg-gray-50 dark:hover:bg-gray-700"
+        >
+          <ListItemIcon className="text-purple-600 dark:text-purple-400">
+            <Settings size={20} />
+          </ListItemIcon>
+          <ListItemText primary={t("admin.home") || "لوحة تحكم الأدمن"} />
+        </MenuItem>
+      )}
 
       <MenuItem
         onClick={handlePurchasesClick}

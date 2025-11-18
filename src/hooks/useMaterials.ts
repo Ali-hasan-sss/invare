@@ -7,6 +7,7 @@ import {
   updateMaterial,
   deleteMaterial,
   addFavoriteMaterial,
+  addFavoriteMaterialAdmin,
   getFavoriteMaterials,
   removeFavoriteMaterial,
   clearError,
@@ -17,6 +18,7 @@ import {
   UpdateMaterialData,
   GetMaterialsParams,
   GetMaterialByIdParams,
+  AddFavoriteMaterialAdminParams,
 } from "../store/slices/materialsSlice";
 
 // Main materials hook
@@ -122,6 +124,14 @@ export const useMaterials = () => {
     [dispatch]
   );
 
+  // Add favorite material admin (for specific user)
+  const addFavoriteAdmin = useCallback(
+    async (params: AddFavoriteMaterialAdminParams) => {
+      return dispatch(addFavoriteMaterialAdmin(params));
+    },
+    [dispatch]
+  );
+
   return {
     // State
     materials: materialsState.materials,
@@ -140,6 +150,7 @@ export const useMaterials = () => {
     updateMaterial: editMaterial,
     deleteMaterial: removeMaterial,
     addFavoriteMaterial: addFavorite,
+    addFavoriteMaterialAdmin: addFavoriteAdmin,
     getFavoriteMaterials: fetchFavorites,
     removeFavoriteMaterial: removeFavorite,
     clearError: clearMaterialsError,

@@ -11,11 +11,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import EmailVerification from "@/components/EmailVerification";
 import { useAuth } from "@/hooks/useAuth";
+import { useAppDispatch } from "@/store/hooks";
+import { handleGoogleAuth } from "@/lib/googleAuth";
 
 export default function LoginPage() {
   const { t, currentLanguage } = useTranslation();
   const { showToast } = useToast();
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const {
     login,
     // requestOtp,
@@ -27,6 +30,7 @@ export default function LoginPage() {
   const [step, setStep] = useState<"email" | "otp">("email");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const sendOtp = async () => {
     if (!email) {
@@ -62,6 +66,7 @@ export default function LoginPage() {
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // Prevent any event bubbling that might cause reload
     await sendOtp();
   };
 
@@ -83,13 +88,20 @@ export default function LoginPage() {
           const redirect = searchParams.get("redirect");
           router.push(redirect ? redirect : "/");
         }
-      } else if (authError) {
-        showToast(authError, "error");
       } else {
-        showToast("Login failed", "error");
+        // Login failed - do NOT redirect or reload
+        // Only show error message and stay on the same page
+        const errorMessage = authError || "Login failed";
+        showToast(errorMessage, "error");
+        // Stay on OTP step to allow user to retry
+        // Do NOT redirect or reload the page
       }
-    } catch (error) {
-      showToast("Login failed", "error");
+    } catch (error: any) {
+      // Catch any unexpected errors - do NOT redirect or reload
+      const errorMessage = error?.message || "Login failed";
+      showToast(errorMessage, "error");
+      // Stay on OTP step to allow user to retry
+      // Do NOT redirect or reload the page
     } finally {
       setLoading(false);
     }
@@ -106,8 +118,37 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleSignIn = () => {
-    showToast("Google Sign In - Coming Soon", "info");
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      const result = await handleGoogleAuth(dispatch);
+
+      if (result.success && result.user) {
+        // Login successful - redirect based on user type
+        if (result.user.isAdmin) {
+          router.push("/admin");
+        } else {
+          const redirect = searchParams.get("redirect");
+          router.push(redirect ? redirect : "/");
+        }
+      } else {
+        // Google sign-in failed - do NOT redirect or reload
+        // Silent failure - don't show error to user as requested
+        // Only log for debugging
+        if (process.env.NODE_ENV === "development") {
+          console.error("Google sign in failed:", result.error);
+        }
+        // Stay on the same page - do NOT redirect or reload
+      }
+    } catch (error: any) {
+      // Catch any unexpected errors - do NOT redirect or reload
+      if (process.env.NODE_ENV === "development") {
+        console.error("Google sign in error:", error);
+      }
+      // Stay on the same page - do NOT redirect or reload
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   return (
@@ -181,6 +222,8 @@ export default function LoginPage() {
                   type="button"
                   variant="outline"
                   onClick={handleGoogleSignIn}
+                  disabled={googleLoading || loading}
+                  loading={googleLoading}
                   className="w-full h-11 sm:h-12 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-all duration-200 text-sm sm:text-base"
                   sx={{
                     color: "rgb(55 65 81) !important", // gray-700 for light mode
@@ -209,7 +252,9 @@ export default function LoginPage() {
                       />
                     </div>
                     <span className="text-xs sm:text-base">
-                      {t("auth.signInWithGoogle")}
+                      {googleLoading
+                        ? t("common.loading") || "جاري التحميل..."
+                        : t("auth.signUpWithGoogle")}
                     </span>
                   </div>
                 </Button>

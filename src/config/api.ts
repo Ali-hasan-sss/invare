@@ -3,6 +3,7 @@ export const API_CONFIG = {
   ENDPOINTS: {
     AUTH: {
       LOGIN: "/auth/login",
+      LOGIN_GOOGLE: "/auth/login/google",
       REGISTER_USER: "/auth/register/user",
       REGISTER_COMPANY: "/auth/register/company",
       ME: "/auth/me",
@@ -13,6 +14,7 @@ export const API_CONFIG = {
       LIST: "/materials",
       DETAIL: (id: string) => `/materials/${id}`,
       ADD_FAVORITE: (id: string) => `/materials/${id}/favorite`,
+      ADD_FAVORITE_ADMIN: (id: string) => `/materials/${id}/favorite/admin`,
       GET_FAVORITES: "/materials/favorites",
       REMOVE_FAVORITE: (id: string) => `/materials/${id}/favorite`,
     },

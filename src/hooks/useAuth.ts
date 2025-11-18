@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   loginUser,
+  loginGoogle,
   registerUser,
   registerCompany,
   getCurrentUser,
@@ -10,6 +11,7 @@ import {
   clearError,
   initializeAuth,
   LoginCredentials,
+  GoogleLoginCredentials,
   RegisterUserData,
   RegisterCompanyData,
 } from "../store/slices/authSlice";
@@ -23,6 +25,14 @@ export const useAuth = () => {
   const login = useCallback(
     async (credentials: LoginCredentials) => {
       return dispatch(loginUser(credentials));
+    },
+    [dispatch]
+  );
+
+  // Login with Google function
+  const loginWithGoogle = useCallback(
+    async (credentials: GoogleLoginCredentials) => {
+      return dispatch(loginGoogle(credentials));
     },
     [dispatch]
   );
@@ -82,6 +92,7 @@ export const useAuth = () => {
 
     // Actions
     login,
+    loginWithGoogle,
     registerUser: registerUserAccount,
     registerCompany: registerCompanyAccount,
     requestOtp: requestOtpCode,
@@ -121,6 +132,7 @@ export const useUser = () => {
 export const useAuthActions = () => {
   const {
     login,
+    loginWithGoogle,
     registerUser,
     registerCompany,
     requestOtp,
@@ -131,6 +143,7 @@ export const useAuthActions = () => {
 
   return {
     login,
+    loginWithGoogle,
     registerUser,
     registerCompany,
     requestOtp,

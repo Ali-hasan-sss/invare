@@ -33,11 +33,18 @@ export interface LoginCredentials {
   otp: string;
 }
 
+export interface GoogleLoginCredentials {
+  email: string;
+  googleId: string;
+}
+
 export interface RegisterUserData {
   email: string;
   firstName: string;
   lastName: string;
   countryId?: string;
+  googleId?: string; // Google OAuth sub ID (optional, for Google sign-up)
+  registerType?: "email" | "google"; // Default: "email"
 }
 
 export interface RegisterCompanyData {
@@ -110,9 +117,15 @@ export const registerUser = createAsyncThunk<
   { rejectValue: string }
 >("auth/registerUser", async (userData, { rejectWithValue }) => {
   try {
+    // Ensure registerType defaults to "email" if not provided
+    const payload = {
+      ...userData,
+      registerType: userData.registerType || "email",
+    };
+
     const response = await apiClient.post(
       API_CONFIG.ENDPOINTS.AUTH.REGISTER_USER,
-      userData
+      payload
     );
     return response.data;
   } catch (error: any) {
@@ -156,6 +169,40 @@ export const requestOtp = createAsyncThunk<
   } catch (error: any) {
     return rejectWithValue(
       error.response?.data?.message || error.message || "Failed to request OTP"
+    );
+  }
+});
+
+export const loginGoogle = createAsyncThunk<
+  AuthResponse,
+  GoogleLoginCredentials,
+  { rejectValue: string }
+>("auth/loginGoogle", async (credentials, { rejectWithValue }) => {
+  try {
+    const response = await apiClient.post(
+      API_CONFIG.ENDPOINTS.AUTH.LOGIN_GOOGLE,
+      credentials
+    );
+    const data = response.data;
+
+    // Store token and user data in localStorage and cookies
+    if (typeof window !== "undefined") {
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      // Store in cookies for middleware access
+      document.cookie = `accessToken=${data.accessToken}; path=/; max-age=${
+        7 * 24 * 60 * 60
+      }`; // 7 days
+      document.cookie = `user=${encodeURIComponent(
+        JSON.stringify(data.user)
+      )}; path=/; max-age=${7 * 24 * 60 * 60}`;
+    }
+
+    return data;
+  } catch (error: any) {
+    return rejectWithValue(
+      error.response?.data?.message || error.message || "Google login failed"
     );
   }
 });
@@ -360,6 +407,27 @@ const authSlice = createSlice({
           localStorage.removeItem("accessToken");
           localStorage.removeItem("user");
         }
+      })
+
+      // Login Google
+      .addCase(loginGoogle.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(
+        loginGoogle.fulfilled,
+        (state, action: PayloadAction<AuthResponse>) => {
+          state.isLoading = false;
+          state.accessToken = action.payload.accessToken;
+          state.user = action.payload.user;
+          state.isAuthenticated = true;
+          state.error = null;
+        }
+      )
+      .addCase(loginGoogle.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || "Google login failed";
+        state.isAuthenticated = false;
       });
   },
 });

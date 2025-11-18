@@ -20,11 +20,14 @@ import Image from "next/image";
 import EmailVerification from "@/components/EmailVerification";
 import { useAuth } from "@/hooks/useAuth";
 import { useCountriesList } from "@/hooks/useCountries";
+import { useAppDispatch } from "@/store/hooks";
+import { handleGoogleSignUp } from "@/lib/googleAuth";
 
 export default function RegisterPage() {
   const { t, currentLanguage } = useTranslation();
   const { showToast } = useToast();
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const {
     registerUser,
     // requestOtp,
@@ -45,6 +48,7 @@ export default function RegisterPage() {
     countryId: "",
   });
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   // Fetch countries on mount
   useEffect(() => {
@@ -151,8 +155,29 @@ export default function RegisterPage() {
     }
   };
 
-  const handleGoogleSignUp = () => {
-    showToast("Google Sign Up - Coming Soon", "info");
+  const handleGoogleSignUpClick = async () => {
+    setGoogleLoading(true);
+    try {
+      const result = await handleGoogleSignUp(dispatch);
+
+      if (result.success && result.user) {
+        // Registration successful - redirect to onboarding
+        router.push("/onboarding/interests");
+      } else {
+        // Silent failure - don't show error to user as requested
+        // Only log for debugging
+        if (process.env.NODE_ENV === "development") {
+          console.error("Google sign up failed:", result.error);
+        }
+      }
+    } catch (error) {
+      // Silent failure - don't show error to user
+      if (process.env.NODE_ENV === "development") {
+        console.error("Google sign up error:", error);
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   return (
@@ -330,7 +355,9 @@ export default function RegisterPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={handleGoogleSignUp}
+                  onClick={handleGoogleSignUpClick}
+                  disabled={googleLoading || loading}
+                  loading={googleLoading}
                   className="w-full h-11 sm:h-12 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-all duration-200 text-sm sm:text-base"
                   sx={{
                     color: "rgb(55 65 81) !important", // gray-700 for light mode
@@ -359,7 +386,9 @@ export default function RegisterPage() {
                       />
                     </div>
                     <span className="text-xs sm:text-base">
-                      {t("auth.signInWithGoogle")}
+                      {googleLoading
+                        ? t("common.loading") || "جاري التحميل..."
+                        : t("auth.signUpWithGoogle")}
                     </span>
                   </div>
                 </Button>

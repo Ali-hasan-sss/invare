@@ -90,6 +90,7 @@
     "enterOTP": "Enter OTP",
     "otpSent": "We have sent a OTP to your email",
     "signInWithGoogle": "Sign in with Google",
+    "signUpWithGoogle": "Sign up with Google",
     "dontHaveAccount": "Don't have an account?",
     "signUp": "Sign up",
     "register": "Register an account",
@@ -393,6 +394,7 @@
   },
   "admin": {
     "title": "Admin Dashboard",
+    "home": "Admin Dashboard",
     "menu": "Menu",
     "dashboard": "Dashboard",
     "users": "Users",

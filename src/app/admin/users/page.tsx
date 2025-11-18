@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Edit, Trash2, Plus, Search } from "lucide-react";
+import { Edit, Trash2, Plus, Search, Heart, Settings } from "lucide-react";
 import { useTranslation } from "../../../hooks/useTranslation";
 import { useUsers } from "../../../hooks/useUsers";
+import { useMaterials } from "../../../hooks/useMaterials";
+import { useRouter } from "next/navigation";
 import {
   User,
   CreateUserData,
@@ -23,12 +25,29 @@ import {
 } from "../../../components/ui/Table";
 import { UserFormDialog } from "../../../components/admin/UserFormDialog";
 import { DeleteConfirmDialog } from "../../../components/admin/DeleteConfirmDialog";
+import { AddFavoriteMaterialDialog } from "../../../components/admin/AddFavoriteMaterialDialog";
 import { Toast } from "../../../components/ui/Toast";
 import { cn } from "../../../lib/utils";
+
+// Helper function to check if user is admin
+const isAdminUser = (user: User): boolean => {
+  // Check if user has admin role in roles array
+  if (user.roles && user.roles.length > 0) {
+    return user.roles.some(
+      (role) =>
+        role.name?.toLowerCase() === "admin" ||
+        role.name?.toLowerCase() === "administrator"
+    );
+  }
+  // Fallback: if roles array is not available, you might need to check roleIds
+  // This would require knowing the admin role ID, which is typically stored in the backend
+  return false;
+};
 
 export default function UsersManagement() {
   const { t, currentLanguage } = useTranslation();
   const isRTL = currentLanguage.code === "ar";
+  const router = useRouter();
   const {
     users,
     isLoading,
@@ -40,9 +59,13 @@ export default function UsersManagement() {
     clearError,
   } = useUsers();
 
+  const { addFavoriteMaterialAdmin, isLoading: materialsLoading } =
+    useMaterials();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [userFormOpen, setUserFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [addFavoriteDialogOpen, setAddFavoriteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [toast, setToast] = useState<{
     message: string;
@@ -73,6 +96,46 @@ export default function UsersManagement() {
   const handleDeleteUser = (user: User) => {
     setSelectedUser(user);
     setDeleteDialogOpen(true);
+  };
+
+  const handleAddFavorite = (user: User) => {
+    setSelectedUser(user);
+    setAddFavoriteDialogOpen(true);
+  };
+
+  const handleSubmitFavorite = async (materialId: string) => {
+    if (!selectedUser) return;
+    try {
+      const result = await addFavoriteMaterialAdmin({
+        materialId,
+        userId: selectedUser.id,
+      });
+      if (result.type.endsWith("/rejected")) {
+        throw new Error("Add favorite failed");
+      }
+      setToast({
+        message:
+          t("admin.favoriteMaterialAddedSuccess") ||
+          "تمت إضافة المادة للمفضلة بنجاح",
+        type: "success",
+      });
+      setAddFavoriteDialogOpen(false);
+      setSelectedUser(null);
+    } catch (err: any) {
+      const errorMessage = err?.message || error || t("admin.error");
+      setToast({
+        message:
+          typeof errorMessage === "string" ? errorMessage : t("admin.error"),
+        type: "error",
+      });
+    }
+  };
+
+  const handleGoToAdminDashboard = (user: User) => {
+    // Redirect to admin dashboard as the selected user
+    // You might need to implement a way to impersonate/login as that user
+    // For now, we'll just navigate to admin dashboard
+    router.push("/admin");
   };
 
   const handleSubmitUser = async (data: CreateUserData | UpdateUserData) => {
@@ -291,6 +354,30 @@ export default function UsersManagement() {
                       </Button>
                       <Button
                         size="sm"
+                        variant="secondary"
+                        onClick={() => handleAddFavorite(user)}
+                        title={
+                          t("admin.addFavoriteMaterial") || "إضافة مادة للمفضلة"
+                        }
+                      >
+                        <Heart className="h-4 w-4" />
+                      </Button>
+                      {isAdminUser(user) && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => handleGoToAdminDashboard(user)}
+                          title={
+                            t("admin.goToAdminDashboard") ||
+                            "الذهاب إلى لوحة التحكم"
+                          }
+                          className="!bg-purple-500 hover:!bg-purple-600 !text-white"
+                        >
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
                         variant="destructive"
                         onClick={() => handleDeleteUser(user)}
                         title={t("admin.delete")}
@@ -322,6 +409,14 @@ export default function UsersManagement() {
         title={t("admin.deleteUser")}
         description={t("admin.deleteUserConfirm")}
         isLoading={isLoading}
+      />
+
+      <AddFavoriteMaterialDialog
+        open={addFavoriteDialogOpen}
+        onOpenChange={setAddFavoriteDialogOpen}
+        user={selectedUser}
+        onSubmit={handleSubmitFavorite}
+        isLoading={materialsLoading}
       />
 
       {/* Toast */}

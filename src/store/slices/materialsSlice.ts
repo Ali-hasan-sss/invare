@@ -242,6 +242,34 @@ export const removeFavoriteMaterial = createAsyncThunk<
   }
 });
 
+export interface AddFavoriteMaterialAdminParams {
+  materialId: string;
+  userId: string;
+}
+
+export const addFavoriteMaterialAdmin = createAsyncThunk<
+  FavoriteMaterial,
+  AddFavoriteMaterialAdminParams,
+  { rejectValue: string }
+>(
+  "materials/addFavoriteAdmin",
+  async ({ materialId, userId }, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.post(
+        API_CONFIG.ENDPOINTS.MATERIALS.ADD_FAVORITE_ADMIN(materialId),
+        { userId }
+      );
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to add material to favorites for user"
+      );
+    }
+  }
+);
+
 // Materials slice
 const materialsSlice = createSlice({
   name: "materials",
@@ -424,6 +452,25 @@ const materialsSlice = createSlice({
         state.isLoading = false;
         state.error =
           action.payload || "Failed to remove material from favorites";
+      })
+
+      // Add Favorite Material Admin
+      .addCase(addFavoriteMaterialAdmin.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(
+        addFavoriteMaterialAdmin.fulfilled,
+        (state, action: PayloadAction<FavoriteMaterial>) => {
+          state.isLoading = false;
+          state.error = null;
+          // Note: This doesn't add to favoriteMaterials as it's for a different user
+        }
+      )
+      .addCase(addFavoriteMaterialAdmin.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error =
+          action.payload || "Failed to add material to favorites for user";
       });
   },
 });

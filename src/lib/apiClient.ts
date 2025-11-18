@@ -43,8 +43,20 @@ apiClient.interceptors.response.use(
       if (typeof window !== "undefined") {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("user");
-        // Optional: Dispatch logout action or redirect to login
-        window.location.href = "/auth/login";
+
+        // Only redirect if we're NOT already on the login/register page
+        // This prevents page reload when login fails with 401
+        const currentPath = window.location.pathname;
+        const isAuthPage =
+          currentPath.startsWith("/auth/login") ||
+          currentPath.startsWith("/auth/register");
+
+        if (!isAuthPage) {
+          // Redirect to login only if we're not already on an auth page
+          window.location.href = "/auth/login";
+        }
+        // If we're already on login/register page, just reject the error
+        // without redirecting to prevent page reload
       }
     }
     return Promise.reject(error);
