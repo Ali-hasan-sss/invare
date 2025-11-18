@@ -30,7 +30,8 @@ export default function RegisterPage() {
   const dispatch = useAppDispatch();
   const {
     registerUser,
-    // requestOtp,
+    requestOtp,
+    login,
     isLoading: authLoading,
     error: authError,
     isAuthenticated,
@@ -64,26 +65,6 @@ export default function RegisterPage() {
     }));
   };
 
-  const sendOtp = async () => {
-    try {
-      setLoading(true);
-      // Temporary bypass for OTP request
-      // const result = await requestOtp(formData.email);
-      // if (result && "payload" in result && result.type.includes("fulfilled")) {
-      setStep("verification");
-      showToast(t("auth.otpSent"), "success");
-      // } else if (authError) {
-      //   showToast(authError, "error");
-      // } else {
-      //   showToast("Failed to send OTP", "error");
-      // }
-    } catch (error) {
-      showToast("Failed to proceed to verification", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -97,19 +78,55 @@ export default function RegisterPage() {
       return;
     }
 
-    await sendOtp();
+    setLoading(true);
+    try {
+      // Step 1: Register user first
+      const registerResult = await registerUser({
+        email: formData.email,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        countryId: formData.countryId || undefined,
+      });
+
+      const isRegisterFulfilled =
+        registerResult &&
+        "payload" in registerResult &&
+        registerResult.type.includes("fulfilled");
+
+      if (!isRegisterFulfilled) {
+        const errorMsg = authError || "Registration failed";
+        showToast(errorMsg, "error");
+        setLoading(false);
+        return;
+      }
+
+      // Step 2: After successful registration, request OTP
+      const otpResult = await requestOtp(formData.email);
+      const isOtpFulfilled =
+        otpResult &&
+        "payload" in otpResult &&
+        otpResult.type.includes("fulfilled");
+
+      if (isOtpFulfilled) {
+        setStep("verification");
+        showToast(t("auth.otpSent"), "success");
+      } else {
+        const errorMsg = authError || "Failed to send OTP";
+        showToast(errorMsg, "error");
+      }
+    } catch (error: any) {
+      const errorMessage = error?.message || "Registration failed";
+      showToast(errorMessage, "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleVerification = async (otp: string) => {
     setLoading(true);
     try {
-      // Call register API with user data
-      const result = await registerUser({
-        email: formData.email,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        countryId: formData.countryId || undefined, // Send countryId if selected, otherwise undefined
-      });
+      // Call login API with email and OTP (not register)
+      const result = await login({ email: formData.email, otp });
 
       const isFulfilled =
         result && "payload" in result && result.type.includes("fulfilled");
@@ -134,17 +151,32 @@ export default function RegisterPage() {
       } else if (authError) {
         showToast(authError, "error");
       } else {
-        showToast("Registration failed", "error");
+        showToast("Login failed", "error");
       }
-    } catch (error) {
-      showToast("Registration failed", "error");
+    } catch (error: any) {
+      const errorMessage = error?.message || "Login failed";
+      showToast(errorMessage, "error");
     } finally {
       setLoading(false);
     }
   };
 
   const handleResendOtp = async () => {
-    await sendOtp();
+    setLoading(true);
+    try {
+      const result = await requestOtp(formData.email);
+      if (result && "payload" in result && result.type.includes("fulfilled")) {
+        showToast(t("auth.otpSent"), "success");
+      } else {
+        const errorMsg = authError || "Failed to send OTP";
+        showToast(errorMsg, "error");
+      }
+    } catch (error: any) {
+      const errorMessage = error?.message || "Failed to send OTP";
+      showToast(errorMessage, "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBack = () => {

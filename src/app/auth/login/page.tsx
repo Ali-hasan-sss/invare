@@ -21,7 +21,7 @@ export default function LoginPage() {
   const dispatch = useAppDispatch();
   const {
     login,
-    // requestOtp,
+    requestOtp,
     isLoading: authLoading,
     error: authError,
     isAuthenticated,
@@ -45,19 +45,21 @@ export default function LoginPage() {
 
     try {
       setLoading(true);
-      // Temporary bypass for OTP request
-      // const result = await requestOtp(email);
-      // if (result && "payload" in result && result.type.includes("fulfilled")) {
-      setStep("otp");
-      showToast(t("auth.otpSent"), "success");
-      return true;
-      // } else if (authError) {
-      //   showToast(authError, "error");
-      // } else {
-      //   showToast("Failed to send OTP", "error");
-      // }
-    } catch (error) {
-      showToast("Failed to proceed to verification", "error");
+      const result = await requestOtp(email);
+      if (result && "payload" in result && result.type.includes("fulfilled")) {
+        setStep("otp");
+        showToast(t("auth.otpSent"), "success");
+        return true;
+      } else if (authError) {
+        showToast(authError, "error");
+        return false;
+      } else {
+        showToast("Failed to send OTP", "error");
+        return false;
+      }
+    } catch (error: any) {
+      const errorMessage = error?.message || "Failed to send OTP";
+      showToast(errorMessage, "error");
       return false;
     } finally {
       setLoading(false);
