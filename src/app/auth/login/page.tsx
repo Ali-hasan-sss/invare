@@ -12,7 +12,7 @@ import Image from "next/image";
 import EmailVerification from "@/components/EmailVerification";
 import { useAuth } from "@/hooks/useAuth";
 import { useAppDispatch } from "@/store/hooks";
-import { handleGoogleAuth } from "@/lib/googleAuth";
+import { handleGoogleSignUp } from "@/lib/googleAuth";
 
 export default function LoginPage() {
   const { t, currentLanguage } = useTranslation();
@@ -121,10 +121,11 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     try {
-      const result = await handleGoogleAuth(dispatch);
+      // Use handleGoogleSignUp to register directly (same as register page)
+      const result = await handleGoogleSignUp(dispatch);
 
       if (result.success && result.user) {
-        // Login successful - redirect based on user type
+        // Registration/Login successful - redirect based on user type
         if (result.user.isAdmin) {
           router.push("/admin");
         } else {
@@ -132,18 +133,18 @@ export default function LoginPage() {
           router.push(redirect ? redirect : "/");
         }
       } else {
-        // Google sign-in failed - do NOT redirect or reload
+        // Google sign-up failed - do NOT redirect or reload
         // Silent failure - don't show error to user as requested
         // Only log for debugging
         if (process.env.NODE_ENV === "development") {
-          console.error("Google sign in failed:", result.error);
+          console.error("Google sign up failed:", result.error);
         }
         // Stay on the same page - do NOT redirect or reload
       }
     } catch (error: any) {
       // Catch any unexpected errors - do NOT redirect or reload
       if (process.env.NODE_ENV === "development") {
-        console.error("Google sign in error:", error);
+        console.error("Google sign up error:", error);
       }
       // Stay on the same page - do NOT redirect or reload
     } finally {
