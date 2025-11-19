@@ -105,7 +105,8 @@
     "alreadyHaveAccount": "Already have an account?",
     "signIn": "Sign In",
     "backToEmail": "Back to email",
-    "otpDigit": "OTP digit"
+    "otpDigit": "OTP digit",
+    "completingSignIn": "Completing sign in..."
   },
   "navigation": {
     "auctions": "Auctions",

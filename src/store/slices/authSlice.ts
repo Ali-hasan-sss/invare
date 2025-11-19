@@ -123,12 +123,37 @@ export const registerUser = createAsyncThunk<
       registerType: userData.registerType || "email",
     };
 
+    if (process.env.NODE_ENV === "development") {
+      console.log("[registerUser] Sending request to:", {
+        url: `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.REGISTER_USER}`,
+        payload: { ...payload, googleId: payload.googleId ? "***" : undefined },
+      });
+    }
+
     const response = await apiClient.post(
       API_CONFIG.ENDPOINTS.AUTH.REGISTER_USER,
       payload
     );
+
+    if (process.env.NODE_ENV === "development") {
+      console.log("[registerUser] Response received:", {
+        status: response.status,
+        hasData: !!response.data,
+      });
+    }
+
     return response.data;
   } catch (error: any) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("[registerUser] Error:", {
+        message: error.message,
+        code: error.code,
+        responseStatus: error.response?.status,
+        responseData: error.response?.data,
+        isTimeout: error.message?.includes("timeout"),
+      });
+    }
+
     return rejectWithValue(
       error.response?.data?.message || error.message || "Registration failed"
     );

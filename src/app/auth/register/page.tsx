@@ -21,7 +21,10 @@ import EmailVerification from "@/components/EmailVerification";
 import { useAuth } from "@/hooks/useAuth";
 import { useCountriesList } from "@/hooks/useCountries";
 import { useAppDispatch } from "@/store/hooks";
-import { handleGoogleSignUp } from "@/lib/googleAuth";
+import {
+  initiateGoogleRedirect,
+  processGoogleRedirect,
+} from "@/lib/googleAuth";
 
 export default function RegisterPage() {
   const { t, currentLanguage } = useTranslation();
@@ -50,6 +53,77 @@ export default function RegisterPage() {
   });
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [checkingRedirect, setCheckingRedirect] = useState(true);
+
+  // Check for Google redirect result on mobile when page loads
+  useEffect(() => {
+    let isMounted = true;
+    let hasChecked = false;
+
+    const checkRedirect = async () => {
+      if (hasChecked || !isMounted) return;
+      hasChecked = true;
+
+      // Check if redirect was initiated
+      const redirectInitiated =
+        typeof window !== "undefined" &&
+        sessionStorage.getItem("google_redirect_initiated") === "true";
+
+      if (!redirectInitiated) {
+        // No redirect initiated, show page immediately
+        if (isMounted) {
+          setCheckingRedirect(false);
+        }
+        return;
+      }
+
+      // Redirect was initiated, start checking
+      if (isMounted) {
+        setCheckingRedirect(true);
+      }
+
+      // Wait for Firebase to initialize
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      if (!isMounted) return;
+
+      try {
+        const result = await processGoogleRedirect(dispatch);
+
+        if (!isMounted) return;
+
+        if (result.success && result.user) {
+          // Registration/Login successful - redirect to onboarding
+          router.replace("/onboarding/interests");
+        } else if (result.error) {
+          // Redirect failed or not found - stop loading and show page
+          if (isMounted) {
+            setCheckingRedirect(false);
+            setGoogleLoading(false);
+          }
+        } else {
+          // No redirect result - show page
+          if (isMounted) {
+            setCheckingRedirect(false);
+          }
+        }
+      } catch (error) {
+        if (process.env.NODE_ENV === "development") {
+          console.error("[Register] Redirect check error:", error);
+        }
+        if (isMounted) {
+          setCheckingRedirect(false);
+          setGoogleLoading(false);
+        }
+      }
+    };
+
+    checkRedirect();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [dispatch, router]);
 
   // Fetch countries on mount
   useEffect(() => {
@@ -190,27 +264,59 @@ export default function RegisterPage() {
   const handleGoogleSignUpClick = async () => {
     setGoogleLoading(true);
     try {
-      const result = await handleGoogleSignUp(dispatch);
+      // Initiate Google sign-in (popup on desktop, redirect on mobile)
+      const result = await initiateGoogleRedirect(dispatch);
 
+      // On mobile, result.success will be true but no user (redirect will happen)
+      // On desktop, result will have user if successful
       if (result.success && result.user) {
-        // Registration successful - redirect to onboarding
-        router.push("/onboarding/interests");
-      } else {
-        // Silent failure - don't show error to user as requested
-        // Only log for debugging
-        if (process.env.NODE_ENV === "development") {
-          console.error("Google sign up failed:", result.error);
+        // Desktop: popup completed - redirect to onboarding
+        router.replace("/onboarding/interests");
+      } else if (result.success && !result.user) {
+        // Mobile: redirect initiated, wait for redirect to complete
+        // The useEffect will handle the redirect result
+        // Don't set loading to false here - keep it loading until redirect completes
+      } else if (result.error) {
+        // Show error message
+        setGoogleLoading(false);
+        if (result.error.includes("not configured")) {
+          showToast(result.error, "error");
+        } else if (result.error.includes("popup")) {
+          showToast(result.error, "error");
+        } else {
+          if (process.env.NODE_ENV === "development") {
+            console.error("[Register] Google sign-in failed:", result.error);
+          }
         }
+      } else {
+        setGoogleLoading(false);
       }
-    } catch (error) {
-      // Silent failure - don't show error to user
+    } catch (error: any) {
       if (process.env.NODE_ENV === "development") {
-        console.error("Google sign up error:", error);
+        console.error("[Register] Google sign-in error:", error);
       }
-    } finally {
       setGoogleLoading(false);
     }
   };
+
+  // Show loader while checking redirect
+  if (checkingRedirect) {
+    return (
+      <div className="min-h-screen py-8 sm:py-12 md:py-20 px-4 sm:px-5 flex items-center justify-center">
+        <Container maxWidth="sm" className="w-full">
+          <Box className="w-full flex flex-col items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-teal-600 border-t-transparent mb-4"></div>
+            <Typography className="text-center text-gray-600 dark:text-gray-300">
+              {t("common.loading") || "جاري التحميل..."}
+            </Typography>
+            <Typography className="text-center text-sm text-gray-500 dark:text-gray-400 mt-2">
+              {t("auth.completingSignIn") || "جارٍ إكمال تسجيل الدخول..."}
+            </Typography>
+          </Box>
+        </Container>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen py-8 sm:py-12 md:py-20 px-4 sm:px-5 flex">

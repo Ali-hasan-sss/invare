@@ -8,7 +8,7 @@ import { API_CONFIG } from "@/config/api";
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_CONFIG.BASE_URL,
-  timeout: 10000,
+  timeout: 30000, // Increase timeout to accommodate slower auth/register flows
   headers: {
     "Content-Type": "application/json",
   },
@@ -24,9 +24,23 @@ apiClient.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
+
+    if (process.env.NODE_ENV === "development") {
+      console.log("[apiClient] Request:", {
+        method: config.method?.toUpperCase(),
+        url: config.url,
+        baseURL: config.baseURL,
+        fullURL: `${config.baseURL}${config.url}`,
+        timeout: config.timeout,
+      });
+    }
+
     return config;
   },
   (error) => {
+    if (process.env.NODE_ENV === "development") {
+      console.error("[apiClient] Request error:", error);
+    }
     return Promise.reject(error);
   }
 );
@@ -34,9 +48,26 @@ apiClient.interceptors.request.use(
 // Response interceptor to handle errors
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
+    if (process.env.NODE_ENV === "development") {
+      console.log("[apiClient] Response:", {
+        status: response.status,
+        url: response.config.url,
+      });
+    }
     return response;
   },
   (error) => {
+    if (process.env.NODE_ENV === "development") {
+      console.error("[apiClient] Response error:", {
+        message: error.message,
+        code: error.code,
+        status: error.response?.status,
+        url: error.config?.url,
+        isTimeout:
+          error.code === "ECONNABORTED" || error.message?.includes("timeout"),
+      });
+    }
+
     // Handle 401 errors (unauthorized)
     if (error.response?.status === 401) {
       // Clear token and user data

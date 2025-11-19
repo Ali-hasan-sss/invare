@@ -105,7 +105,8 @@
     "alreadyHaveAccount": "لديك حساب بالفعل؟",
     "signIn": "تسجيل الدخول",
     "backToEmail": "رجوع إلى البريد الإلكتروني",
-    "otpDigit": "رقم التحقق"
+    "otpDigit": "رقم التحقق",
+    "completingSignIn": "جارٍ إكمال تسجيل الدخول..."
   },
   "navigation": {
     "auctions": "المزادات",
