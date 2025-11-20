@@ -2,13 +2,13 @@ import { initializeApp, getApps } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDkcbV240dlPntbAXcuejXCuW7Q6pJ_bkQ",
-  authDomain: "invare-bd572.firebaseapp.com",
-  projectId: "invare-bd572",
-  storageBucket: "invare-bd572.appspot.com",
-  messagingSenderId: "268628072160",
-  appId: "1:268628072160:web:493db1deffb5c97c0ae285",
-  measurementId: "G-S7R8T5F5Z9",
+  apiKey: "AIzaSyARaSyxZzenwAu9KYm4s12L2ip_SveoU-0",
+  authDomain: "invare-sa.firebaseapp.com",
+  projectId: "invare-sa",
+  storageBucket: "invare-sa.firebasestorage.app",
+  messagingSenderId: "631292521850",
+  appId: "1:631292521850:web:3872c41c78e75c7a7e7ac3",
+  measurementId: "G-ZGNJPSHDPX",
 };
 
 const app =

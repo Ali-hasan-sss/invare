@@ -52,9 +52,18 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
       const digits = value.slice(0, 6).split("");
       const newOtp = [...otp];
 
-      // Fill from current index
+      // Find the first empty index (starting from left)
+      let startIndex = 0;
+      for (let i = 0; i < 6; i++) {
+        if (!newOtp[i]) {
+          startIndex = i;
+          break;
+        }
+      }
+
+      // Fill from the first empty index (left to right)
       digits.forEach((digit, i) => {
-        const targetIndex = index + i;
+        const targetIndex = startIndex + i;
         if (targetIndex < 6) {
           newOtp[targetIndex] = digit;
         }
@@ -62,21 +71,42 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
 
       setOtp(newOtp);
 
-      // Focus the next empty input or last input
-      const lastFilledIndex = Math.min(index + digits.length - 1, 5);
+      // Focus the next empty input or last input (always move right)
+      const lastFilledIndex = Math.min(startIndex + digits.length - 1, 5);
       const nextIndex = lastFilledIndex < 5 ? lastFilledIndex + 1 : 5;
       setTimeout(() => {
         inputRefs.current[nextIndex]?.focus();
       }, 10);
     } else if (value.length === 1) {
-      // Single digit input
+      // Single digit input - always fill from left to right
       const newOtp = [...otp];
-      newOtp[index] = value;
+
+      // Find the first empty index (starting from left)
+      let targetIndex = index;
+      for (let i = 0; i < index; i++) {
+        if (!newOtp[i]) {
+          targetIndex = i;
+          break;
+        }
+      }
+
+      // If target index already has a value, move to next empty
+      if (newOtp[targetIndex]) {
+        for (let i = targetIndex + 1; i < 6; i++) {
+          if (!newOtp[i]) {
+            targetIndex = i;
+            break;
+          }
+        }
+      }
+
+      // Fill the target index
+      newOtp[targetIndex] = value;
       setOtp(newOtp);
 
-      // Move to next input based on RTL direction
-      const nextIndex = isRTL ? index - 1 : index + 1;
-      if (nextIndex >= 0 && nextIndex < 6) {
+      // Move to next input (always move right, LTR)
+      const nextIndex = targetIndex + 1;
+      if (nextIndex < 6) {
         setTimeout(() => {
           inputRefs.current[nextIndex]?.focus();
         }, 10);
@@ -100,12 +130,17 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
 
     const digits = pastedData.split("");
     const newOtp = [...otp];
-    const target = e.currentTarget;
-    const pasteIndex = parseInt(target.dataset.index || "0");
 
-    // Fill from the clicked input index (or start from beginning if all empty)
-    const startIndex = otp.every((digit) => digit === "") ? 0 : pasteIndex;
+    // Always find the first empty index (starting from left)
+    let startIndex = 0;
+    for (let i = 0; i < 6; i++) {
+      if (!newOtp[i]) {
+        startIndex = i;
+        break;
+      }
+    }
 
+    // Fill from the first empty index (left to right)
     digits.forEach((digit, i) => {
       const targetIndex = startIndex + i;
       if (targetIndex < 6) {
@@ -115,7 +150,7 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
 
     setOtp(newOtp);
 
-    // Focus the next empty input or last input
+    // Focus the next empty input or last input (always move right)
     const lastFilledIndex = Math.min(startIndex + digits.length - 1, 5);
     const nextIndex = lastFilledIndex < 5 ? lastFilledIndex + 1 : 5;
 
@@ -130,8 +165,9 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
     e: React.KeyboardEvent<HTMLDivElement>,
     index: number
   ) => {
-    const prevIndex = isRTL ? index + 1 : index - 1;
-    const nextIndex = isRTL ? index - 1 : index + 1;
+    // Always use LTR navigation (left = previous, right = next)
+    const prevIndex = index - 1;
+    const nextIndex = index + 1;
 
     if (e.key === "Backspace") {
       e.preventDefault();
@@ -141,8 +177,8 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
         // If current input has value, clear it
         newOtp[index] = "";
         setOtp(newOtp);
-      } else if (prevIndex >= 0 && prevIndex < 6) {
-        // If current input is empty, go to previous and clear it
+      } else if (prevIndex >= 0) {
+        // If current input is empty, go to previous (left) and clear it
         newOtp[prevIndex] = "";
         setOtp(newOtp);
         setTimeout(() => {
@@ -151,25 +187,19 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
       }
     } else if (e.key === "ArrowLeft") {
       e.preventDefault();
-      if (isRTL && nextIndex >= 0) {
-        // In RTL, left arrow goes to next input
-        inputRefs.current[nextIndex]?.focus();
-      } else if (!isRTL && prevIndex >= 0) {
-        // In LTR, left arrow goes to previous input
+      // Left arrow always goes to previous (left) input
+      if (prevIndex >= 0) {
         inputRefs.current[prevIndex]?.focus();
       }
     } else if (e.key === "ArrowRight") {
       e.preventDefault();
-      if (isRTL && prevIndex >= 0) {
-        // In RTL, right arrow goes to previous input
-        inputRefs.current[prevIndex]?.focus();
-      } else if (!isRTL && nextIndex < 6) {
-        // In LTR, right arrow goes to next input
+      // Right arrow always goes to next (right) input
+      if (nextIndex < 6) {
         inputRefs.current[nextIndex]?.focus();
       }
     } else if (e.key === "Delete") {
       e.preventDefault();
-      // Clear current input and move to next
+      // Clear current input and move to next (right)
       const newOtp = [...otp];
       newOtp[index] = "";
       setOtp(newOtp);

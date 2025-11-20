@@ -25,7 +25,7 @@ import {
 } from "../../../components/ui/Table";
 import { UserFormDialog } from "../../../components/admin/UserFormDialog";
 import { DeleteConfirmDialog } from "../../../components/admin/DeleteConfirmDialog";
-import { AddFavoriteMaterialDialog } from "../../../components/admin/AddFavoriteMaterialDialog";
+import { UserFavoritesDialog } from "../../../components/admin/UserFavoritesDialog";
 import { Toast } from "../../../components/ui/Toast";
 import { cn } from "../../../lib/utils";
 
@@ -59,13 +59,12 @@ export default function UsersManagement() {
     clearError,
   } = useUsers();
 
-  const { addFavoriteMaterialAdmin, isLoading: materialsLoading } =
-    useMaterials();
+  const { addUserFavoriteMaterials } = useMaterials();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [userFormOpen, setUserFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [addFavoriteDialogOpen, setAddFavoriteDialogOpen] = useState(false);
+  const [favoritesDialogOpen, setFavoritesDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [toast, setToast] = useState<{
     message: string;
@@ -98,37 +97,9 @@ export default function UsersManagement() {
     setDeleteDialogOpen(true);
   };
 
-  const handleAddFavorite = (user: User) => {
+  const handleManageFavorites = (user: User) => {
     setSelectedUser(user);
-    setAddFavoriteDialogOpen(true);
-  };
-
-  const handleSubmitFavorite = async (materialId: string) => {
-    if (!selectedUser) return;
-    try {
-      const result = await addFavoriteMaterialAdmin({
-        materialId,
-        userId: selectedUser.id,
-      });
-      if (result.type.endsWith("/rejected")) {
-        throw new Error("Add favorite failed");
-      }
-      setToast({
-        message:
-          t("admin.favoriteMaterialAddedSuccess") ||
-          "تمت إضافة المادة للمفضلة بنجاح",
-        type: "success",
-      });
-      setAddFavoriteDialogOpen(false);
-      setSelectedUser(null);
-    } catch (err: any) {
-      const errorMessage = err?.message || error || t("admin.error");
-      setToast({
-        message:
-          typeof errorMessage === "string" ? errorMessage : t("admin.error"),
-        type: "error",
-      });
-    }
+    setFavoritesDialogOpen(true);
   };
 
   const handleGoToAdminDashboard = (user: User) => {
@@ -138,7 +109,10 @@ export default function UsersManagement() {
     router.push("/admin");
   };
 
-  const handleSubmitUser = async (data: CreateUserData | UpdateUserData) => {
+  const handleSubmitUser = async (
+    data: CreateUserData | UpdateUserData,
+    materialIds?: string[]
+  ) => {
     try {
       if (selectedUser) {
         const result = await updateUser(
@@ -154,7 +128,61 @@ export default function UsersManagement() {
         if (result.type.endsWith("/rejected")) {
           throw new Error("Create failed");
         }
-        setToast({ message: t("admin.userCreatedSuccess"), type: "success" });
+
+        // If user created successfully and materialIds provided, add favorites
+        if (
+          result.type.endsWith("/fulfilled") &&
+          materialIds &&
+          materialIds.length > 0
+        ) {
+          const createdUser = result.payload as User;
+          if (createdUser?.id) {
+            try {
+              const favResult = await addUserFavoriteMaterials({
+                userId: createdUser.id,
+                materialIds: materialIds,
+              });
+              if (favResult.type.endsWith("/fulfilled")) {
+                setToast({
+                  message:
+                    t("admin.userCreatedSuccess") +
+                    ". " +
+                    (t("admin.favoriteMaterialsAddedSuccess") ||
+                      "تمت إضافة الاهتمامات بنجاح"),
+                  type: "success",
+                });
+              } else {
+                setToast({
+                  message:
+                    t("admin.userCreatedSuccess") +
+                    ". " +
+                    (t("admin.error") || "حدث خطأ في إضافة الاهتمامات"),
+                  type: "error",
+                });
+              }
+            } catch (favError) {
+              // User created but favorites failed
+              console.error("Failed to add favorites:", favError);
+              setToast({
+                message:
+                  t("admin.userCreatedSuccess") +
+                  ". " +
+                  (t("admin.error") || "حدث خطأ في إضافة الاهتمامات"),
+                type: "error",
+              });
+            }
+          } else {
+            setToast({
+              message: t("admin.userCreatedSuccess"),
+              type: "success",
+            });
+          }
+        } else {
+          setToast({
+            message: t("admin.userCreatedSuccess"),
+            type: "success",
+          });
+        }
       }
       setUserFormOpen(false);
       setSelectedUser(null);
@@ -355,10 +383,8 @@ export default function UsersManagement() {
                       <Button
                         size="sm"
                         variant="secondary"
-                        onClick={() => handleAddFavorite(user)}
-                        title={
-                          t("admin.addFavoriteMaterial") || "إضافة مادة للمفضلة"
-                        }
+                        onClick={() => handleManageFavorites(user)}
+                        title={t("admin.manageFavorites") || "إدارة الاهتمامات"}
                       >
                         <Heart className="h-4 w-4" />
                       </Button>
@@ -411,12 +437,10 @@ export default function UsersManagement() {
         isLoading={isLoading}
       />
 
-      <AddFavoriteMaterialDialog
-        open={addFavoriteDialogOpen}
-        onOpenChange={setAddFavoriteDialogOpen}
+      <UserFavoritesDialog
+        open={favoritesDialogOpen}
+        onOpenChange={setFavoritesDialogOpen}
         user={selectedUser}
-        onSubmit={handleSubmitFavorite}
-        isLoading={materialsLoading}
       />
 
       {/* Toast */}

@@ -86,12 +86,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       icon: Package,
       current: pathname.startsWith("/admin/materials"),
     },
-    {
-      name: t("admin.advertisements"),
-      href: "/admin/advertisements",
-      icon: Image,
-      current: pathname.startsWith("/admin/advertisements"),
-    },
   ];
 
   // Show loading or nothing while checking

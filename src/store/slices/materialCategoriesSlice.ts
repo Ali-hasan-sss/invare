@@ -286,63 +286,59 @@ export const createMaterialCategory = createAsyncThunk<
   "materialCategories/createMaterialCategory",
   async (categoryData, { rejectWithValue }) => {
     try {
-      // First, try the documented format directly: { name, i18n }
-      // Clean the payload to match the exact format from documentation
-      const cleanPayload: Record<string, any> = {
-        name: categoryData.name,
-      };
+      // Build payload exactly as documented: { name, i18n }
+      // Ensure name is not empty
+      const name = categoryData.name?.trim();
+      if (!name) {
+        return rejectWithValue("Category name is required");
+      }
 
-      if (categoryData.i18n && Object.keys(categoryData.i18n).length > 0) {
-        // Clean i18n object to remove undefined values
-        const cleanI18n: MaterialCategoryTranslations = {};
+      // Build clean i18n object with only valid translations
+      const cleanI18n: MaterialCategoryTranslations = {};
+      if (categoryData.i18n) {
         Object.keys(categoryData.i18n).forEach((lang) => {
           const translation = categoryData.i18n![lang];
-          if (translation && translation.name) {
-            cleanI18n[lang] = { name: translation.name };
+          if (translation?.name?.trim()) {
+            cleanI18n[lang] = { name: translation.name.trim() };
           }
         });
+      }
 
-        if (Object.keys(cleanI18n).length > 0) {
-          cleanPayload.i18n = cleanI18n;
-        }
+      // Build payload exactly as per documentation
+      const payload: Record<string, any> = {
+        name: name,
+      };
+
+      // Only include i18n if we have translations
+      if (Object.keys(cleanI18n).length > 0) {
+        payload.i18n = cleanI18n;
+      }
+
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          "[MaterialCategory] Sending payload:",
+          JSON.stringify(payload, null, 2)
+        );
       }
 
       const response = await apiClient.post(
         API_CONFIG.ENDPOINTS.MATERIAL_CATEGORIES.BASE,
-        cleanPayload
+        payload
       );
       return response.data;
     } catch (error: any) {
-      // If the documented format fails, try alternative formats
-      if (shouldRetryWithAlternatePayload(error)) {
-        try {
-          // Try using submitCategoryWithVariants which tries multiple payload formats
-          return await submitCategoryWithVariants(
-            "post",
-            API_CONFIG.ENDPOINTS.MATERIAL_CATEGORIES.BASE,
-            categoryData
-          );
-        } catch (variantsError: any) {
-          // If all variants fail, try the alternate payload format
-          try {
-            const alternatePayload =
-              buildAlternateCategoryPayload(categoryData);
-            const retryResponse = await apiClient.post(
-              API_CONFIG.ENDPOINTS.MATERIAL_CATEGORIES.BASE,
-              alternatePayload
-            );
-            return retryResponse.data;
-          } catch (retryError: any) {
-            return rejectWithValue(
-              retryError.response?.data?.message ||
-                retryError.message ||
-                "Failed to create material category"
-            );
-          }
-        }
+      if (process.env.NODE_ENV === "development") {
+        console.error("[MaterialCategory] Error creating category:", {
+          error: error.message,
+          response: error.response?.data,
+          payload: categoryData,
+        });
       }
       return rejectWithValue(
         error.response?.data?.message ||
+          (Array.isArray(error.response?.data?.message)
+            ? error.response.data.message.join(", ")
+            : null) ||
           error.message ||
           "Failed to create material category"
       );
