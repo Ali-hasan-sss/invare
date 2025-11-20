@@ -278,23 +278,20 @@ export const getUserFavoriteMaterials = createAsyncThunk<
   Material[],
   GetUserFavoriteMaterialsParams,
   { rejectValue: string }
->(
-  "materials/getUserFavorites",
-  async ({ userId }, { rejectWithValue }) => {
-    try {
-      const response = await apiClient.get(
-        API_CONFIG.ENDPOINTS.MATERIALS.GET_USER_FAVORITES(userId)
-      );
-      return response.data;
-    } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to fetch user favorite materials"
-      );
-    }
+>("materials/getUserFavorites", async ({ userId }, { rejectWithValue }) => {
+  try {
+    const response = await apiClient.get(
+      API_CONFIG.ENDPOINTS.MATERIALS.GET_USER_FAVORITES(userId)
+    );
+    return response.data;
+  } catch (error: any) {
+    return rejectWithValue(
+      error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch user favorite materials"
+    );
   }
-);
+});
 
 export interface AddUserFavoriteMaterialsParams {
   userId: string;
@@ -337,15 +334,48 @@ export const deleteFavoriteMaterial = createAsyncThunk<
   "materials/deleteFavorite",
   async ({ id, materialId }, { rejectWithValue }) => {
     try {
-      await apiClient.delete(API_CONFIG.ENDPOINTS.MATERIALS.DELETE_FAVORITE(id), {
-        data: { materialId },
-      });
+      await apiClient.delete(
+        API_CONFIG.ENDPOINTS.MATERIALS.DELETE_FAVORITE(id),
+        {
+          data: { materialId },
+        }
+      );
       return materialId;
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message ||
           error.message ||
           "Failed to delete favorite material"
+      );
+    }
+  }
+);
+
+export interface DeleteUserFavoriteMaterialParams {
+  userId: string;
+  materialId: string;
+}
+
+export const deleteUserFavoriteMaterial = createAsyncThunk<
+  string,
+  DeleteUserFavoriteMaterialParams,
+  { rejectValue: string }
+>(
+  "materials/deleteUserFavorite",
+  async ({ userId, materialId }, { rejectWithValue }) => {
+    try {
+      await apiClient.delete(
+        API_CONFIG.ENDPOINTS.MATERIALS.DELETE_USER_FAVORITE(userId),
+        {
+          data: { materialId },
+        }
+      );
+      return materialId;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to delete user favorite material"
       );
     }
   }
@@ -606,8 +636,23 @@ const materialsSlice = createSlice({
       })
       .addCase(deleteFavoriteMaterial.rejected, (state, action) => {
         state.isLoading = false;
+        state.error = action.payload || "Failed to delete favorite material";
+      })
+
+      // Delete User Favorite Material (Admin)
+      .addCase(deleteUserFavoriteMaterial.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(deleteUserFavoriteMaterial.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.error = null;
+        // Note: This is for a different user, so doesn't update favoriteMaterials
+      })
+      .addCase(deleteUserFavoriteMaterial.rejected, (state, action) => {
+        state.isLoading = false;
         state.error =
-          action.payload || "Failed to delete favorite material";
+          action.payload || "Failed to delete user favorite material";
       });
   },
 });

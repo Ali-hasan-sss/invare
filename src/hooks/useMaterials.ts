@@ -13,6 +13,7 @@ import {
   getUserFavoriteMaterials,
   addUserFavoriteMaterials,
   deleteFavoriteMaterial,
+  deleteUserFavoriteMaterial,
   clearError,
   clearCurrentMaterial,
   setCurrentPage,
@@ -25,6 +26,7 @@ import {
   GetUserFavoriteMaterialsParams,
   AddUserFavoriteMaterialsParams,
   DeleteFavoriteMaterialParams,
+  DeleteUserFavoriteMaterialParams,
 } from "../store/slices/materialsSlice";
 
 // Main materials hook
@@ -162,6 +164,14 @@ export const useMaterials = () => {
     [dispatch]
   );
 
+  // Delete user favorite material (Admin only)
+  const removeUserFavorite = useCallback(
+    async (params: DeleteUserFavoriteMaterialParams) => {
+      return dispatch(deleteUserFavoriteMaterial(params));
+    },
+    [dispatch]
+  );
+
   return {
     // State
     materials: materialsState.materials,
@@ -186,6 +196,7 @@ export const useMaterials = () => {
     getUserFavoriteMaterials: fetchUserFavorites,
     addUserFavoriteMaterials: addUserFavorites,
     deleteFavoriteMaterial: removeFavoriteById,
+    deleteUserFavoriteMaterial: removeUserFavorite,
     clearError: clearMaterialsError,
     clearCurrentMaterial: clearMaterial,
     setCurrentPage: changePage,

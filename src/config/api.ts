@@ -21,6 +21,8 @@ export const API_CONFIG = {
         `/materials/favorites/user/${userId}`,
       ADD_USER_FAVORITES: (userId: string) =>
         `/materials/favorites/user/${userId}`,
+      DELETE_USER_FAVORITE: (userId: string) =>
+        `/materials/favorites/user/${userId}`,
       DELETE_FAVORITE: (id: string) => `/materials/${id}/favorite`,
     },
     MATERIAL_CATEGORIES: {

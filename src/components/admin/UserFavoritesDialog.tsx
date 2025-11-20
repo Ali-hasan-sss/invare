@@ -34,7 +34,7 @@ export const UserFavoritesDialog: React.FC<UserFavoritesDialogProps> = ({
     materials,
     getUserFavoriteMaterials,
     addUserFavoriteMaterials,
-    deleteFavoriteMaterial,
+    deleteUserFavoriteMaterial,
     getMaterials,
     isLoading,
   } = useMaterials();
@@ -127,10 +127,9 @@ export const UserFavoritesDialog: React.FC<UserFavoritesDialogProps> = ({
     if (!user) return;
     setLoadingDelete(materialId);
     try {
-      // DELETE /materials/:id/favorite with { materialId } in body
-      // The :id in URL should be materialId, and materialId in body is the same
-      const result = await deleteFavoriteMaterial({
-        id: materialId,
+      // DELETE /materials/favorites/user/:userId with { materialId } in body
+      const result = await deleteUserFavoriteMaterial({
+        userId: user.id,
         materialId: materialId,
       });
       if (result.type.endsWith("/fulfilled")) {
