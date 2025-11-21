@@ -16,6 +16,7 @@ import {
   initiateGoogleRedirect,
   processGoogleRedirect,
 } from "@/lib/googleAuth";
+import { getErrorMessageKey } from "@/lib/errorUtils";
 
 export default function LoginPage() {
   const { t, currentLanguage } = useTranslation();
@@ -33,6 +34,7 @@ export default function LoginPage() {
   const [step, setStep] = useState<"email" | "otp">("email");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [checkingRedirect, setCheckingRedirect] = useState(true);
 
@@ -111,37 +113,53 @@ export default function LoginPage() {
     };
   }, [dispatch, router, searchParams]);
 
-  const sendOtp = async () => {
+  const sendOtp = async (isResend: boolean = false) => {
     if (!email) {
       showToast(t("auth.enterEmail"), "error");
       return false;
     }
 
     if (!email.includes("@")) {
-      showToast("Please enter a valid email", "error");
+      showToast(t("auth.invalidEmail"), "error");
       return false;
     }
 
     try {
-      setLoading(true);
+      // Use resendLoading if resending, otherwise use loading
+      if (isResend) {
+        // Make sure loading is false when resending to avoid affecting verify button
+        setLoading(false);
+        setResendLoading(true);
+      } else {
+        setLoading(true);
+      }
+
       const result = await requestOtp(email);
       if (result && "payload" in result && result.type.includes("fulfilled")) {
-        setStep("otp");
+        if (!isResend) {
+          setStep("otp");
+        }
         showToast(t("auth.otpSent"), "success");
         return true;
       } else if (authError) {
-        showToast(authError, "error");
+        const errorKey = getErrorMessageKey(authError);
+        showToast(errorKey ? t(errorKey) : authError, "error");
         return false;
       } else {
-        showToast("Failed to send OTP", "error");
+        showToast(t("errors.requestOtp"), "error");
         return false;
       }
     } catch (error: any) {
       const errorMessage = error?.message || "Failed to send OTP";
-      showToast(errorMessage, "error");
+      const errorKey = getErrorMessageKey(errorMessage);
+      showToast(errorKey ? t(errorKey) : t("errors.requestOtp"), "error");
       return false;
     } finally {
-      setLoading(false);
+      if (isResend) {
+        setResendLoading(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
@@ -173,14 +191,16 @@ export default function LoginPage() {
         // Login failed - do NOT redirect or reload
         // Only show error message and stay on the same page
         const errorMessage = authError || "Login failed";
-        showToast(errorMessage, "error");
+        const errorKey = getErrorMessageKey(errorMessage);
+        showToast(errorKey ? t(errorKey) : t("errors.login"), "error");
         // Stay on OTP step to allow user to retry
         // Do NOT redirect or reload the page
       }
     } catch (error: any) {
       // Catch any unexpected errors - do NOT redirect or reload
       const errorMessage = error?.message || "Login failed";
-      showToast(errorMessage, "error");
+      const errorKey = getErrorMessageKey(errorMessage);
+      showToast(errorKey ? t(errorKey) : t("errors.login"), "error");
       // Stay on OTP step to allow user to retry
       // Do NOT redirect or reload the page
     } finally {
@@ -193,10 +213,8 @@ export default function LoginPage() {
   };
 
   const handleResendOtp = async () => {
-    const success = await sendOtp();
-    if (success) {
-      showToast(t("auth.otpSent"), "success");
-    }
+    if (resendLoading || loading) return; // Prevent multiple clicks or if already loading
+    await sendOtp(true); // Pass true to indicate this is a resend
   };
 
   const handleGoogleSignIn = async () => {
@@ -384,7 +402,7 @@ export default function LoginPage() {
 
                 <div className="text-center mt-6 sm:mt-8">
                   <Typography className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500">
-                    © 2025 ALL RIGHTS RESERVED
+                    {t("footer.copyright")}
                   </Typography>
                 </div>
               </form>
@@ -398,6 +416,7 @@ export default function LoginPage() {
                 onVerify={(otp) => handleOtpSubmit(otp)}
                 loading={loading}
                 onResend={handleResendOtp}
+                resendLoading={resendLoading}
               />
             )}
           </Box>

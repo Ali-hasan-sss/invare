@@ -28,6 +28,7 @@ import { DeleteConfirmDialog } from "../../../components/admin/DeleteConfirmDial
 import { UserFavoritesDialog } from "../../../components/admin/UserFavoritesDialog";
 import { Toast } from "../../../components/ui/Toast";
 import { cn } from "../../../lib/utils";
+import { getErrorMessageKey } from "../../../lib/errorUtils";
 
 // Helper function to check if user is admin
 const isAdminUser = (user: User): boolean => {
@@ -75,12 +76,20 @@ export default function UsersManagement() {
     getUsers();
   }, []);
 
+  // Helper function to get translated error message
+  const getErrorMessage = (errorMsg: string | null): string => {
+    if (!errorMsg) return t("admin.error");
+    
+    const errorKey = getErrorMessageKey(errorMsg);
+    return errorKey ? t(errorKey) : t("admin.error");
+  };
+
   useEffect(() => {
     if (error) {
-      setToast({ message: error, type: "error" });
+      setToast({ message: getErrorMessage(error), type: "error" });
       clearError();
     }
-  }, [error]);
+  }, [error, t]);
 
   const handleAddUser = () => {
     setSelectedUser(null);
@@ -190,8 +199,9 @@ export default function UsersManagement() {
     } catch (err: any) {
       const errorMessage = err?.message || error || t("admin.error");
       setToast({
-        message:
-          typeof errorMessage === "string" ? errorMessage : t("admin.error"),
+        message: getErrorMessage(
+          typeof errorMessage === "string" ? errorMessage : null
+        ),
         type: "error",
       });
     }
@@ -211,8 +221,9 @@ export default function UsersManagement() {
       } catch (err: any) {
         const errorMessage = err?.message || error || t("admin.error");
         setToast({
-          message:
-            typeof errorMessage === "string" ? errorMessage : t("admin.error"),
+          message: getErrorMessage(
+            typeof errorMessage === "string" ? errorMessage : null
+          ),
           type: "error",
         });
       }

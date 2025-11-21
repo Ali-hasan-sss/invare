@@ -25,6 +25,7 @@ import {
   initiateGoogleRedirect,
   processGoogleRedirect,
 } from "@/lib/googleAuth";
+import { getErrorMessageKey } from "@/lib/errorUtils";
 
 export default function RegisterPage() {
   const { t, currentLanguage } = useTranslation();
@@ -52,6 +53,7 @@ export default function RegisterPage() {
     countryId: "",
   });
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [checkingRedirect, setCheckingRedirect] = useState(true);
 
@@ -143,12 +145,12 @@ export default function RegisterPage() {
     e.preventDefault();
 
     if (!formData.firstName || !formData.lastName || !formData.email) {
-      showToast("Please fill in all fields", "error");
+      showToast(t("auth.fillAllFields"), "error");
       return;
     }
 
     if (!formData.email.includes("@")) {
-      showToast("Please enter a valid email", "error");
+      showToast(t("auth.invalidEmail"), "error");
       return;
     }
 
@@ -169,7 +171,8 @@ export default function RegisterPage() {
 
       if (!isRegisterFulfilled) {
         const errorMsg = authError || "Registration failed";
-        showToast(errorMsg, "error");
+        const errorKey = getErrorMessageKey(errorMsg);
+        showToast(errorKey ? t(errorKey) : t("errors.registration"), "error");
         setLoading(false);
         return;
       }
@@ -186,11 +189,13 @@ export default function RegisterPage() {
         showToast(t("auth.otpSent"), "success");
       } else {
         const errorMsg = authError || "Failed to send OTP";
-        showToast(errorMsg, "error");
+        const errorKey = getErrorMessageKey(errorMsg);
+        showToast(errorKey ? t(errorKey) : t("errors.requestOtp"), "error");
       }
     } catch (error: any) {
       const errorMessage = error?.message || "Registration failed";
-      showToast(errorMessage, "error");
+      const errorKey = getErrorMessageKey(errorMessage);
+      showToast(errorKey ? t(errorKey) : t("errors.registration"), "error");
     } finally {
       setLoading(false);
     }
@@ -223,33 +228,41 @@ export default function RegisterPage() {
         router.replace("/auth/login?redirect=/onboarding/interests");
         return;
       } else if (authError) {
-        showToast(authError, "error");
+        const errorKey = getErrorMessageKey(authError);
+        showToast(errorKey ? t(errorKey) : authError, "error");
       } else {
-        showToast("Login failed", "error");
+        showToast(t("errors.login"), "error");
       }
     } catch (error: any) {
       const errorMessage = error?.message || "Login failed";
-      showToast(errorMessage, "error");
+      const errorKey = getErrorMessageKey(errorMessage);
+      showToast(errorKey ? t(errorKey) : t("errors.login"), "error");
     } finally {
       setLoading(false);
     }
   };
 
   const handleResendOtp = async () => {
-    setLoading(true);
+    if (resendLoading || loading) return; // Prevent multiple clicks or if already loading
+
+    // Make sure loading is false when resending
+    setLoading(false);
+    setResendLoading(true);
     try {
       const result = await requestOtp(formData.email);
       if (result && "payload" in result && result.type.includes("fulfilled")) {
         showToast(t("auth.otpSent"), "success");
       } else {
         const errorMsg = authError || "Failed to send OTP";
-        showToast(errorMsg, "error");
+        const errorKey = getErrorMessageKey(errorMsg);
+        showToast(errorKey ? t(errorKey) : t("errors.requestOtp"), "error");
       }
     } catch (error: any) {
       const errorMessage = error?.message || "Failed to send OTP";
-      showToast(errorMessage, "error");
+      const errorKey = getErrorMessageKey(errorMessage);
+      showToast(errorKey ? t(errorKey) : t("errors.requestOtp"), "error");
     } finally {
-      setLoading(false);
+      setResendLoading(false);
     }
   };
 
@@ -546,7 +559,7 @@ export default function RegisterPage() {
 
                 <div className="text-center mt-6 sm:mt-8">
                   <Typography className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500">
-                    © 2025 ALL RIGHTS RESERVED
+                    {t("footer.copyright")}
                   </Typography>
                 </div>
               </form>
@@ -560,6 +573,7 @@ export default function RegisterPage() {
                 onVerify={handleVerification}
                 loading={loading}
                 onResend={handleResendOtp}
+                resendLoading={resendLoading}
               />
             )}
           </Box>

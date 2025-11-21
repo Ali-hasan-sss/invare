@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -14,7 +14,8 @@ interface EmailVerificationProps {
   onBack: () => void;
   onVerify: (otp: string) => void;
   loading?: boolean;
-  onResend?: () => void;
+  onResend?: () => Promise<void> | void;
+  resendLoading?: boolean;
 }
 
 const EmailVerification: React.FC<EmailVerificationProps> = ({
@@ -23,6 +24,7 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
   onVerify,
   loading = false,
   onResend,
+  resendLoading = false,
 }) => {
   const { t, currentLanguage } = useTranslation();
   const { showToast } = useToast();
@@ -30,7 +32,6 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
   const [otp, setOtp] = React.useState(["", "", "", "", "", ""]);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const isRTL = currentLanguage.dir === "rtl";
-
   // Focus first input on mount
   useEffect(() => {
     if (inputRefs.current[0] && otp.every((digit) => digit === "")) {
@@ -228,9 +229,9 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
     onVerify(otpString);
   };
 
-  const handleResendOtp = () => {
+  const handleResendOtp = async () => {
     if (onResend) {
-      onResend();
+      await onResend();
     } else {
       showToast(t("auth.resendOTP"), "info");
     }
@@ -336,6 +337,7 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
               variant="ghost"
               className="p-0 h-auto text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
               onClick={handleResendOtp}
+              disabled={resendLoading}
             >
               {t("auth.resendOTP")}
             </Button>

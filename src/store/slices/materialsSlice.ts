@@ -272,26 +272,32 @@ export const addFavoriteMaterialAdmin = createAsyncThunk<
 
 export interface GetUserFavoriteMaterialsParams {
   userId: string;
+  lang?: string;
 }
 
 export const getUserFavoriteMaterials = createAsyncThunk<
   Material[],
   GetUserFavoriteMaterialsParams,
   { rejectValue: string }
->("materials/getUserFavorites", async ({ userId }, { rejectWithValue }) => {
-  try {
-    const response = await apiClient.get(
-      API_CONFIG.ENDPOINTS.MATERIALS.GET_USER_FAVORITES(userId)
-    );
-    return response.data;
-  } catch (error: any) {
-    return rejectWithValue(
-      error.response?.data?.message ||
-        error.message ||
-        "Failed to fetch user favorite materials"
-    );
+>(
+  "materials/getUserFavorites",
+  async ({ userId, lang }, { rejectWithValue }) => {
+    try {
+      const params = lang ? { lang } : {};
+      const response = await apiClient.get(
+        API_CONFIG.ENDPOINTS.MATERIALS.GET_USER_FAVORITES(userId),
+        { params }
+      );
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to fetch user favorite materials"
+      );
+    }
   }
-});
+);
 
 export interface AddUserFavoriteMaterialsParams {
   userId: string;

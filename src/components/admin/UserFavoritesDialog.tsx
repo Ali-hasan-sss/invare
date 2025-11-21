@@ -47,7 +47,7 @@ export const UserFavoritesDialog: React.FC<UserFavoritesDialogProps> = ({
   const [loadingDelete, setLoadingDelete] = useState<string | null>(null);
   const [showAddSection, setShowAddSection] = useState(false);
 
-  // Fetch user favorites when dialog opens
+  // Fetch user favorites when dialog opens or language changes
   useEffect(() => {
     if (open && user) {
       fetchUserFavorites();
@@ -55,7 +55,7 @@ export const UserFavoritesDialog: React.FC<UserFavoritesDialogProps> = ({
       fetchAllMaterials();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, user]);
+  }, [open, user, currentLanguage.code]);
 
   // Reset state when dialog closes
   useEffect(() => {
@@ -71,7 +71,10 @@ export const UserFavoritesDialog: React.FC<UserFavoritesDialogProps> = ({
     if (!user) return;
     setLoadingFavorites(true);
     try {
-      const result = await getUserFavoriteMaterials({ userId: user.id });
+      const result = await getUserFavoriteMaterials({
+        userId: user.id,
+        lang: currentLanguage.code,
+      });
       if (result.type.endsWith("/fulfilled")) {
         setUserFavorites(result.payload as Material[]);
       }

@@ -32,6 +32,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import UserMenu from "@/components/UserMenu";
 import NotificationDropdown from "@/components/NotificationDropdown";
 import NotificationBell from "@/components/NotificationBell";
+import Logo from "@/components/ui/logo";
 
 const Header: React.FC = () => {
   const { t } = useTranslation();
@@ -176,19 +177,8 @@ const Header: React.FC = () => {
       >
         <Toolbar className="flex justify-between items-center py-2 px-4 sm:px-6 lg:px-8">
           {/* Logo Section */}
-          <Box className="flex ">
-            <div
-              className="flex items-center justify-center cursor-pointer"
-              onClick={() => router.push("/")}
-            >
-              <Image
-                src="/images/logo.png"
-                alt="logo"
-                width={50}
-                height={50}
-                className="object-contain"
-              />
-            </div>
+          <Box className="flex">
+            <Logo onClick={() => router.push("/")} size="md" />
           </Box>
 
           {/* Desktop Navigation */}
