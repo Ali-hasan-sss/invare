@@ -106,22 +106,15 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
 
       // If editing an existing listing, populate form with listing data
       if (editingListing) {
+        // Use i18n object directly, fallback to title/description if i18n not available
         const englishTitle =
-          editingListing.i18n?.en?.title ||
-          (currentLanguage.code === "en" ? editingListing.title || "" : "");
-        const arabicTitle =
-          editingListing.i18n?.ar?.title ||
-          (currentLanguage.code === "ar" ? editingListing.title || "" : "");
+          editingListing.i18n?.en?.title || editingListing.title || "";
+        const arabicTitle = editingListing.i18n?.ar?.title || "";
         const englishDescription =
           editingListing.i18n?.en?.description ||
-          (currentLanguage.code === "en"
-            ? editingListing.description || ""
-            : "");
-        const arabicDescription =
-          editingListing.i18n?.ar?.description ||
-          (currentLanguage.code === "ar"
-            ? editingListing.description || ""
-            : "");
+          editingListing.description ||
+          "";
+        const arabicDescription = editingListing.i18n?.ar?.description || "";
 
         setFormData({
           title: englishTitle || arabicTitle || "",
@@ -148,19 +141,32 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
           descriptionAr: arabicDescription,
         });
 
-        // Set category and material from editing listing
-        if (editingListing.material?.id) {
-          // Find category for this material
-          // Note: We'll need to fetch materials first to get the category
-          setSelectedCategoryId(initialCategoryId || "");
-        } else if (initialCategoryId) {
-          setSelectedCategoryId(initialCategoryId);
-          setFormData((prev) => ({
-            ...prev,
-            materialId: initialMaterialId || "",
-          }));
+        // Set category and material from editing listing or initial values
+        // Priority when editing: editingListing.material?.category?.id > initialCategoryId
+        // Priority when editing: editingListing.material?.id > initialMaterialId
+        const categoryId =
+          (editingListing.material as any)?.category?.id ||
+          initialCategoryId ||
+          editingListing.material?.categoryId ||
+          "";
+        const materialId =
+          (editingListing.material as any)?.id ||
+          initialMaterialId ||
+          editingListing.materialId ||
+          "";
+
+        if (categoryId) {
+          setSelectedCategoryId(categoryId);
         } else {
           setSelectedCategoryId("");
+        }
+
+        // Set materialId if available (will be set after materials are fetched)
+        if (materialId) {
+          setFormData((prev) => ({
+            ...prev,
+            materialId: materialId,
+          }));
         }
 
         // Set photos
@@ -215,13 +221,17 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
         // Set initial category and material if provided
         if (initialCategoryId) {
           setSelectedCategoryId(initialCategoryId);
-          setFormData((prev) => ({
-            ...prev,
-            materialId: initialMaterialId || "",
-          }));
         } else {
           // Reset category selection when dialog opens
           setSelectedCategoryId("");
+        }
+
+        // Set materialId if provided (even without categoryId)
+        if (initialMaterialId) {
+          setFormData((prev) => ({
+            ...prev,
+            materialId: initialMaterialId,
+          }));
         }
       }
     }
@@ -238,11 +248,48 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
   useEffect(() => {
     if (open && selectedCategoryId) {
       getMaterials({ categoryId: selectedCategoryId });
-      // Reset material selection when category changes
-      setFormData((prev) => ({ ...prev, materialId: "" }));
+
+      // Preserve materialId if initialMaterialId is provided or when editing with same category
+      // Priority when editing: use editingListing.material?.category?.id first
+      const editingCategoryId =
+        (editingListing?.material as any)?.category?.id ||
+        editingListing?.material?.categoryId ||
+        "";
+      const shouldPreserveMaterialId =
+        initialMaterialId ||
+        (editingListing &&
+          selectedCategoryId ===
+            (editingCategoryId || initialCategoryId || ""));
+
+      if (!shouldPreserveMaterialId) {
+        // Reset material selection when category changes
+        setFormData((prev) => ({ ...prev, materialId: "" }));
+      } else if (
+        editingListing?.material &&
+        (editingListing.material as any)?.id
+      ) {
+        // Set materialId from editingListing.material.id (from response)
+        const materialIdFromResponse = (editingListing.material as any).id;
+        setFormData((prev) => ({
+          ...prev,
+          materialId: materialIdFromResponse,
+        }));
+      } else if (initialMaterialId) {
+        // Set materialId from initialMaterialId
+        setFormData((prev) => ({
+          ...prev,
+          materialId: initialMaterialId,
+        }));
+      } else if (editingListing?.materialId) {
+        // Set materialId from editingListing.materialId (fallback)
+        setFormData((prev) => ({
+          ...prev,
+          materialId: editingListing.materialId,
+        }));
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCategoryId]);
+  }, [selectedCategoryId, open]);
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -487,7 +534,9 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
           }}
           className="text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
         >
-          {t("listing.addListing")}
+          {editingListing
+            ? t("listing.editListing") || t("admin.save") || "حفظ"
+            : t("listing.addListing") || "إضافة"}
         </DialogTitle>
         <DialogContent
           sx={{ pt: 3, pb: 2 }}
@@ -556,7 +605,8 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
                   </SelectOption>
                   {categories.map((category) => (
                     <SelectOption key={category.id} value={category.id}>
-                      {category.name}
+                      {category.i18n?.[currentLanguage.code]?.name ||
+                        category.name}
                     </SelectOption>
                   ))}
                 </Select>
@@ -582,11 +632,22 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
                       : t("listing.selectCategoryFirst")}
                   </SelectOption>
                   {selectedCategoryId &&
-                    materials.map((material) => (
-                      <SelectOption key={material.id} value={material.id}>
-                        {material.name}
-                      </SelectOption>
-                    ))}
+                    materials.map((material) => {
+                      const materialName =
+                        material.i18n?.[currentLanguage.code]?.name ||
+                        material.name;
+                      const unitOfMeasure =
+                        material.i18n?.[currentLanguage.code]?.unitOfMeasure ||
+                        material.unitOfMeasure;
+                      const displayText = unitOfMeasure
+                        ? `${materialName} (${unitOfMeasure})`
+                        : materialName;
+                      return (
+                        <SelectOption key={material.id} value={material.id}>
+                          {displayText}
+                        </SelectOption>
+                      );
+                    })}
                 </Select>
               </div>
             </div>
@@ -940,7 +1001,9 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
               "& *": { color: "white !important" },
             }}
           >
-            {t("listing.createListing")}
+            {editingListing
+              ? t("admin.save") || "حفظ"
+              : t("listing.createListing") || "إضافة"}
           </Button>
         </DialogActions>
       </form>

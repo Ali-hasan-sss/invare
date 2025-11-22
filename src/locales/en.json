@@ -37,7 +37,12 @@
     "daysAgo": "days",
     "ago": "ago",
     "country": "Country",
-    "selectCountry": "Select Country"
+    "selectCountry": "Select Country",
+    "unitOfMeasures": {
+      "ton": "ton",
+      "piece": "piece",
+      "liter": "liter"
+    }
   },
   "home": {
     "heroTitle": "Saudi Arabia's Leading Recycling Platform",
@@ -610,7 +615,8 @@
     "viewAll": "View all"
   },
   "currency": {
-    "omr": "OMR"
+    "omr": "OMR",
+    "sar": "SAR"
   },
   "profile": {
     "title": "Profile",

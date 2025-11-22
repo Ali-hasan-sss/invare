@@ -57,8 +57,9 @@ export default function CategoriesPage() {
   } | null>(null);
 
   useEffect(() => {
-    dispatch(getMaterialCategories({ lang: currentLanguage.code }));
-  }, [dispatch, currentLanguage.code]);
+    // Fetch categories without lang parameter to get i18n object with both languages
+    dispatch(getMaterialCategories());
+  }, [dispatch]);
 
   useEffect(() => {
     if (categoriesError) {
@@ -73,6 +74,7 @@ export default function CategoriesPage() {
   };
 
   const handleEditCategory = (category: MaterialCategory) => {
+    // Use the category data directly from the list (already includes i18n)
     setEditingCategory(category);
     setCategoryFormOpen(true);
   };
@@ -111,7 +113,8 @@ export default function CategoriesPage() {
         });
       }
       setCategoryFormOpen(false);
-      dispatch(getMaterialCategories({ lang: currentLanguage.code }));
+      // Refresh categories without lang parameter to get i18n object
+      dispatch(getMaterialCategories());
     } catch (err) {
       setToast({ message: t("admin.error"), type: "error" });
     }
@@ -128,15 +131,25 @@ export default function CategoriesPage() {
       });
       setDeleteDialogOpen(false);
       setDeletingCategory(null);
-      dispatch(getMaterialCategories({ lang: currentLanguage.code }));
+      // Refresh categories without lang parameter to get i18n object
+      dispatch(getMaterialCategories());
     } catch (err) {
       setToast({ message: t("admin.error"), type: "error" });
     }
   };
 
-  const filteredCategories = categories.filter((category) =>
-    (category.name || "").toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredCategories = categories.filter((category) => {
+    const searchLower = searchQuery.toLowerCase();
+    const nameEn = category.i18n?.en?.name || "";
+    const nameAr = category.i18n?.ar?.name || "";
+    const name = category.name || "";
+
+    return (
+      name.toLowerCase().includes(searchLower) ||
+      nameEn.toLowerCase().includes(searchLower) ||
+      nameAr.toLowerCase().includes(searchLower)
+    );
+  });
 
   return (
     <div>
@@ -152,11 +165,11 @@ export default function CategoriesPage() {
       </div>
 
       {/* Search Bar */}
-      <Card className="mb-4 py-5 px-3">
-        <div className="relative">
+      <Card className="mb-4 py-3 px-4">
+        <div className="relative w-full">
           <Search
             className={cn(
-              "absolute top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400",
+              "absolute top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 z-10",
               isRTL ? "left-3" : "right-3"
             )}
           />
@@ -165,10 +178,18 @@ export default function CategoriesPage() {
             placeholder={t("admin.search")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className={cn(
-              "h-10 border-0 focus:ring-0 shadow-none",
-              isRTL ? "pr-11" : "pl-11"
-            )}
+            className="w-full"
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                height: "40px",
+                borderRadius: "6px",
+              },
+              "& .MuiOutlinedInput-input": {
+                paddingLeft: isRTL ? "14px !important" : "36px !important",
+                paddingRight: isRTL ? "36px !important" : "14px !important",
+                fontSize: "14px",
+              },
+            }}
           />
         </div>
       </Card>
@@ -215,7 +236,10 @@ export default function CategoriesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-center text-gray-700 dark:text-gray-200">
-                  {t("admin.categoryName")}
+                  {t("admin.categoryName")} (EN)
+                </TableHead>
+                <TableHead className="text-center text-gray-700 dark:text-gray-200">
+                  {t("admin.categoryName")} (AR)
                 </TableHead>
                 <TableHead className="text-center w-32 text-gray-700 dark:text-gray-200">
                   {t("admin.actions")}
@@ -232,7 +256,12 @@ export default function CategoriesPage() {
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-2 font-medium text-gray-900 dark:text-white">
                       <FolderOpen className="h-5 w-5 text-yellow-600" />
-                      {category.name}
+                      {category.i18n?.en?.name || category.name || "-"}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      {category.i18n?.ar?.name || "-"}
                     </div>
                   </TableCell>
                   <TableCell className="text-center">

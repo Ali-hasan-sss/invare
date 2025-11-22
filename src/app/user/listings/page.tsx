@@ -9,7 +9,6 @@ import {
   Tag,
   Image as ImageIcon,
   Calendar,
-  DollarSign,
   ShoppingCart,
 } from "lucide-react";
 import { useTranslation } from "../../../hooks/useTranslation";
@@ -68,6 +67,37 @@ export default function MyListingsPage() {
     message: string;
     type: "success" | "error";
   } | null>(null);
+
+  // Helper function to translate listing status
+  const getStatusText = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "active":
+        return t("listings.status.active") || t("listings.active");
+      case "pending":
+        return t("listings.pending");
+      case "expired":
+        return t("listings.expired");
+      case "draft":
+        return t("listings.status.draft");
+      case "closed":
+        return t("listings.status.closed");
+      case "cancelled":
+        return t("listings.status.cancelled");
+      default:
+        return status;
+    }
+  };
+
+  // Helper function to get unit of measure text
+  const getUnitOfMeasureText = (unit: string | undefined) => {
+    if (!unit) return "";
+    const unitLower = unit.toLowerCase();
+    const translated = t(`common.unitOfMeasures.${unitLower}`);
+    // If translation not found, return original value
+    return translated && translated !== `common.unitOfMeasures.${unitLower}`
+      ? translated
+      : unit;
+  };
 
   // Fetch user's listings
   useEffect(() => {
@@ -202,41 +232,54 @@ export default function MyListingsPage() {
       </div>
 
       {/* Search and Filter Bar */}
-      <Card className="mb-6 py-6 px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <Card className="mb-6 py-5 px-4 sm:px-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 items-start">
           {/* Search */}
-          <div className="relative">
+          <div className="w-full flex flex-col">
             <label
               htmlFor="search-input"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 h-5 leading-5"
             >
               {t("admin.search") || "بحث"}
             </label>
-            <div className="relative">
+            <div className="relative w-full">
               <Search
                 className={cn(
-                  "absolute top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400",
+                  "absolute top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 z-10",
                   isRTL ? "left-3" : "right-3"
                 )}
+                style={{
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                }}
               />
               <Input
                 id="search-input"
                 type="text"
-                placeholder={t("admin.search") || "بحث"}
+                placeholder={t("admin.search") || "بحث..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={cn(
-                  "h-10 border-0 focus:ring-0 shadow-none",
-                  isRTL ? "pr-11" : "pl-11"
-                )}
+                className="w-full"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    height: "40px",
+                    borderRadius: "6px",
+                  },
+                  "& .MuiOutlinedInput-input": {
+                    paddingLeft: isRTL ? "14px !important" : "36px !important",
+                    paddingRight: isRTL ? "36px !important" : "14px !important",
+                    fontSize: "14px",
+                    lineHeight: "1.5",
+                  },
+                }}
               />
             </div>
           </div>
           {/* Status Filter */}
-          <div>
+          <div className="w-full flex flex-col">
             <label
               htmlFor="status-filter"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 h-5 leading-5"
             >
               {t("listings.filterByStatus") || "فلترة حسب الحالة"}
             </label>
@@ -247,7 +290,11 @@ export default function MyListingsPage() {
                 setStatusFilter(e.target.value);
                 setCurrentPage(1); // Reset to first page when filter changes
               }}
-              className="h-10 w-full"
+              className="h-10 w-full rounded-md text-sm"
+              style={{
+                height: "40px",
+                fontSize: "14px",
+              }}
             >
               <SelectOption value="">
                 {t("listings.allStatuses") || "جميع الحالات"}
@@ -342,21 +389,25 @@ export default function MyListingsPage() {
                             : "error"
                         }
                       >
-                        {listing.status}
+                        {getStatusText(listing.status)}
                       </Badge>
                     </div>
                   </div>
 
                   {/* Listing Title */}
                   <CardTitle className="text-lg font-semibold mb-2 text-gray-900 dark:text-white line-clamp-2">
-                    {listing.title || "N/A"}
+                    {listing.i18n?.[currentLanguage.code]?.title ||
+                      listing.title ||
+                      "N/A"}
                   </CardTitle>
 
                   {/* Material Name */}
-                  {listing.material?.name && (
+                  {listing.material && (
                     <CardDescription className="mb-3 text-gray-600 dark:text-gray-400">
                       <Tag className="h-4 w-4 inline mr-1" />
-                      {listing.material.name}
+                      {listing.material.i18n?.[currentLanguage.code]?.name ||
+                        listing.material.name ||
+                        ""}
                     </CardDescription>
                   )}
 
@@ -376,8 +427,7 @@ export default function MyListingsPage() {
                         {t("listings.price") || "السعر"}
                       </span>
                       <span className="font-semibold text-green-600 dark:text-green-400">
-                        <DollarSign className="h-4 w-4 inline" />
-                        {listing.startingPrice} {t("currency.omr") || "ريال"}
+                        {listing.startingPrice} {t("currency.sar") || "ر.س"}
                       </span>
                     </div>
 
@@ -387,7 +437,11 @@ export default function MyListingsPage() {
                         {t("listings.quantity") || "الكمية"}
                       </span>
                       <span className="font-medium text-gray-900 dark:text-white">
-                        {listing.stockAmount} {listing.unitOfMeasure}
+                        {listing.stockAmount}{" "}
+                        {getUnitOfMeasureText(
+                          listing.material?.i18n?.[currentLanguage.code]
+                            ?.unitOfMeasure || listing.unitOfMeasure
+                        )}
                       </span>
                     </div>
 

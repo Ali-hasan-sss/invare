@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   getMaterialCategories,
+  getMaterialCategoryById,
   createMaterialCategory,
   updateMaterialCategory,
   deleteMaterialCategory,
@@ -11,6 +12,7 @@ import {
   CreateMaterialCategoryData,
   UpdateMaterialCategoryData,
   GetMaterialCategoriesParams,
+  GetMaterialCategoryByIdParams,
   MaterialCategory,
 } from "../store/slices/materialCategoriesSlice";
 
@@ -32,6 +34,17 @@ export const useMaterialCategories = () => {
       return dispatch(getMaterialCategories(payload));
     },
     [dispatch, currentLanguage.code]
+  );
+
+  // Get material category by ID (without lang to get i18n object)
+  const fetchCategoryById = useCallback(
+    async (params: GetMaterialCategoryByIdParams) => {
+      // Don't send lang parameter to get i18n object
+      return dispatch(
+        getMaterialCategoryById({ id: params.id, lang: undefined })
+      );
+    },
+    [dispatch]
   );
 
   // Create material category
@@ -85,6 +98,7 @@ export const useMaterialCategories = () => {
 
     // Actions
     getCategories: fetchCategories,
+    getCategoryById: fetchCategoryById,
     createCategory: addCategory,
     updateCategory: editCategory,
     deleteCategory: removeCategory,

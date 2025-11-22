@@ -85,32 +85,64 @@ export default function ListingsPage() {
     type: "success" | "error";
   } | null>(null);
 
+  // Helper function to translate listing status
+  const getStatusText = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "active":
+        return t("listings.status.active") || t("listings.active");
+      case "pending":
+        return t("listings.pending");
+      case "expired":
+        return t("listings.expired");
+      case "draft":
+        return t("listings.status.draft");
+      case "closed":
+        return t("listings.status.closed");
+      case "cancelled":
+        return t("listings.status.cancelled");
+      default:
+        return status;
+    }
+  };
+
+  // Helper function to translate unit of measure
+  const getUnitOfMeasureText = (unit: string | undefined) => {
+    if (!unit) return "";
+    const unitLower = unit.toLowerCase();
+    const translated = t(`common.unitOfMeasures.${unitLower}`);
+    // If translation not found, return original value
+    return translated && translated !== `common.unitOfMeasures.${unitLower}`
+      ? translated
+      : unit;
+  };
+
   // Fetch categories and materials
   useEffect(() => {
-    dispatch(getMaterialCategories({ lang: currentLanguage.code }));
-  }, [dispatch, currentLanguage.code]);
+    // Fetch categories without lang parameter to get i18n object with both languages
+    dispatch(getMaterialCategories());
+  }, [dispatch]);
 
   useEffect(() => {
     if (categoryId && categories.length > 0) {
       const category = categories.find((cat) => cat.id === categoryId);
       if (category) {
         setSelectedCategory(category);
-        // Fetch materials for this category
-        dispatch(getMaterials({ categoryId, lang: currentLanguage.code }));
+        // Fetch materials without lang parameter to get i18n object with both languages
+        dispatch(getMaterials({ categoryId }));
       }
     }
-  }, [categoryId, categories, dispatch, currentLanguage.code]);
+  }, [categoryId, categories, dispatch]);
 
   useEffect(() => {
     if (materialId && materials.length > 0) {
       const material = materials.find((mat) => mat.id === materialId);
       if (material) {
         setSelectedMaterial(material);
-        // Fetch listings for this material
-        dispatch(getListings({ materialId, lang: currentLanguage.code }));
+        // Fetch listings without lang parameter to get i18n object with both languages
+        dispatch(getListings({ materialId }));
       }
     }
-  }, [materialId, materials, dispatch, currentLanguage.code]);
+  }, [materialId, materials, dispatch]);
 
   useEffect(() => {
     if (listingsError) {
@@ -176,9 +208,9 @@ export default function ListingsPage() {
       }
       setListingFormOpen(false);
       setEditingListing(null);
-      // Refresh listings
+      // Refresh listings without lang parameter to get i18n object
       if (materialId) {
-        dispatch(getListings({ materialId, lang: currentLanguage.code }));
+        dispatch(getListings({ materialId }));
       }
     } catch (err: any) {
       setToast({
@@ -200,8 +232,9 @@ export default function ListingsPage() {
       });
       setDeleteDialogOpen(false);
       setDeletingListing(null);
+      // Refresh listings without lang parameter to get i18n object
       if (materialId) {
-        dispatch(getListings({ materialId, lang: currentLanguage.code }));
+        dispatch(getListings({ materialId }));
       }
     } catch (err) {
       setToast({ message: t("admin.error"), type: "error" });
@@ -212,14 +245,28 @@ export default function ListingsPage() {
     router.push(`/admin/materials/${categoryId}`);
   };
 
-  const filteredListings = listings.filter(
-    (listing) =>
-      listing.seller?.companyName
-        ?.toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
+  const filteredListings = listings.filter((listing) => {
+    if (!searchQuery.trim()) return true;
+
+    const searchLower = searchQuery.toLowerCase();
+    const titleEn = listing.i18n?.en?.title || "";
+    const titleAr = listing.i18n?.ar?.title || "";
+    const title = listing.title || "";
+    const descriptionEn = listing.i18n?.en?.description || "";
+    const descriptionAr = listing.i18n?.ar?.description || "";
+    const description = listing.description || "";
+
+    return (
+      listing.seller?.companyName?.toLowerCase().includes(searchLower) ||
       listing.startingPrice?.toString().includes(searchQuery) ||
-      listing.title?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      title.toLowerCase().includes(searchLower) ||
+      titleEn.toLowerCase().includes(searchLower) ||
+      titleAr.toLowerCase().includes(searchLower) ||
+      description.toLowerCase().includes(searchLower) ||
+      descriptionEn.toLowerCase().includes(searchLower) ||
+      descriptionAr.toLowerCase().includes(searchLower)
+    );
+  });
 
   if (!selectedCategory || !selectedMaterial) {
     return (
@@ -248,7 +295,8 @@ export default function ListingsPage() {
           </Button>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
             <Tag className="h-8 w-8 text-green-600" />
-            {selectedMaterial.name}
+            {selectedMaterial.i18n?.[currentLanguage.code]?.name ||
+              selectedMaterial.name}
           </h1>
         </div>
         <p className="mt-2 text-gray-600 dark:text-gray-400">
@@ -257,11 +305,11 @@ export default function ListingsPage() {
       </div>
 
       {/* Search Bar */}
-      <Card className="mb-4 py-5 px-3">
-        <div className="relative">
+      <Card className="mb-4 py-3 px-4">
+        <div className="relative w-full">
           <Search
             className={cn(
-              "absolute top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400",
+              "absolute top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 z-10",
               isRTL ? "left-3" : "right-3"
             )}
           />
@@ -270,10 +318,18 @@ export default function ListingsPage() {
             placeholder={t("admin.search")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className={cn(
-              "h-10 border-0 focus:ring-0 shadow-none",
-              isRTL ? "pr-11" : "pl-11"
-            )}
+            className="w-full"
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                height: "40px",
+                borderRadius: "6px",
+              },
+              "& .MuiOutlinedInput-input": {
+                paddingLeft: isRTL ? "14px !important" : "36px !important",
+                paddingRight: isRTL ? "36px !important" : "14px !important",
+                fontSize: "14px",
+              },
+            }}
           />
         </div>
       </Card>
@@ -328,7 +384,11 @@ export default function ListingsPage() {
                     {listing.photos && listing.photos.length > 0 ? (
                       <Image
                         src={listing.photos[0].url}
-                        alt={listing.title || "Listing"}
+                        alt={
+                          listing.i18n?.[currentLanguage.code]?.title ||
+                          listing.title ||
+                          "Listing"
+                        }
                         fill
                         className="object-cover"
                         unoptimized
@@ -349,15 +409,26 @@ export default function ListingsPage() {
                             : "error"
                         }
                       >
-                        {listing.status}
+                        {getStatusText(listing.status)}
                       </Badge>
                     </div>
                   </div>
 
                   {/* Listing Title */}
                   <CardTitle className="text-lg font-semibold mb-2 text-gray-900 dark:text-white line-clamp-2">
-                    {listing.title || "N/A"}
+                    {listing.i18n?.[currentLanguage.code]?.title ||
+                      listing.title ||
+                      "N/A"}
                   </CardTitle>
+
+                  {/* Listing Description */}
+                  {listing.i18n?.[currentLanguage.code]?.description ||
+                  listing.description ? (
+                    <CardDescription className="mb-2 text-gray-600 dark:text-gray-400 line-clamp-2">
+                      {listing.i18n?.[currentLanguage.code]?.description ||
+                        listing.description}
+                    </CardDescription>
+                  ) : null}
 
                   {/* Company Name */}
                   {listing.seller?.companyName && (
@@ -386,7 +457,14 @@ export default function ListingsPage() {
                         {t("listings.quantity")}
                       </span>
                       <span className="font-medium text-gray-900 dark:text-white">
-                        {listing.stockAmount} {listing.unitOfMeasure}
+                        {listing.stockAmount}{" "}
+                        {getUnitOfMeasureText(
+                          (listing.material as any)?.i18n?.[
+                            currentLanguage.code
+                          ]?.unitOfMeasure ||
+                            listing.material?.unitOfMeasure ||
+                            listing.unitOfMeasure
+                        )}
                       </span>
                     </div>
 
@@ -456,6 +534,7 @@ export default function ListingsPage() {
         onSubmit={handleSubmitListing}
         initialCategoryId={categoryId}
         initialMaterialId={materialId}
+        editingListing={editingListing}
       />
 
       <DeleteConfirmDialog

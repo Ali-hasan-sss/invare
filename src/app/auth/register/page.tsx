@@ -9,6 +9,7 @@ import {
   FormControl,
   Select,
   MenuItem,
+  SelectChangeEvent,
 } from "@mui/material";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -26,6 +27,7 @@ import {
   processGoogleRedirect,
 } from "@/lib/googleAuth";
 import { getErrorMessageKey } from "@/lib/errorUtils";
+import { getCountryFlag, getCountryName } from "@/lib/countryUtils";
 
 export default function RegisterPage() {
   const { t, currentLanguage } = useTranslation();
@@ -431,8 +433,8 @@ export default function RegisterPage() {
                   <FormControl fullWidth size="small">
                     <Select
                       value={formData.countryId || ""}
-                      onChange={(e) =>
-                        handleInputChange("countryId", e.target.value as string)
+                      onChange={(e: SelectChangeEvent<string>) =>
+                        handleInputChange("countryId", e.target.value)
                       }
                       displayEmpty
                       className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white h-11 sm:h-12"
@@ -446,6 +448,12 @@ export default function RegisterPage() {
                         },
                         "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                           borderColor: "#9333ea",
+                        },
+                        "& .MuiSelect-select": {
+                          padding: "8px 14px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
                         },
                         pr: 2,
                         pl: 2,
@@ -461,27 +469,113 @@ export default function RegisterPage() {
                         ".dark & .MuiSelect-icon": {
                           color: "rgb(156 163 175)",
                         },
+                        ".dark &": {
+                          color: "rgb(249 250 251)",
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "rgba(75, 85, 99, 0.5)",
+                          },
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "rgba(75, 85, 99, 0.8)",
+                          },
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#9333ea",
+                          },
+                        },
                       }}
                       MenuProps={{
                         disableScrollLock: true,
                         PaperProps: {
-                          className: "dark:bg-gray-700 dark:text-white",
+                          sx: {
+                            backgroundColor: "rgb(255 255 255)",
+                            ".dark &": {
+                              backgroundColor: "rgb(55 65 81)",
+                            },
+                          },
                         },
                       }}
+                      renderValue={(value) => {
+                        if (!value) {
+                          return (
+                            <span className="text-gray-500 dark:text-gray-400">
+                              {t("common.selectCountry")}
+                            </span>
+                          );
+                        }
+                        const selectedCountry = countries.find(
+                          (c) => c.id === value
+                        );
+                        if (!selectedCountry) return "";
+                        const flag = getCountryFlag(
+                          selectedCountry.countryCode
+                        );
+                        const translatedName = getCountryName(
+                          selectedCountry.countryCode,
+                          currentLanguage.code as "ar" | "en"
+                        );
+                        const displayName =
+                          translatedName || selectedCountry.countryName || "";
+                        return (
+                          <span className="flex items-center gap-2">
+                            <span className="text-lg">{flag}</span>
+                            <span>{displayName}</span>
+                          </span>
+                        );
+                      }}
                     >
-                      <MenuItem value="">
-                        <em>{t("common.selectCountry")}</em>
+                      <MenuItem
+                        value=""
+                        sx={{
+                          color: "rgb(107 114 128)",
+                          ".dark &": {
+                            color: "rgb(156 163 175)",
+                          },
+                        }}
+                      >
+                        {t("common.selectCountry")}
                       </MenuItem>
                       {isLoadingCountries ? (
                         <MenuItem value="" disabled>
                           {t("common.loading")}
                         </MenuItem>
                       ) : (
-                        countries.map((country) => (
-                          <MenuItem key={country.id} value={country.id}>
-                            {country.countryName}
-                          </MenuItem>
-                        ))
+                        countries.map((country) => {
+                          const flag = getCountryFlag(country.countryCode);
+                          const translatedName = getCountryName(
+                            country.countryCode,
+                            currentLanguage.code as "ar" | "en"
+                          );
+                          const displayName =
+                            translatedName || country.countryName || "";
+                          return (
+                            <MenuItem
+                              key={country.id}
+                              value={country.id}
+                              sx={{
+                                color: "rgb(17 24 39)",
+                                "&.Mui-selected": {
+                                  backgroundColor: "rgb(239 246 255)",
+                                },
+                                "&.Mui-selected:hover": {
+                                  backgroundColor: "rgb(219 234 254)",
+                                },
+                                ".dark &": {
+                                  color: "rgb(249 250 251)",
+                                  "&.Mui-selected": {
+                                    backgroundColor: "rgb(30 58 138)",
+                                  },
+                                  "&.Mui-selected:hover": {
+                                    backgroundColor: "rgb(37 99 235)",
+                                  },
+                                },
+                              }}
+                            >
+                              <span className="flex items-center gap-2">
+                                <span className="text-lg">{flag}</span>
+                                <span>{displayName}</span>
+                              </span>
+                            </MenuItem>
+                          );
+                        })
                       )}
                     </Select>
                   </FormControl>

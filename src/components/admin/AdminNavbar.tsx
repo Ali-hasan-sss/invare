@@ -33,16 +33,19 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({ onMenuClick }) => {
   return (
     <>
       {/* Desktop Navbar */}
-      <nav className="hidden lg:block sticky top-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+      <nav
+        dir={currentLanguage.dir}
+        className="hidden lg:block sticky top-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm"
+      >
         <div className="px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
+          <div
+            className={cn(
+              "flex h-16 items-center",
+              isRTL ? "flex-row-reverse justify-between" : "justify-between"
+            )}
+          >
             {/* Title */}
-            <div
-              className={cn(
-                "flex items-center",
-                isRTL ? "order-2 w-full justify-end" : "order-1"
-              )}
-            >
+            <div className="flex items-center">
               <h1
                 className={cn(
                   "text-xl font-bold text-gray-900 dark:text-white",
@@ -56,8 +59,8 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({ onMenuClick }) => {
             {/* Actions */}
             <div
               className={cn(
-                "flex items-center gap-2",
-                isRTL ? "order-1 flex-row-reverse" : "order-2"
+                "flex items-center",
+                isRTL ? "flex-row-reverse gap-2" : "gap-2"
               )}
             >
               {/* Language Switcher */}
@@ -71,10 +74,10 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({ onMenuClick }) => {
                 <button
                   onClick={handleUserMenuOpen}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg",
+                    "flex items-center px-3 py-2 rounded-lg",
                     "hover:bg-gray-100 dark:hover:bg-gray-700",
                     "transition-colors duration-200",
-                    isRTL ? "flex-row-reverse" : ""
+                    isRTL ? "flex-row-reverse gap-2" : "gap-2"
                   )}
                 >
                   <Avatar
@@ -101,16 +104,22 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({ onMenuClick }) => {
       </nav>
 
       {/* Mobile Navbar */}
-      <nav className="lg:hidden sticky top-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+      <nav
+        dir={currentLanguage.dir}
+        className="lg:hidden sticky top-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm"
+      >
         <div className="px-4">
-          <div className="flex h-16 items-center justify-between">
+          <div
+            className={cn(
+              "flex h-16 items-center",
+              isRTL ? "flex-row-reverse justify-between" : "justify-between"
+            )}
+          >
             {/* Menu Button & Title */}
             <div
               className={cn(
-                "flex items-center gap-3",
-                isRTL
-                  ? "order-2 flex-row-reverse w-full justify-end"
-                  : "order-1"
+                "flex items-center",
+                isRTL ? "flex-row-reverse gap-3" : "gap-3"
               )}
             >
               <button
@@ -133,8 +142,8 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({ onMenuClick }) => {
             {/* Actions */}
             <div
               className={cn(
-                "flex items-center gap-2",
-                isRTL ? "order-1 flex-row-reverse" : "order-2"
+                "flex items-center",
+                isRTL ? "flex-row-reverse gap-2" : "gap-2"
               )}
             >
               {/* Language Switcher */}

@@ -130,11 +130,65 @@ const Header: React.FC = () => {
             <MuiListItemText primary={t("listings.allListings")} />
           </ListItemButton>
         </ListItem>
-        <ListItem disablePadding>
-          <ListItemButton className="rounded-lg mb-2">
-            <MuiListItemText primary={t("navigation.support")} />
-            <ChevronDown size={16} />
-          </ListItemButton>
+        {/* Support Section */}
+        <ListItem disablePadding className="flex-col items-start mb-2">
+          <Box className="w-full">
+            <MuiListItemText
+              primary={t("navigation.support")}
+              className="px-4 py-2 text-base font-medium text-gray-900 dark:text-white"
+            />
+            {/* Support Options */}
+            <List className="w-full" disablePadding>
+              <ListItem disablePadding>
+                <ListItemButton
+                  className="rounded-lg mb-1 mx-2"
+                  onClick={() => {
+                    router.push("/help-center");
+                    handleDrawerToggle();
+                  }}
+                >
+                  <MuiListItemText
+                    primary={t("navigation.helpCenter")}
+                    primaryTypographyProps={{
+                      className: "text-sm text-gray-700 dark:text-gray-300",
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
+              <ListItem disablePadding>
+                <ListItemButton
+                  className="rounded-lg mb-1 mx-2"
+                  onClick={() => {
+                    router.push("/contact");
+                    handleDrawerToggle();
+                  }}
+                >
+                  <MuiListItemText
+                    primary={t("navigation.contactUs")}
+                    primaryTypographyProps={{
+                      className: "text-sm text-gray-700 dark:text-gray-300",
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
+              <ListItem disablePadding>
+                <ListItemButton
+                  className="rounded-lg mb-1 mx-2"
+                  onClick={() => {
+                    router.push("/faq");
+                    handleDrawerToggle();
+                  }}
+                >
+                  <MuiListItemText
+                    primary={t("navigation.faq")}
+                    primaryTypographyProps={{
+                      className: "text-sm text-gray-700 dark:text-gray-300",
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
+            </List>
+          </Box>
         </ListItem>
         <ListItem disablePadding>
           <ListItemButton

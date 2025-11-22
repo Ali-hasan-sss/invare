@@ -49,9 +49,13 @@ const CategoryMaterialsPage: React.FC = () => {
 
   useEffect(() => {
     if (categoryIdParam) {
-      getMaterials({ categoryId: categoryIdParam.toString(), limit: 500 });
+      getMaterials({
+        categoryId: categoryIdParam.toString(),
+        limit: 500,
+        lang: currentLanguage.code,
+      });
     }
-  }, [categoryIdParam, getMaterials]);
+  }, [categoryIdParam, getMaterials, currentLanguage.code]);
 
   const category = useMemo(
     () => categories.find((item) => item.id === categoryIdParam),

@@ -151,11 +151,11 @@ export default function CountriesManagement() {
       </div>
 
       {/* Search Bar */}
-      <Card className="mb-4 py-5 px-3">
-        <div className="relative">
+      <Card className="mb-4 py-3 px-4">
+        <div className="relative w-full">
           <Search
             className={cn(
-              "absolute top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400",
+              "absolute top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 z-10",
               isRTL ? "left-3" : "right-3"
             )}
           />
@@ -164,10 +164,18 @@ export default function CountriesManagement() {
             placeholder={t("admin.search")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className={cn(
-              "h-10 border-0 focus:ring-0 shadow-none",
-              isRTL ? "pr-11" : "pl-11"
-            )}
+            className="w-full"
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                height: "40px",
+                borderRadius: "6px",
+              },
+              "& .MuiOutlinedInput-input": {
+                paddingLeft: isRTL ? "14px !important" : "36px !important",
+                paddingRight: isRTL ? "36px !important" : "14px !important",
+                fontSize: "14px",
+              },
+            }}
           />
         </div>
       </Card>

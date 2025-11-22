@@ -206,15 +206,23 @@ export const addFavoriteMaterial = createAsyncThunk<
   }
 });
 
+export interface GetFavoriteMaterialsParams {
+  lang?: string;
+}
+
 export const getFavoriteMaterials = createAsyncThunk<
   Material[],
-  void,
+  GetFavoriteMaterialsParams | void,
   { rejectValue: string }
->("materials/getFavorites", async (_, { rejectWithValue }) => {
+>("materials/getFavorites", async (params, { rejectWithValue }) => {
   try {
-    const response = await apiClient.get(
-      API_CONFIG.ENDPOINTS.MATERIALS.GET_FAVORITES
-    );
+    const queryParams = new URLSearchParams();
+    if (params?.lang) queryParams.append("lang", params.lang);
+
+    const url = `${API_CONFIG.ENDPOINTS.MATERIALS.GET_FAVORITES}${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+    const response = await apiClient.get(url);
     return response.data;
   } catch (error: any) {
     return rejectWithValue(
@@ -225,14 +233,31 @@ export const getFavoriteMaterials = createAsyncThunk<
   }
 });
 
+export interface RemoveFavoriteMaterialParams {
+  id: string; // material id
+  materialId?: string; // Optional materialId in body (for backward compatibility)
+}
+
 export const removeFavoriteMaterial = createAsyncThunk<
   string,
-  string,
+  RemoveFavoriteMaterialParams | string,
   { rejectValue: string }
->("materials/removeFavorite", async (id, { rejectWithValue }) => {
+>("materials/removeFavorite", async (params, { rejectWithValue }) => {
   try {
-    await apiClient.delete(API_CONFIG.ENDPOINTS.MATERIALS.REMOVE_FAVORITE(id));
-    return id;
+    // Support both old format (just id as string) and new format (object with id and materialId)
+    const materialId = typeof params === "string" ? params : params.id;
+    const bodyMaterialId =
+      typeof params === "object" && params.materialId
+        ? params.materialId
+        : materialId;
+
+    await apiClient.delete(
+      API_CONFIG.ENDPOINTS.MATERIALS.REMOVE_FAVORITE(materialId),
+      {
+        data: { materialId: bodyMaterialId },
+      }
+    );
+    return materialId;
   } catch (error: any) {
     return rejectWithValue(
       error.response?.data?.message ||
@@ -359,7 +384,7 @@ export const deleteFavoriteMaterial = createAsyncThunk<
 
 export interface DeleteUserFavoriteMaterialParams {
   userId: string;
-  materialId: string;
+  favoriteId: string; // ID of the favorite item (in URL)
 }
 
 export const deleteUserFavoriteMaterial = createAsyncThunk<
@@ -368,18 +393,34 @@ export const deleteUserFavoriteMaterial = createAsyncThunk<
   { rejectValue: string }
 >(
   "materials/deleteUserFavorite",
-  async ({ userId, materialId }, { rejectWithValue }) => {
+  async ({ userId, favoriteId }, { rejectWithValue }) => {
     try {
-      await apiClient.delete(
-        API_CONFIG.ENDPOINTS.MATERIALS.DELETE_USER_FAVORITE(userId),
-        {
-          data: { materialId },
-        }
-      );
-      return materialId;
+      // DELETE /materials/:favoriteId/favorite (no body)
+      const url = API_CONFIG.ENDPOINTS.MATERIALS.DELETE_FAVORITE(favoriteId);
+
+      if (process.env.NODE_ENV === "development") {
+        console.log("[deleteUserFavoriteMaterial] Sending DELETE request:", {
+          url,
+          favoriteId,
+        });
+      }
+
+      await apiClient.delete(url);
+
+      return favoriteId;
     } catch (error: any) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("[deleteUserFavoriteMaterial] Error:", {
+          error: error.message,
+          response: error.response?.data,
+          status: error.response?.status,
+        });
+      }
       return rejectWithValue(
         error.response?.data?.message ||
+          (Array.isArray(error.response?.data?.message)
+            ? error.response.data.message.join(", ")
+            : null) ||
           error.message ||
           "Failed to delete user favorite material"
       );

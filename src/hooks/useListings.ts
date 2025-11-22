@@ -109,14 +109,14 @@ export const useListings = () => {
       status?: string;
       lang?: string;
     }) => {
+      // Don't send lang parameter to get i18n object with both languages
       return dispatch(
         getMyListings({
-          lang: params?.lang ?? currentLanguage.code,
           ...params,
         })
       );
     },
-    [dispatch, currentLanguage.code]
+    [dispatch]
   );
 
   // Get my user listings
@@ -127,14 +127,14 @@ export const useListings = () => {
       status?: string;
       lang?: string;
     }) => {
+      // Don't send lang parameter to get i18n object with both languages
       return dispatch(
         getMyUserListings({
-          lang: params?.lang ?? currentLanguage.code,
           ...params,
         })
       );
     },
-    [dispatch, currentLanguage.code]
+    [dispatch]
   );
 
   // Get my company listings

@@ -54,7 +54,7 @@ export const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps
       {onClose && (
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 transition-opacity"
+          className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
         >
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
@@ -91,7 +91,7 @@ export const DialogTitle = React.forwardRef<HTMLHeadingElement, DialogTitleProps
   ({ className, children, ...props }, ref) => (
     <h2
       ref={ref}
-      className={cn('text-lg font-semibold leading-none tracking-tight', className)}
+      className={cn('text-lg font-semibold leading-none tracking-tight text-gray-900 dark:text-white', className)}
       {...props}
     >
       {children}

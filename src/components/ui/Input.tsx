@@ -18,7 +18,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         variant={variant}
         error={error}
         helperText={helperText}
-        className={cn("w-full dark:text-white", className)}
+        className={cn("w-full  dark:text-white", className)}
         sx={{
           "& .MuiOutlinedInput-root": {
             "& fieldset": {

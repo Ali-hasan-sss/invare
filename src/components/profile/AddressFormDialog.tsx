@@ -6,6 +6,10 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  FormControl,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
 } from "@mui/material";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useUserAddresses } from "@/hooks/useUserAddresses";
@@ -13,9 +17,9 @@ import { useCompanyAddresses } from "@/hooks/useCompanyAddresses";
 import { useCountries } from "@/hooks/useCountries";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select, SelectOption } from "@/components/ui/Select";
 import { X, Save, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getCountryFlag, getCountryName } from "@/lib/countryUtils";
 
 interface AddressFormDialogProps {
   open: boolean;
@@ -294,23 +298,141 @@ export default function AddressFormDialog({
                 >
                   {t("profile.country")} <span className="text-red-500">*</span>
                 </label>
-                <Select
-                  id="countryId"
-                  name="countryId"
-                  value={formData.countryId}
-                  onChange={handleChange}
-                  required
-                  className="w-full bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
-                >
-                  <SelectOption value="">
-                    {t("profile.selectCountry")}
-                  </SelectOption>
-                  {countries.map((country) => (
-                    <SelectOption key={country.id} value={country.id}>
-                      {country.countryName}
-                    </SelectOption>
-                  ))}
-                </Select>
+                <FormControl fullWidth>
+                  <Select
+                    id="countryId"
+                    name="countryId"
+                    value={formData.countryId}
+                    onChange={(e: SelectChangeEvent<string>) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        countryId: e.target.value,
+                      }));
+                    }}
+                    displayEmpty
+                    required
+                    sx={{
+                      height: "40px",
+                      backgroundColor: "transparent",
+                      color: "rgb(17 24 39)",
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "rgb(209 213 219)",
+                      },
+                      "&:hover .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "rgb(59 130 246)",
+                      },
+                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "rgb(0 123 255)",
+                      },
+                      "& .MuiSelect-select": {
+                        padding: "8px 14px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      },
+                      ".dark &": {
+                        color: "rgb(249 250 251)",
+                        backgroundColor: "rgb(31 41 55)",
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "rgb(75 85 99)",
+                        },
+                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "rgb(107 114 128)",
+                        },
+                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "rgb(0 123 255)",
+                        },
+                      },
+                    }}
+                    MenuProps={{
+                      PaperProps: {
+                        sx: {
+                          backgroundColor: "rgb(255 255 255)",
+                          ".dark &": {
+                            backgroundColor: "rgb(17 24 39)",
+                          },
+                        },
+                      },
+                    }}
+                    renderValue={(value) => {
+                      if (!value) {
+                        return (
+                          <span className="text-gray-500 dark:text-gray-400">
+                            {t("profile.selectCountry") ||
+                              t("common.selectCountry")}
+                          </span>
+                        );
+                      }
+                      const selectedCountry = countries.find(
+                        (c) => c.id === value
+                      );
+                      if (!selectedCountry) return "";
+                      const flag = getCountryFlag(selectedCountry.countryCode);
+                      const translatedName = getCountryName(
+                        selectedCountry.countryCode,
+                        currentLanguage.code as "ar" | "en"
+                      );
+                      const displayName =
+                        translatedName || selectedCountry.countryName || "";
+                      return (
+                        <span className="flex items-center gap-2">
+                          <span className="text-lg">{flag}</span>
+                          <span>{displayName}</span>
+                        </span>
+                      );
+                    }}
+                  >
+                    <MenuItem
+                      value=""
+                      sx={{
+                        color: "rgb(107 114 128)",
+                        ".dark &": {
+                          color: "rgb(156 163 175)",
+                        },
+                      }}
+                    >
+                      {t("profile.selectCountry") || t("common.selectCountry")}
+                    </MenuItem>
+                    {countries.map((country) => {
+                      const flag = getCountryFlag(country.countryCode);
+                      const translatedName = getCountryName(
+                        country.countryCode,
+                        currentLanguage.code as "ar" | "en"
+                      );
+                      const displayName =
+                        translatedName || country.countryName || "";
+                      return (
+                        <MenuItem
+                          key={country.id}
+                          value={country.id}
+                          sx={{
+                            color: "rgb(17 24 39)",
+                            "&.Mui-selected": {
+                              backgroundColor: "rgb(239 246 255)",
+                            },
+                            "&.Mui-selected:hover": {
+                              backgroundColor: "rgb(219 234 254)",
+                            },
+                            ".dark &": {
+                              color: "rgb(249 250 251)",
+                              "&.Mui-selected": {
+                                backgroundColor: "rgb(30 58 138)",
+                              },
+                              "&.Mui-selected:hover": {
+                                backgroundColor: "rgb(37 99 235)",
+                              },
+                            },
+                          }}
+                        >
+                          <span className="flex items-center gap-2">
+                            <span className="text-lg">{flag}</span>
+                            <span>{displayName}</span>
+                          </span>
+                        </MenuItem>
+                      );
+                    })}
+                  </Select>
+                </FormControl>
               </div>
             </div>
 

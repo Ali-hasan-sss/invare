@@ -3,12 +3,31 @@ import apiClient from "../../lib/apiClient";
 import { API_CONFIG } from "../../config/api";
 
 // Types
+export interface MaterialTranslation {
+  name?: string;
+  unitOfMeasure?: string;
+}
+
+export interface MaterialTranslations {
+  [lang: string]: MaterialTranslation | undefined;
+}
+
+export interface MaterialCategory {
+  id: string;
+  name: string;
+  i18n?: {
+    [lang: string]: { name?: string } | undefined;
+  };
+}
+
 export interface Material {
   id: string;
   name: string;
   unitOfMeasure?: string;
   categoryId?: string;
   categoryName?: string;
+  category?: MaterialCategory;
+  i18n?: MaterialTranslations;
 }
 
 export interface Seller {
@@ -287,7 +306,7 @@ export const getMyListings = createAsyncThunk<
     if (params?.page) queryParams.append("page", params.page.toString());
     if (params?.limit) queryParams.append("limit", params.limit.toString());
     if (params?.status) queryParams.append("status", params.status);
-    if (params?.lang) queryParams.append("lang", params.lang);
+    // Don't send lang parameter to get i18n object with both languages
 
     const url = `${API_CONFIG.ENDPOINTS.LISTINGS.ME_USER}${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
@@ -313,7 +332,7 @@ export const getMyUserListings = createAsyncThunk<
     if (params?.page) queryParams.append("page", params.page.toString());
     if (params?.limit) queryParams.append("limit", params.limit.toString());
     if (params?.status) queryParams.append("status", params.status);
-    if (params?.lang) queryParams.append("lang", params.lang);
+    // Don't send lang parameter to get i18n object with both languages
 
     const url = `${API_CONFIG.ENDPOINTS.LISTINGS.ME_USER}${
       queryParams.toString() ? `?${queryParams.toString()}` : ""

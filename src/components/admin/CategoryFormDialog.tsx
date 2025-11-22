@@ -48,9 +48,13 @@ export const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
 
   useEffect(() => {
     if (category) {
+      // If i18n object exists, use it; otherwise use name as fallback
+      const nameEn = category.i18n?.en?.name || category.name || "";
+      const nameAr = category.i18n?.ar?.name || "";
+
       setFormData({
-        nameEn: category.i18n?.en?.name || category.name || "",
-        nameAr: category.i18n?.ar?.name || "",
+        nameEn,
+        nameAr,
       });
     } else {
       setFormData({

@@ -76,19 +76,20 @@ export default function MaterialsPage() {
 
   // Fetch categories and find selected category
   useEffect(() => {
-    dispatch(getMaterialCategories({ lang: currentLanguage.code }));
-  }, [dispatch, currentLanguage.code]);
+    // Fetch categories without lang parameter to get i18n object with both languages
+    dispatch(getMaterialCategories());
+  }, [dispatch]);
 
   useEffect(() => {
     if (categoryId && categories.length > 0) {
       const category = categories.find((cat) => cat.id === categoryId);
       if (category) {
         setSelectedCategory(category);
-        // Fetch materials for this category
-        dispatch(getMaterials({ categoryId, lang: currentLanguage.code }));
+        // Fetch materials without lang parameter to get i18n object with both languages
+        dispatch(getMaterials({ categoryId }));
       }
     }
-  }, [categoryId, categories, dispatch, currentLanguage.code]);
+  }, [categoryId, categories, dispatch]);
 
   useEffect(() => {
     if (materialsError) {
@@ -121,7 +122,7 @@ export default function MaterialsPage() {
   ) => {
     try {
       if (editingMaterial) {
-        await dispatch(
+        const result = await dispatch(
           updateMaterial({
             id: editingMaterial.id,
             data: data as UpdateMaterialData,
@@ -131,17 +132,19 @@ export default function MaterialsPage() {
           message: t("admin.materialUpdatedSuccess"),
           type: "success",
         });
+        // Material is already updated in Redux state, no need to refetch
       } else {
-        await dispatch(createMaterial(data as CreateMaterialData)).unwrap();
+        const result = await dispatch(
+          createMaterial(data as CreateMaterialData)
+        ).unwrap();
         setToast({
           message: t("admin.materialCreatedSuccess"),
           type: "success",
         });
+        // Material is already added to Redux state, no need to refetch
       }
       setMaterialFormOpen(false);
-      if (categoryId) {
-        dispatch(getMaterials({ categoryId, lang: currentLanguage.code }));
-      }
+      setEditingMaterial(null);
     } catch (err) {
       setToast({ message: t("admin.error"), type: "error" });
     }
@@ -158,9 +161,7 @@ export default function MaterialsPage() {
       });
       setDeleteDialogOpen(false);
       setDeletingMaterial(null);
-      if (categoryId) {
-        dispatch(getMaterials({ categoryId, lang: currentLanguage.code }));
-      }
+      // Material is already removed from Redux state, no need to refetch
     } catch (err) {
       setToast({ message: t("admin.error"), type: "error" });
     }
@@ -170,9 +171,29 @@ export default function MaterialsPage() {
     router.push("/admin/materials");
   };
 
-  const filteredMaterials = materials.filter((material) =>
-    material.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter materials by categoryId and search query
+  const filteredMaterials = materials.filter((material) => {
+    // First filter by categoryId
+    const matchesCategory =
+      material.categoryId === categoryId ||
+      material.category?.id === categoryId;
+
+    if (!matchesCategory) return false;
+
+    // Then filter by search query
+    if (!searchQuery.trim()) return true;
+
+    const searchLower = searchQuery.toLowerCase();
+    const nameEn = material.i18n?.en?.name || "";
+    const nameAr = material.i18n?.ar?.name || "";
+    const name = material.name || "";
+
+    return (
+      name.toLowerCase().includes(searchLower) ||
+      nameEn.toLowerCase().includes(searchLower) ||
+      nameAr.toLowerCase().includes(searchLower)
+    );
+  });
 
   if (!selectedCategory) {
     return (
@@ -210,11 +231,11 @@ export default function MaterialsPage() {
       </div>
 
       {/* Search Bar */}
-      <Card className="mb-4 py-5 px-3">
-        <div className="relative">
+      <Card className="mb-4 py-3 px-4">
+        <div className="relative w-full">
           <Search
             className={cn(
-              "absolute top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400",
+              "absolute top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 z-10",
               isRTL ? "left-3" : "right-3"
             )}
           />
@@ -223,10 +244,18 @@ export default function MaterialsPage() {
             placeholder={t("admin.search")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className={cn(
-              "h-10 border-0 focus:ring-0 shadow-none",
-              isRTL ? "pr-11" : "pl-11"
-            )}
+            className="w-full"
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                height: "40px",
+                borderRadius: "6px",
+              },
+              "& .MuiOutlinedInput-input": {
+                paddingLeft: isRTL ? "14px !important" : "36px !important",
+                paddingRight: isRTL ? "36px !important" : "14px !important",
+                fontSize: "14px",
+              },
+            }}
           />
         </div>
       </Card>
@@ -281,10 +310,16 @@ export default function MaterialsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-center text-gray-700 dark:text-gray-200">
-                  {t("admin.materialName")}
+                  {t("admin.materialName")} (EN)
+                </TableHead>
+                <TableHead className="text-center text-gray-700 dark:text-gray-200">
+                  {t("admin.materialName")} (AR)
                 </TableHead>
                 <TableHead className="text-center w-40 text-gray-700 dark:text-gray-200">
-                  {t("admin.unitOfMeasure")}
+                  {t("admin.unitOfMeasure")} (EN)
+                </TableHead>
+                <TableHead className="text-center w-40 text-gray-700 dark:text-gray-200">
+                  {t("admin.unitOfMeasure")} (AR)
                 </TableHead>
                 <TableHead className="text-center w-32 text-gray-700 dark:text-gray-200">
                   {t("admin.actions")}
@@ -301,15 +336,27 @@ export default function MaterialsPage() {
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-2 font-medium text-gray-900 dark:text-white">
                       <Box className="h-5 w-5 text-blue-600" />
-                      {material.name}
+                      {material.i18n?.en?.name || material.name || "-"}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      {material.i18n?.ar?.name || "-"}
                     </div>
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex justify-center">
                       <Badge variant="info">
-                        {material.unitOfMeasure ||
-                          t("admin.notAvailable") ||
+                        {material.i18n?.en?.unitOfMeasure ||
+                          material.unitOfMeasure ||
                           "-"}
+                      </Badge>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex justify-center">
+                      <Badge variant="info">
+                        {material.i18n?.ar?.unitOfMeasure || "-"}
                       </Badge>
                     </div>
                   </TableCell>

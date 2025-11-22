@@ -1,7 +1,22 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Edit, Trash2, Plus, Search, Heart, Settings } from "lucide-react";
+import {
+  Edit,
+  Trash2,
+  Plus,
+  Search,
+  Heart,
+  Settings,
+  MoreVertical,
+} from "lucide-react";
+import {
+  Menu,
+  MenuItem,
+  IconButton,
+  ListItemIcon,
+  ListItemText,
+} from "@mui/material";
 import { useTranslation } from "../../../hooks/useTranslation";
 import { useUsers } from "../../../hooks/useUsers";
 import { useMaterials } from "../../../hooks/useMaterials";
@@ -67,6 +82,9 @@ export default function UsersManagement() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [favoritesDialogOpen, setFavoritesDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [menuAnchor, setMenuAnchor] = useState<{
+    [key: string]: HTMLElement | null;
+  }>({});
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error";
@@ -79,7 +97,7 @@ export default function UsersManagement() {
   // Helper function to get translated error message
   const getErrorMessage = (errorMsg: string | null): string => {
     if (!errorMsg) return t("admin.error");
-    
+
     const errorKey = getErrorMessageKey(errorMsg);
     return errorKey ? t(errorKey) : t("admin.error");
   };
@@ -99,22 +117,37 @@ export default function UsersManagement() {
   const handleEditUser = (user: User) => {
     setSelectedUser(user);
     setUserFormOpen(true);
+    handleMenuClose(user.id);
   };
 
   const handleDeleteUser = (user: User) => {
     setSelectedUser(user);
     setDeleteDialogOpen(true);
+    handleMenuClose(user.id);
   };
 
   const handleManageFavorites = (user: User) => {
     setSelectedUser(user);
     setFavoritesDialogOpen(true);
+    handleMenuClose(user.id);
+  };
+
+  const handleMenuOpen = (
+    event: React.MouseEvent<HTMLElement>,
+    userId: string
+  ) => {
+    setMenuAnchor({ ...menuAnchor, [userId]: event.currentTarget });
+  };
+
+  const handleMenuClose = (userId: string) => {
+    setMenuAnchor({ ...menuAnchor, [userId]: null });
   };
 
   const handleGoToAdminDashboard = (user: User) => {
     // Redirect to admin dashboard as the selected user
     // You might need to implement a way to impersonate/login as that user
     // For now, we'll just navigate to admin dashboard
+    handleMenuClose(user.id);
     router.push("/admin");
   };
 
@@ -263,11 +296,11 @@ export default function UsersManagement() {
       </div>
 
       {/* Search Bar */}
-      <Card className="mb-4 py-5 px-3">
-        <div className="relative">
+      <Card className="mb-4 py-3 px-4">
+        <div className="relative w-full">
           <Search
             className={cn(
-              "absolute top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400",
+              "absolute top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 z-10",
               isRTL ? "left-3" : "right-3"
             )}
           />
@@ -276,10 +309,18 @@ export default function UsersManagement() {
             placeholder={t("admin.search")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className={cn(
-              "h-10 border-0 focus:ring-0 shadow-none",
-              isRTL ? "pr-11" : "pl-11"
-            )}
+            className="w-full"
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                height: "40px",
+                borderRadius: "6px",
+              },
+              "& .MuiOutlinedInput-input": {
+                paddingLeft: isRTL ? "14px !important" : "36px !important",
+                paddingRight: isRTL ? "36px !important" : "14px !important",
+                fontSize: "14px",
+              },
+            }}
           />
         </div>
       </Card>
@@ -382,45 +423,90 @@ export default function UsersManagement() {
                     </div>
                   </TableCell>
                   <TableCell className="text-center">
-                    <div className="flex justify-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => handleEditUser(user)}
-                        title={t("admin.edit")}
+                    <div className="flex justify-center">
+                      <IconButton
+                        size="small"
+                        onClick={(e) => handleMenuOpen(e, user.id)}
+                        className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                       >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => handleManageFavorites(user)}
-                        title={t("admin.manageFavorites") || "إدارة الاهتمامات"}
+                        <MoreVertical className="h-5 w-5" />
+                      </IconButton>
+                      <Menu
+                        anchorEl={menuAnchor[user.id]}
+                        open={Boolean(menuAnchor[user.id])}
+                        onClose={() => handleMenuClose(user.id)}
+                        anchorOrigin={{
+                          vertical: "bottom",
+                          horizontal: isRTL ? "left" : "right",
+                        }}
+                        transformOrigin={{
+                          vertical: "top",
+                          horizontal: isRTL ? "left" : "right",
+                        }}
+                        slotProps={{
+                          paper: {
+                            className: "bg-white dark:bg-gray-800",
+                          },
+                        }}
                       >
-                        <Heart className="h-4 w-4" />
-                      </Button>
-                      {isAdminUser(user) && (
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => handleGoToAdminDashboard(user)}
-                          title={
-                            t("admin.goToAdminDashboard") ||
-                            "الذهاب إلى لوحة التحكم"
-                          }
-                          className="!bg-purple-500 hover:!bg-purple-600 !text-white"
+                        <MenuItem
+                          onClick={() => {
+                            handleEditUser(user);
+                            handleMenuClose(user.id);
+                          }}
+                          className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
                         >
-                          <Settings className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleDeleteUser(user)}
-                        title={t("admin.delete")}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                          <ListItemIcon>
+                            <Edit className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                          </ListItemIcon>
+                          <ListItemText>{t("admin.edit")}</ListItemText>
+                        </MenuItem>
+                        <MenuItem
+                          onClick={() => {
+                            handleManageFavorites(user);
+                            handleMenuClose(user.id);
+                          }}
+                          className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          <ListItemIcon>
+                            <Heart className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                          </ListItemIcon>
+                          <ListItemText>
+                            {t("admin.manageFavorites") || "إدارة الاهتمامات"}
+                          </ListItemText>
+                        </MenuItem>
+                        {isAdminUser(user) && (
+                          <MenuItem
+                            onClick={() => {
+                              handleGoToAdminDashboard(user);
+                              handleMenuClose(user.id);
+                            }}
+                            className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                          >
+                            <ListItemIcon>
+                              <Settings className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                            </ListItemIcon>
+                            <ListItemText>
+                              {t("admin.goToAdminDashboard") ||
+                                "الذهاب إلى لوحة التحكم"}
+                            </ListItemText>
+                          </MenuItem>
+                        )}
+                        <MenuItem
+                          onClick={() => {
+                            handleDeleteUser(user);
+                            handleMenuClose(user.id);
+                          }}
+                          className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          <ListItemIcon>
+                            <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" />
+                          </ListItemIcon>
+                          <ListItemText className="text-red-600 dark:text-red-400">
+                            {t("admin.delete")}
+                          </ListItemText>
+                        </MenuItem>
+                      </Menu>
                     </div>
                   </TableCell>
                 </TableRow>

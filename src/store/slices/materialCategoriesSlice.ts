@@ -243,6 +243,11 @@ export interface GetMaterialCategoriesParams {
   lang?: string;
 }
 
+export interface GetMaterialCategoryByIdParams {
+  id: string;
+  lang?: string;
+}
+
 // Initial state
 const initialState: MaterialCategoriesState = {
   categories: [],
@@ -278,6 +283,33 @@ export const getMaterialCategories = createAsyncThunk<
   }
 );
 
+export const getMaterialCategoryById = createAsyncThunk<
+  MaterialCategory,
+  GetMaterialCategoryByIdParams,
+  { rejectValue: string }
+>(
+  "materialCategories/getMaterialCategoryById",
+  async ({ id, lang }, { rejectWithValue }) => {
+    try {
+      const queryParams = new URLSearchParams();
+      // Don't send lang parameter to get i18n object
+      // if (lang) queryParams.append("lang", lang);
+
+      const url = `${API_CONFIG.ENDPOINTS.MATERIAL_CATEGORIES.DETAIL(id)}${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`;
+      const response = await apiClient.get(url);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to fetch material category"
+      );
+    }
+  }
+);
+
 export const createMaterialCategory = createAsyncThunk<
   MaterialCategory,
   CreateMaterialCategoryData,
@@ -304,15 +336,11 @@ export const createMaterialCategory = createAsyncThunk<
         });
       }
 
-      // Build payload exactly as per documentation
-      const payload: Record<string, any> = {
+      // Build payload exactly as per documentation: { name, i18n }
+      const payload = {
         name: name,
+        i18n: cleanI18n,
       };
-
-      // Only include i18n if we have translations
-      if (Object.keys(cleanI18n).length > 0) {
-        payload.i18n = cleanI18n;
-      }
 
       if (process.env.NODE_ENV === "development") {
         console.log(
@@ -354,30 +382,51 @@ export const updateMaterialCategory = createAsyncThunk<
   "materialCategories/updateMaterialCategory",
   async ({ id, data }, { rejectWithValue }) => {
     try {
+      // Build payload exactly as documented: { name, i18n }
+      const name = data.name?.trim() || "";
+
+      // Build clean i18n object with only valid translations
+      const cleanI18n: MaterialCategoryTranslations = {};
+      if (data.i18n) {
+        Object.keys(data.i18n).forEach((lang) => {
+          const translation = data.i18n![lang];
+          if (translation?.name?.trim()) {
+            cleanI18n[lang] = { name: translation.name.trim() };
+          }
+        });
+      }
+
+      // Build payload exactly as per documentation: { name, i18n }
+      const payload = {
+        name: name,
+        i18n: cleanI18n,
+      };
+
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          "[MaterialCategory] Sending update payload:",
+          JSON.stringify(payload, null, 2)
+        );
+      }
+
       const response = await apiClient.patch(
         API_CONFIG.ENDPOINTS.MATERIAL_CATEGORIES.DETAIL(id),
-        data
+        payload
       );
       return response.data;
     } catch (error: any) {
-      if (shouldRetryWithAlternatePayload(error)) {
-        try {
-          const alternatePayload = buildAlternateCategoryPayload(data);
-          const retryResponse = await apiClient.patch(
-            API_CONFIG.ENDPOINTS.MATERIAL_CATEGORIES.DETAIL(id),
-            alternatePayload
-          );
-          return retryResponse.data;
-        } catch (retryError: any) {
-          return rejectWithValue(
-            retryError.response?.data?.message ||
-              retryError.message ||
-              "Failed to update material category"
-          );
-        }
+      if (process.env.NODE_ENV === "development") {
+        console.error("[MaterialCategory] Error updating category:", {
+          error: error.message,
+          response: error.response?.data,
+          payload: data,
+        });
       }
       return rejectWithValue(
         error.response?.data?.message ||
+          (Array.isArray(error.response?.data?.message)
+            ? error.response.data.message.join(", ")
+            : null) ||
           error.message ||
           "Failed to update material category"
       );
@@ -440,6 +489,24 @@ const materialCategoriesSlice = createSlice({
       .addCase(getMaterialCategories.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload || "Failed to fetch material categories";
+      })
+
+      // Get Material Category By ID
+      .addCase(getMaterialCategoryById.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(
+        getMaterialCategoryById.fulfilled,
+        (state, action: PayloadAction<MaterialCategory>) => {
+          state.isLoading = false;
+          state.currentCategory = action.payload;
+          state.error = null;
+        }
+      )
+      .addCase(getMaterialCategoryById.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || "Failed to fetch material category";
       })
 
       // Create Material Category

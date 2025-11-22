@@ -119,11 +119,17 @@ const ListingCard: React.FC<ListingCardProps> = ({
   const getStatusText = (status: string) => {
     switch (status.toLowerCase()) {
       case "active":
-        return t("listings.active");
+        return t("listings.status.active") || t("listings.active");
       case "pending":
         return t("listings.pending");
       case "expired":
         return t("listings.expired");
+      case "draft":
+        return t("listings.status.draft");
+      case "closed":
+        return t("listings.status.closed");
+      case "cancelled":
+        return t("listings.status.cancelled");
       default:
         return status;
     }

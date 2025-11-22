@@ -37,7 +37,12 @@
     "daysAgo": "أيام",
     "ago": "مضت",
     "country": "البلد",
-    "selectCountry": "اختر البلد"
+    "selectCountry": "اختر البلد",
+    "unitOfMeasures": {
+      "ton": "طن",
+      "piece": "قطعة",
+      "liter": "لتر"
+    }
   },
   "home": {
     "heroTitle": "منصة إعادة التدوير الرائدة في المملكة العربية السعودية",
@@ -610,7 +615,8 @@
     "viewAll": "عرض الكل"
   },
   "currency": {
-    "omr": "ر.ع"
+    "omr": "ر.ع",
+    "sar": "ر.س"
   },
   "profile": {
     "title": "الملف الشخصي",

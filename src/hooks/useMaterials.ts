@@ -120,14 +120,17 @@ export const useMaterials = () => {
   );
 
   // Get favorite materials
-  const fetchFavorites = useCallback(async () => {
-    return dispatch(getFavoriteMaterials());
-  }, [dispatch]);
+  const fetchFavorites = useCallback(
+    async (lang?: string) => {
+      return dispatch(getFavoriteMaterials(lang ? { lang } : undefined));
+    },
+    [dispatch]
+  );
 
   // Remove favorite material
   const removeFavorite = useCallback(
     async (id: string) => {
-      return dispatch(removeFavoriteMaterial(id));
+      return dispatch(removeFavoriteMaterial({ id, materialId: id }));
     },
     [dispatch]
   );

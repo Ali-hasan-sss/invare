@@ -55,17 +55,23 @@ const InterestsSection: React.FC<InterestsSectionProps> = ({ userId }) => {
 
   // Fetch favorite materials on mount
   useEffect(() => {
-    getFavoriteMaterials();
+    getFavoriteMaterials(currentLanguage.code);
     getCategories();
     if (userId) {
       getUserById(userId);
     }
-  }, [getFavoriteMaterials, getCategories, getUserById, userId]);
+  }, [
+    getFavoriteMaterials,
+    getCategories,
+    getUserById,
+    userId,
+    currentLanguage.code,
+  ]);
 
   useEffect(() => {
     if (currentUser?.phone) {
       setPhoneInput(currentUser.phone);
-      setNotifyWhatsApp(false);
+      setNotifyWhatsApp(true);
     } else {
       setPhoneInput("");
       setNotifyWhatsApp(false);
@@ -97,7 +103,7 @@ const InterestsSection: React.FC<InterestsSectionProps> = ({ userId }) => {
       setSelectedCategoryId("");
       setSelectedMaterialId("");
       // Refresh favorite materials
-      getFavoriteMaterials();
+      getFavoriteMaterials(currentLanguage.code);
     } catch (error: any) {
       showToast(
         error.message || t("profile.errorAddingMaterial") || "فشل إضافة المادة",
@@ -115,7 +121,7 @@ const InterestsSection: React.FC<InterestsSectionProps> = ({ userId }) => {
         "success"
       );
       // Refresh favorite materials
-      getFavoriteMaterials();
+      getFavoriteMaterials(currentLanguage.code);
     } catch (error: any) {
       showToast(
         error.message ||
