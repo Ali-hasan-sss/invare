@@ -560,6 +560,8 @@
     "selectedCount": "{{count}} materials selected",
     "clearSelection": "Clear Selection",
     "addSelected": "Add Selected",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All",
     "manageFavorites": "Manage Favorites",
     "addFavoriteMaterial": "Add Favorite Material",
     "favoriteMaterialAddedSuccess": "Material added to favorites successfully",

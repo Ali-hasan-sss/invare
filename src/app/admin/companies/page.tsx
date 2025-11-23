@@ -35,6 +35,7 @@ import { DeleteConfirmDialog } from "../../../components/admin/DeleteConfirmDial
 import { UserFavoritesDialog } from "../../../components/admin/UserFavoritesDialog";
 import { Toast } from "../../../components/ui/Toast";
 import { cn } from "../../../lib/utils";
+import { getCountryFlag, getCountryName } from "../../../lib/countryUtils";
 
 export default function CompaniesManagement() {
   const { t, currentLanguage } = useTranslation();
@@ -363,6 +364,9 @@ export default function CompaniesManagement() {
                   {t("admin.website")}
                 </TableHead>
                 <TableHead className="text-center text-gray-700 dark:text-gray-200">
+                  {t("admin.country") || t("common.country")}
+                </TableHead>
+                <TableHead className="text-center text-gray-700 dark:text-gray-200">
                   {t("admin.verificationStatus")}
                 </TableHead>
                 <TableHead className="text-center text-gray-700 dark:text-gray-200">
@@ -397,6 +401,23 @@ export default function CompaniesManagement() {
                       </a>
                     ) : (
                       <span className="text-gray-900 dark:text-white">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {company.country?.countryCode ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-lg">
+                          {getCountryFlag(company.country.countryCode)}
+                        </span>
+                        <span className="text-gray-900 dark:text-white">
+                          {getCountryName(
+                            company.country.countryCode,
+                            currentLanguage.code as "ar" | "en"
+                          ) || company.country.countryName || "-"}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-gray-500 dark:text-gray-400">-</span>
                     )}
                   </TableCell>
                   <TableCell className="text-center">

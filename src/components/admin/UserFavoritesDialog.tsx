@@ -219,6 +219,40 @@ export const UserFavoritesDialog: React.FC<UserFavoritesDialogProps> = ({
     );
   });
 
+  const handleSelectAll = () => {
+    const filteredIds = filteredAvailableMaterials.map(
+      (material) => material.id
+    );
+    const allSelected = filteredIds.every((id) =>
+      selectedMaterials.includes(id)
+    );
+
+    if (allSelected) {
+      // Deselect all filtered materials
+      setSelectedMaterials((prev) =>
+        prev.filter((id) => !filteredIds.includes(id))
+      );
+    } else {
+      // Select all filtered materials (add only those not already selected)
+      setSelectedMaterials((prev) => {
+        const newSelection = [...prev];
+        filteredIds.forEach((id) => {
+          if (!newSelection.includes(id)) {
+            newSelection.push(id);
+          }
+        });
+        return newSelection;
+      });
+    }
+  };
+
+  // Check if all filtered materials are selected
+  const allFilteredSelected =
+    filteredAvailableMaterials.length > 0 &&
+    filteredAvailableMaterials.every((material) =>
+      selectedMaterials.includes(material.id)
+    );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -310,6 +344,27 @@ export const UserFavoritesDialog: React.FC<UserFavoritesDialogProps> = ({
                   {t("admin.cancel") || "إلغاء"}
                 </Button>
               </div>
+
+              {/* Select All Button */}
+              {!loadingMaterials && filteredAvailableMaterials.length > 0 && (
+                <div className="mb-2 flex justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSelectAll}
+                    className={cn(
+                      "h-7 px-3 text-xs border border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20",
+                      allFilteredSelected &&
+                        "bg-blue-50 dark:bg-blue-900/20 border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400"
+                    )}
+                  >
+                    {allFilteredSelected
+                      ? t("admin.deselectAll") || "إلغاء تحديد الكل"
+                      : t("admin.selectAll") || "تحديد الكل"}
+                  </Button>
+                </div>
+              )}
 
               {/* Materials List */}
               <div className="mt-2">

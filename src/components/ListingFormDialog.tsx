@@ -910,67 +910,6 @@ export const ListingFormDialog: React.FC<ListingFormDialogProps> = ({
               </div>
             </div>
 
-            {/* Attributes Section */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
-                {t("listing.attributes")}{" "}
-                <span className="text-gray-500 text-xs">
-                  ({t("listing.optional")})
-                </span>
-              </label>
-              <div className="space-y-2">
-                {attributes.map((attr, index) => (
-                  <div
-                    key={index}
-                    className="grid grid-cols-2 gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
-                  >
-                    <Input
-                      type="text"
-                      value={attr.attrKey}
-                      onChange={(e) =>
-                        handleAttributeChange(index, "attrKey", e.target.value)
-                      }
-                      placeholder={t("listing.attrKeyPlaceholder")}
-                      className="text-gray-900 dark:text-white bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
-                    />
-                    <div className="flex gap-2">
-                      <Input
-                        type="text"
-                        value={attr.attrValue}
-                        onChange={(e) =>
-                          handleAttributeChange(
-                            index,
-                            "attrValue",
-                            e.target.value
-                          )
-                        }
-                        placeholder={t("listing.attrValuePlaceholder")}
-                        className="text-gray-900 dark:text-white bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleRemoveAttribute(index)}
-                        className="px-2 py-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleAddAttribute}
-                  className="w-full border-dashed border-2 border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  {t("listing.addAttribute")}
-                </Button>
-              </div>
-            </div>
-
             {/* Info Note */}
             <p className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-md">
               ℹ️ {t("listing.listingNote")}

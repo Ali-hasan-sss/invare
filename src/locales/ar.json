@@ -560,6 +560,8 @@
     "selectedCount": "{{count}} مادة محددة",
     "clearSelection": "مسح التحديد",
     "addSelected": "إضافة المحددة",
+    "selectAll": "تحديد الكل",
+    "deselectAll": "إلغاء تحديد الكل",
     "manageFavorites": "إدارة الاهتمامات",
     "addFavoriteMaterial": "إضافة مادة للمفضلة",
     "favoriteMaterialAddedSuccess": "تمت إضافة المادة للمفضلة بنجاح",

@@ -20,6 +20,7 @@ import {
 import { useTranslation } from "../../../hooks/useTranslation";
 import { useUsers } from "../../../hooks/useUsers";
 import { useMaterials } from "../../../hooks/useMaterials";
+import { useCountries } from "../../../hooks/useCountries";
 import { useRouter } from "next/navigation";
 import {
   User,
@@ -44,6 +45,7 @@ import { UserFavoritesDialog } from "../../../components/admin/UserFavoritesDial
 import { Toast } from "../../../components/ui/Toast";
 import { cn } from "../../../lib/utils";
 import { getErrorMessageKey } from "../../../lib/errorUtils";
+import { getCountryFlag, getCountryName } from "../../../lib/countryUtils";
 
 // Helper function to check if user is admin
 const isAdminUser = (user: User): boolean => {
@@ -76,6 +78,7 @@ export default function UsersManagement() {
   } = useUsers();
 
   const { addUserFavoriteMaterials } = useMaterials();
+  const { countries, getCountries } = useCountries();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [userFormOpen, setUserFormOpen] = useState(false);
@@ -92,6 +95,7 @@ export default function UsersManagement() {
 
   useEffect(() => {
     getUsers();
+    getCountries();
   }, []);
 
   // Helper function to get translated error message
@@ -382,6 +386,9 @@ export default function UsersManagement() {
                   {t("admin.phone")}
                 </TableHead>
                 <TableHead className="text-center text-gray-700 dark:text-gray-200">
+                  {t("admin.country") || t("common.country")}
+                </TableHead>
+                <TableHead className="text-center text-gray-700 dark:text-gray-200">
                   {t("admin.accountStatus")}
                 </TableHead>
                 <TableHead className="text-center text-gray-700 dark:text-gray-200">
@@ -409,6 +416,62 @@ export default function UsersManagement() {
                   </TableCell>
                   <TableCell className="text-center text-gray-900 dark:text-white">
                     {user.phone || "-"}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {(() => {
+                      // Try to get country code from user.country or find in countries list
+                      let countryCode: string | undefined;
+                      let countryName: string | undefined;
+
+                      if (user.country) {
+                        // If country object exists, check if it has countryCode
+                        countryCode = (user.country as any).countryCode;
+                        countryName = user.country.name;
+                      }
+
+                      // If no countryCode found, try to find country in countries list by countryId
+                      if (!countryCode && user.countryId) {
+                        const foundCountry = countries.find(
+                          (c) => c.id === user.countryId
+                        );
+                        if (foundCountry) {
+                          countryCode = foundCountry.countryCode;
+                          countryName = foundCountry.countryName;
+                        }
+                      }
+
+                      if (countryCode) {
+                        const flag = getCountryFlag(countryCode);
+                        const translatedName = getCountryName(
+                          countryCode,
+                          currentLanguage.code as "ar" | "en"
+                        );
+                        const displayName = translatedName || countryName || "-";
+
+                        return (
+                          <div className="flex items-center justify-center gap-2">
+                            <span className="text-lg">{flag}</span>
+                            <span className="text-gray-900 dark:text-white">
+                              {displayName}
+                            </span>
+                          </div>
+                        );
+                      }
+
+                      // Fallback: show country name if available
+                      if (countryName) {
+                        return (
+                          <span className="text-gray-900 dark:text-white">
+                            {countryName}
+                          </span>
+                        );
+                      }
+
+                      // If nothing found, show dash
+                      return (
+                        <span className="text-gray-500 dark:text-gray-400">-</span>
+                      );
+                    })()}
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex justify-center">

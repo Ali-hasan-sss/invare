@@ -169,6 +169,38 @@ export const UserFormDialog: React.FC<UserFormDialogProps> = ({
     );
   });
 
+  const handleSelectAll = () => {
+    const filteredIds = filteredMaterials.map((material) => material.id);
+    const allSelected = filteredIds.every((id) =>
+      selectedMaterials.includes(id)
+    );
+
+    if (allSelected) {
+      // Deselect all filtered materials
+      setSelectedMaterials((prev) =>
+        prev.filter((id) => !filteredIds.includes(id))
+      );
+    } else {
+      // Select all filtered materials (add only those not already selected)
+      setSelectedMaterials((prev) => {
+        const newSelection = [...prev];
+        filteredIds.forEach((id) => {
+          if (!newSelection.includes(id)) {
+            newSelection.push(id);
+          }
+        });
+        return newSelection;
+      });
+    }
+  };
+
+  // Check if all filtered materials are selected
+  const allFilteredSelected =
+    filteredMaterials.length > 0 &&
+    filteredMaterials.every((material) =>
+      selectedMaterials.includes(material.id)
+    );
+
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -500,6 +532,27 @@ export const UserFormDialog: React.FC<UserFormDialogProps> = ({
                   />
                 </div>
               </div>
+
+              {/* Select All Button */}
+              {!materialsLoading && filteredMaterials.length > 0 && (
+                <div className="mb-2 flex justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSelectAll}
+                    className={cn(
+                      "h-7 px-3 text-xs border border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20",
+                      allFilteredSelected &&
+                        "bg-blue-50 dark:bg-blue-900/20 border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400"
+                    )}
+                  >
+                    {allFilteredSelected
+                      ? t("admin.deselectAll") || "إلغاء تحديد الكل"
+                      : t("admin.selectAll") || "تحديد الكل"}
+                  </Button>
+                </div>
+              )}
 
               {materialsLoading ? (
                 <div className="text-center py-2 text-gray-500 dark:text-gray-400 text-sm">
