@@ -282,7 +282,10 @@
     "attrKey": "اسم الخاصية",
     "attrKeyPlaceholder": "مثال: النقاء",
     "attrValue": "قيمة الخاصية",
-    "attrValuePlaceholder": "مثال: 90%"
+    "attrValuePlaceholder": "مثال: 90%",
+    "deleteListingConfirm": "هل أنت متأكد من حذف هذا العرض؟",
+    "deleteListing": "حذف العرض",
+    "listingDeletedSuccess": "تم حذف العرض بنجاح"
   },
   "orders": {
     "order": "طلب",
@@ -361,7 +364,9 @@
     "allListings": "جميع العروض",
     "buyNow": "اشتري الآن",
     "condition": "الحالة",
-    "materialColor": "لون المادة"
+    "materialColor": "لون المادة",
+    "showFilters": "اظهار الفيلتر",
+    "hideFilters": "اخفاء الفيلتر"
   },
   "contact": {
     "title": "اتصل بنا",
@@ -378,6 +383,10 @@
     "formSubject": "الموضوع",
     "formMessage": "الرسالة",
     "formSubmit": "إرسال الرسالة",
+    "buttonSending": "جارٍ الإرسال...",
+    "successMessage": "شكراً لك! تم إرسال رسالتك بنجاح.",
+    "errorMessage": "تعذر إرسال الرسالة، يرجى المحاولة لاحقاً.",
+    "validationError": "يرجى تعبئة جميع الحقول المطلوبة.",
     "socialTitle": "تابعنا"
   },
   "help": {
@@ -558,7 +567,6 @@
     "userFavorites": "اهتمامات المستخدم",
     "currentFavorites": "الاهتمامات الحالية",
     "addFavorites": "إضافة اهتمامات",
-    "noFavorites": "لا توجد اهتمامات حالياً",
     "selectMaterialsToAdd": "اختر المواد لإضافتها",
     "noMaterialsAvailable": "لا توجد مواد متاحة للإضافة",
     "selectedCount": "{{count}} مادة محددة",
@@ -568,6 +576,14 @@
     "deselectAll": "إلغاء تحديد الكل",
     "scrollToLoadMore": "قم بالتمرير للأسفل لتحميل المزيد",
     "noMoreUsers": "لا توجد بيانات إضافية",
+    "viewUser": "عرض التفاصيل",
+    "backToUsers": "العودة إلى المستخدمين",
+    "userDetails": "تفاصيل المستخدم",
+    "userInfo": "معلومات المستخدم",
+    "userListings": "عروض المستخدم",
+    "noUserListings": "لا توجد عروض لهذا المستخدم",
+    "noFavorites": "لا توجد اهتمامات بعد",
+    "removeFavorite": "إزالة الاهتمام",
     "manageFavorites": "إدارة الاهتمامات",
     "addFavoriteMaterial": "إضافة مادة للمفضلة",
     "favoriteMaterialAddedSuccess": "تمت إضافة المادة للمفضلة بنجاح",
@@ -575,7 +591,9 @@
     "favoriteMaterialsAddedSuccess": "تمت إضافة المواد للمفضلة بنجاح",
     "user": "المستخدم",
     "material": "المادة",
-    "selectMaterial": "اختر المادة"
+    "selectMaterial": "اختر المادة",
+    "manageAllListings": "إدارة العروض ",
+    "listings": "العروض"
   },
   "advertisement": {
     "addAdvertisement": "إضافة إعلان",

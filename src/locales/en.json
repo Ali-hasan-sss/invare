@@ -289,7 +289,10 @@
     "attrKey": "Attribute Key",
     "attrKeyPlaceholder": "e.g., Purity",
     "attrValue": "Attribute Value",
-    "attrValuePlaceholder": "e.g., 90%"
+    "attrValuePlaceholder": "e.g., 90%",
+    "deleteListingConfirm": "Are you sure you want to delete this listing?",
+    "deleteListing": "Delete Listing",
+    "listingDeletedSuccess": "Listing deleted successfully"
   },
   "bidding": {
     "startBidding": "Start Bidding",
@@ -361,7 +364,9 @@
     "allListings": "All Listings",
     "buyNow": "Buy Now",
     "condition": "Condition",
-    "materialColor": "Material Color"
+    "materialColor": "Material Color",
+    "showFilters": "Show Filters",
+    "hideFilters": "Hide Filters"
   },
   "contact": {
     "title": "Contact Us",
@@ -378,6 +383,10 @@
     "formSubject": "Subject",
     "formMessage": "Message",
     "formSubmit": "Send Message",
+    "buttonSending": "Sending...",
+    "successMessage": "Thank you! Your message has been sent.",
+    "errorMessage": "We couldn't send your message. Please try again later.",
+    "validationError": "Please fill out all required fields.",
     "socialTitle": "Follow us"
   },
   "help": {
@@ -558,7 +567,6 @@
     "userFavorites": "User Favorites",
     "currentFavorites": "Current Favorites",
     "addFavorites": "Add Favorites",
-    "noFavorites": "No favorites yet",
     "selectMaterialsToAdd": "Select Materials to Add",
     "noMaterialsAvailable": "No materials available to add",
     "selectedCount": "{{count}} materials selected",
@@ -568,6 +576,14 @@
     "deselectAll": "Deselect All",
     "scrollToLoadMore": "Scroll to load more users",
     "noMoreUsers": "No more users to load",
+    "viewUser": "View Details",
+    "backToUsers": "Back to users",
+    "userDetails": "User Details",
+    "userInfo": "User Information",
+    "userListings": "User Listings",
+    "noUserListings": "No listings found for this user",
+    "noFavorites": "No favorite materials yet",
+    "removeFavorite": "Remove favorite",
     "manageFavorites": "Manage Favorites",
     "addFavoriteMaterial": "Add Favorite Material",
     "favoriteMaterialAddedSuccess": "Material added to favorites successfully",
@@ -575,7 +591,9 @@
     "favoriteMaterialsAddedSuccess": "Materials added to favorites successfully",
     "user": "User",
     "material": "Material",
-    "selectMaterial": "Select Material"
+    "selectMaterial": "Select Material",
+    "manageAllListings": "Manage Listings",
+    "listings": "Listings"
   },
   "advertisement": {
     "addAdvertisement": "Add Advertisement",

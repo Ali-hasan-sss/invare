@@ -9,7 +9,7 @@ import {
   Divider,
   Grid,
 } from "@mui/material";
-import { TextField, Button, Snackbar, Alert } from "@mui/material";
+import { TextField, Button, Snackbar, Alert, AlertColor } from "@mui/material";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { Mail, Phone, MapPin, Instagram } from "lucide-react";
@@ -23,6 +23,59 @@ const ContactPage: React.FC = () => {
   const [message, setMessage] = useState("");
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
+  const [toastSeverity, setToastSeverity] = useState<AlertColor>("success");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!name.trim() || !email.trim() || !message.trim()) {
+      setToastSeverity("error");
+      setToastMsg(
+        t("contact.validationError") || "يرجى تعبئة جميع الحقول المطلوبة"
+      );
+      setToastOpen(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          subject: subject.trim(),
+          message: message.trim(),
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || "Failed to send message");
+      }
+
+      setToastSeverity("success");
+      setToastMsg(
+        t("contact.successMessage") || "شكراً لتواصلك، تم إرسال رسالتك بنجاح."
+      );
+      setName("");
+      setEmail("");
+      setSubject("");
+      setMessage("");
+    } catch (error: any) {
+      setToastSeverity("error");
+      setToastMsg(
+        error?.message ||
+          t("contact.errorMessage") ||
+          "تعذر إرسال الرسالة، يرجى المحاولة لاحقاً."
+      );
+    } finally {
+      setIsSubmitting(false);
+      setToastOpen(true);
+    }
+  };
 
   return (
     <Container maxWidth="lg" className="py-8">
@@ -162,16 +215,12 @@ const ContactPage: React.FC = () => {
                   <Button
                     variant="contained"
                     className="bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 text-white"
-                    onClick={() => {
-                      setToastMsg(t("payments.paymentSuccess") || "تم الإرسال");
-                      setToastOpen(true);
-                      setName("");
-                      setEmail("");
-                      setSubject("");
-                      setMessage("");
-                    }}
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
                   >
-                    {t("contact.formSubmit")}
+                    {isSubmitting
+                      ? t("contact.buttonSending") || "جارٍ الإرسال..."
+                      : t("contact.formSubmit")}
                   </Button>
                 </Grid>
               </Grid>
@@ -217,7 +266,7 @@ const ContactPage: React.FC = () => {
       >
         <Alert
           onClose={() => setToastOpen(false)}
-          severity="success"
+          severity={toastSeverity}
           sx={{ width: "100%" }}
         >
           {toastMsg}

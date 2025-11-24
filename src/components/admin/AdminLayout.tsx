@@ -11,6 +11,7 @@ import {
   Globe,
   Package,
   Image,
+  List,
 } from "lucide-react";
 import { useTranslation } from "../../hooks/useTranslation";
 import { useAuth } from "../../hooks/useAuth";
@@ -85,6 +86,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       href: "/admin/materials",
       icon: Package,
       current: pathname.startsWith("/admin/materials"),
+    },
+    {
+      name: t("admin.listings"),
+      href: "/admin/listings",
+      icon: List,
+      current: pathname.startsWith("/admin/listings"),
     },
   ];
 

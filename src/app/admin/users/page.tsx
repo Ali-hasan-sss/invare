@@ -9,6 +9,7 @@ import {
   Heart,
   Settings,
   MoreVertical,
+  Eye,
 } from "lucide-react";
 import {
   Menu,
@@ -228,6 +229,11 @@ export default function UsersManagement() {
     setSelectedUser(user);
     setFavoritesDialogOpen(true);
     handleMenuClose(user.id);
+  };
+
+  const handleViewDetails = (user: User) => {
+    handleMenuClose(user.id);
+    router.push(`/admin/users/${user.id}`);
   };
 
   const handleMenuOpen = (
@@ -597,6 +603,7 @@ export default function UsersManagement() {
                         anchorEl={menuAnchor[user.id]}
                         open={Boolean(menuAnchor[user.id])}
                         onClose={() => handleMenuClose(user.id)}
+                        disableScrollLock
                         anchorOrigin={{
                           vertical: "bottom",
                           horizontal: isRTL ? "left" : "right",
@@ -611,6 +618,17 @@ export default function UsersManagement() {
                           },
                         }}
                       >
+                        <MenuItem
+                          onClick={() => handleViewDetails(user)}
+                          className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          <ListItemIcon>
+                            <Eye className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                          </ListItemIcon>
+                          <ListItemText>
+                            {t("admin.viewUser") || t("admin.view")}
+                          </ListItemText>
+                        </MenuItem>
                         <MenuItem
                           onClick={() => {
                             handleEditUser(user);
