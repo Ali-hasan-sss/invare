@@ -45,14 +45,12 @@ export interface MaterialState {
 
 export interface CreateMaterialData {
   name: string;
-  unitOfMeasure: string;
   categoryId: string;
   i18n?: MaterialTranslations;
 }
 
 export interface UpdateMaterialData {
   name?: string;
-  unitOfMeasure?: string;
   categoryId?: string;
   i18n?: MaterialTranslations;
 }

@@ -47,6 +47,7 @@ export default function CountriesManagement() {
     message: string;
     type: "success" | "error";
   } | null>(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   useEffect(() => {
     dispatch(getCountries());
@@ -58,6 +59,12 @@ export default function CountriesManagement() {
       dispatch(clearError());
     }
   }, [error, dispatch]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setIsInitialLoading(false);
+    }
+  }, [isLoading]);
 
   const handleAddCountry = () => {
     setSelectedCountry(null);
@@ -98,7 +105,6 @@ export default function CountriesManagement() {
       }
       setCountryFormOpen(false);
       setSelectedCountry(null);
-      dispatch(getCountries());
     } catch (err: any) {
       const errorMessage = err?.message || error || t("admin.error");
       setToast({
@@ -119,7 +125,6 @@ export default function CountriesManagement() {
         });
         setDeleteDialogOpen(false);
         setSelectedCountry(null);
-        dispatch(getCountries());
       } catch (err: any) {
         const errorMessage = err?.message || error || t("admin.error");
         setToast({
@@ -209,7 +214,7 @@ export default function CountriesManagement() {
 
       {/* Table */}
       <Card className="overflow-hidden">
-        {isLoading ? (
+        {isLoading && isInitialLoading ? (
           <div className="p-8 text-center text-gray-600 dark:text-gray-400">
             {t("admin.loading")}
           </div>

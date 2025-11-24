@@ -50,6 +50,7 @@ export default function CategoriesPage() {
     useState<MaterialCategory | null>(null);
   const [deletingCategory, setDeletingCategory] =
     useState<MaterialCategory | null>(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const [toast, setToast] = useState<{
     message: string;
@@ -67,6 +68,12 @@ export default function CategoriesPage() {
       dispatch(clearCategoryError());
     }
   }, [categoriesError, dispatch]);
+
+  useEffect(() => {
+    if (!categoriesLoading) {
+      setIsInitialLoading(false);
+    }
+  }, [categoriesLoading]);
 
   const handleAddCategory = () => {
     setEditingCategory(null);
@@ -113,8 +120,6 @@ export default function CategoriesPage() {
         });
       }
       setCategoryFormOpen(false);
-      // Refresh categories without lang parameter to get i18n object
-      dispatch(getMaterialCategories());
     } catch (err) {
       setToast({ message: t("admin.error"), type: "error" });
     }
@@ -131,8 +136,6 @@ export default function CategoriesPage() {
       });
       setDeleteDialogOpen(false);
       setDeletingCategory(null);
-      // Refresh categories without lang parameter to get i18n object
-      dispatch(getMaterialCategories());
     } catch (err) {
       setToast({ message: t("admin.error"), type: "error" });
     }
@@ -223,7 +226,7 @@ export default function CategoriesPage() {
 
       {/* Categories View */}
       <Card className="overflow-hidden">
-        {categoriesLoading ? (
+        {categoriesLoading && isInitialLoading ? (
           <div className="p-8 text-center text-gray-600 dark:text-gray-400">
             {t("admin.loading")}
           </div>

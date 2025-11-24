@@ -63,6 +63,7 @@ export interface CreateCompanyWithUserData {
 export interface GetCompaniesParams {
   page?: number;
   limit?: number;
+  search?: string;
 }
 
 // Initial state
@@ -87,6 +88,7 @@ export const getCompanies = createAsyncThunk<
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append("page", params.page.toString());
     if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.search) queryParams.append("search", params.search);
 
     const url = `${API_CONFIG.ENDPOINTS.COMPANIES.LIST}${
       queryParams.toString() ? `?${queryParams.toString()}` : ""

@@ -29,9 +29,7 @@ interface MaterialFormDialogProps {
 
 type MaterialFormState = {
   nameEn: string;
-  unitEn: string;
   nameAr: string;
-  unitAr: string;
 };
 
 export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({
@@ -45,27 +43,19 @@ export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({
   const { t } = useTranslation();
   const [formData, setFormData] = useState<MaterialFormState>({
     nameEn: "",
-    unitEn: "",
     nameAr: "",
-    unitAr: "",
   });
 
   useEffect(() => {
     if (material) {
       setFormData({
         nameEn: (material.i18n?.en?.name ?? material.name ?? "") || "",
-        unitEn:
-          (material.i18n?.en?.unitOfMeasure ?? material.unitOfMeasure ?? "") ||
-          "",
         nameAr: (material.i18n?.ar?.name ?? "") || "",
-        unitAr: (material.i18n?.ar?.unitOfMeasure ?? "") || "",
       });
     } else {
       setFormData({
         nameEn: "",
-        unitEn: "",
         nameAr: "",
-        unitAr: "",
       });
     }
   }, [material, categoryId, open]);
@@ -73,30 +63,26 @@ export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const i18n: MaterialTranslations = {};
-    if (formData.nameEn || formData.unitEn) {
+    if (formData.nameEn) {
       i18n.en = {
         name: formData.nameEn || undefined,
-        unitOfMeasure: formData.unitEn || undefined,
       };
     }
-    if (formData.nameAr || formData.unitAr) {
+    if (formData.nameAr) {
       i18n.ar = {
         name: formData.nameAr || undefined,
-        unitOfMeasure: formData.unitAr || undefined,
       };
     }
 
     if (material) {
       const payload: UpdateMaterialData = {
         name: formData.nameEn || material.name,
-        unitOfMeasure: formData.unitEn || material.unitOfMeasure,
         i18n: Object.keys(i18n).length ? i18n : undefined,
       };
       await onSubmit(payload);
     } else {
       const payload: CreateMaterialData = {
         name: formData.nameEn || formData.nameAr || "",
-        unitOfMeasure: formData.unitEn || formData.unitAr || "",
         categoryId,
         i18n: Object.keys(i18n).length ? i18n : undefined,
       };
@@ -151,35 +137,6 @@ export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({
                 onChange={handleChange}
                 placeholder="ألمنيوم"
                 required={!formData.nameEn}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                {t("admin.unitOfMeasureEn") || "Unit of Measure (English)"}
-              </h4>
-              <Input
-                type="text"
-                name="unitEn"
-                value={formData.unitEn}
-                onChange={handleChange}
-                placeholder="kg, m, ton..."
-                required={!formData.unitAr}
-              />
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                {t("admin.unitOfMeasureAr") || "وحدة القياس (العربية)"}
-              </h4>
-              <Input
-                type="text"
-                name="unitAr"
-                value={formData.unitAr}
-                onChange={handleChange}
-                placeholder="كغم، م، طن..."
-                required={!formData.unitEn}
               />
             </div>
           </div>

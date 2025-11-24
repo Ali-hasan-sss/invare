@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -17,9 +17,29 @@ export default function ProfilePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t, currentLanguage } = useTranslation();
-  const { user, company, isAuthenticated, isLoading } = useAuth();
+  const { user, company, isAuthenticated, isLoading, getCurrentUser } =
+    useAuth();
   const isRTL = currentLanguage.dir === "rtl";
   const [activeTab, setActiveTab] = useState(0);
+  const hasFetchedUserRef = useRef(false);
+
+  // Fetch current user data when entering profile page (only once)
+  useEffect(() => {
+    if (isAuthenticated && !hasFetchedUserRef.current && !isLoading) {
+      hasFetchedUserRef.current = true;
+      const fetchUser = async () => {
+        try {
+          await getCurrentUser();
+        } catch (error) {
+          // Silently handle error - don't break the page if fetch fails
+          // The user data from localStorage/state will still be used
+          console.error("Failed to refresh user data:", error);
+        }
+      };
+
+      fetchUser();
+    }
+  }, [isAuthenticated, isLoading, getCurrentUser]);
 
   // Handle tab query parameter
   useEffect(() => {

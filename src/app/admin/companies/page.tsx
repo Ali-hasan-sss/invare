@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Edit, Trash2, Plus, Search, Heart, MoreVertical } from "lucide-react";
 import {
   Menu,
@@ -41,7 +41,6 @@ export default function CompaniesManagement() {
   const { t, currentLanguage } = useTranslation();
   const isRTL = currentLanguage.code === "ar";
   const {
-    companies,
     isLoading,
     error,
     getCompanies,
@@ -66,10 +65,106 @@ export default function CompaniesManagement() {
     message: string;
     type: "success" | "error";
   } | null>(null);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [loadedCompanies, setLoadedCompanies] = useState<Company[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const ITEMS_PER_PAGE = 10;
+  const normalizedSearch = debouncedSearch.toLowerCase();
+  const addCompanyToState = useCallback((company: Company) => {
+    setLoadedCompanies((prev) => {
+      const existingIndex = prev.findIndex((c) => c.id === company.id);
+      if (existingIndex !== -1) {
+        const clone = [...prev];
+        clone[existingIndex] = company;
+        return clone;
+      }
+      return [company, ...prev];
+    });
+  }, []);
+
+  const updateCompanyInState = useCallback((company: Company) => {
+    setLoadedCompanies((prev) =>
+      prev.map((c) => (c.id === company.id ? company : c))
+    );
+  }, []);
+
+  const removeCompanyFromState = useCallback((id: string) => {
+    setLoadedCompanies((prev) => prev.filter((c) => c.id !== id));
+  }, []);
 
   useEffect(() => {
-    getCompanies();
-  }, []);
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  const fetchCompaniesPage = useCallback(
+    async (targetPage: number, replace = false) => {
+      setIsFetchingMore(true);
+      const result = await getCompanies({
+        page: targetPage,
+        limit: ITEMS_PER_PAGE,
+        search: debouncedSearch || undefined,
+      });
+      if (result.type.endsWith("/fulfilled")) {
+        const data = (result.payload as Company[]) || [];
+        setLoadedCompanies((prev) => {
+          if (replace) {
+            return data;
+          }
+          const existingIds = new Set(prev.map((c) => c.id));
+          const merged = data.filter((c) => !existingIds.has(c.id));
+          return [...prev, ...merged];
+        });
+        setHasMore(data.length === ITEMS_PER_PAGE);
+      } else {
+        setHasMore(false);
+      }
+      setIsFetchingMore(false);
+    },
+    [getCompanies, debouncedSearch]
+  );
+
+  useEffect(() => {
+    setPage(1);
+    setHasMore(true);
+    fetchCompaniesPage(1, true);
+  }, [fetchCompaniesPage]);
+
+  const handleLoadMore = useCallback(() => {
+    if (isFetchingMore || !hasMore) return;
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchCompaniesPage(nextPage);
+  }, [isFetchingMore, hasMore, page, fetchCompaniesPage]);
+
+  useEffect(() => {
+    const node = loadMoreRef.current;
+    if (!node || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          handleLoadMore();
+        }
+      },
+      {
+        root: null,
+        rootMargin: "200px",
+        threshold: 0,
+      }
+    );
+
+    observer.observe(node);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [handleLoadMore, hasMore]);
 
   useEffect(() => {
     if (error) {
@@ -121,13 +216,16 @@ export default function CompaniesManagement() {
       if (result.type.endsWith("/rejected")) {
         throw new Error("Update failed");
       }
+      const updatedCompany = result.payload as Company;
+      if (updatedCompany) {
+        updateCompanyInState(updatedCompany);
+      }
       setToast({
         message: t("admin.companyUpdatedSuccess"),
         type: "success",
       });
       setEditCompanyFormOpen(false);
       setSelectedCompany(null);
-      await getCompanies();
     } catch (err: any) {
       const errorMessage = err?.message || error || t("admin.error");
       setToast({
@@ -147,44 +245,27 @@ export default function CompaniesManagement() {
       if (result.type.endsWith("/rejected")) {
         throw new Error("Create failed");
       }
+      const createdCompany = result.payload as Company;
+      if (createdCompany) {
+        addCompanyToState(createdCompany);
+      }
 
-      // Check if company was created successfully
-      if (result.type.endsWith("/fulfilled")) {
-        const createdCompany = result.payload as Company;
-
-        // If materialIds provided, add favorites to owner after successful company creation
-        if (
-          materialIds &&
-          materialIds.length > 0 &&
-          createdCompany?.owner?.id
-        ) {
-          try {
-            const favResult = await addUserFavoriteMaterials({
-              userId: createdCompany.owner.id,
-              materialIds: materialIds,
+      if (materialIds && materialIds.length > 0 && createdCompany?.owner?.id) {
+        try {
+          const favResult = await addUserFavoriteMaterials({
+            userId: createdCompany.owner.id,
+            materialIds,
+          });
+          if (favResult.type.endsWith("/fulfilled")) {
+            setToast({
+              message:
+                t("admin.companyCreatedSuccess") +
+                ". " +
+                (t("admin.favoriteMaterialsAddedSuccess") ||
+                  "تمت إضافة الاهتمامات بنجاح"),
+              type: "success",
             });
-            if (favResult.type.endsWith("/fulfilled")) {
-              setToast({
-                message:
-                  t("admin.companyCreatedSuccess") +
-                  ". " +
-                  (t("admin.favoriteMaterialsAddedSuccess") ||
-                    "تمت إضافة الاهتمامات بنجاح"),
-                type: "success",
-              });
-            } else {
-              // Company created but favorites failed
-              setToast({
-                message:
-                  t("admin.companyCreatedSuccess") +
-                  ". " +
-                  (t("admin.error") || "حدث خطأ في إضافة الاهتمامات"),
-                type: "error",
-              });
-            }
-          } catch (favError) {
-            // Company created but favorites failed
-            console.error("Failed to add favorites:", favError);
+          } else {
             setToast({
               message:
                 t("admin.companyCreatedSuccess") +
@@ -193,22 +274,23 @@ export default function CompaniesManagement() {
               type: "error",
             });
           }
-        } else {
-          // Company created successfully but no materials to add or no owner
+        } catch (favError) {
+          console.error("Failed to add favorites:", favError);
           setToast({
-            message: t("admin.companyCreatedSuccess"),
-            type: "success",
+            message:
+              t("admin.companyCreatedSuccess") +
+              ". " +
+              (t("admin.error") || "حدث خطأ في إضافة الاهتمامات"),
+            type: "error",
           });
         }
       } else {
-        // Company creation failed
         setToast({
           message: t("admin.companyCreatedSuccess"),
           type: "success",
         });
       }
       setCreateCompanyDialogOpen(false);
-      await getCompanies();
     } catch (err: any) {
       const errorMessage = err?.message || error || t("admin.error");
       setToast({
@@ -226,13 +308,13 @@ export default function CompaniesManagement() {
         if (result.type.endsWith("/rejected")) {
           throw new Error("Delete failed");
         }
+        removeCompanyFromState(selectedCompany.id);
         setToast({
           message: t("admin.companyDeletedSuccess"),
           type: "success",
         });
         setDeleteDialogOpen(false);
         setSelectedCompany(null);
-        await getCompanies();
       } catch (err: any) {
         const errorMessage = err?.message || error || t("admin.error");
         setToast({
@@ -244,12 +326,13 @@ export default function CompaniesManagement() {
     }
   };
 
-  const filteredCompanies = companies.filter((company) => {
-    const query = searchQuery.toLowerCase();
+  const filteredCompanies = loadedCompanies.filter((company) => {
+    if (!normalizedSearch) return true;
     return (
-      company.companyName?.toLowerCase().includes(query) ||
-      company.vatNumber?.toLowerCase().includes(query) ||
-      company.website?.toLowerCase().includes(query)
+      company.companyName?.toLowerCase().includes(normalizedSearch) ||
+      company.vatNumber?.toLowerCase().includes(normalizedSearch) ||
+      company.website?.toLowerCase().includes(normalizedSearch) ||
+      company.owner?.email?.toLowerCase().includes(normalizedSearch)
     );
   });
 
@@ -267,6 +350,8 @@ export default function CompaniesManagement() {
         return <Badge>{status || "-"}</Badge>;
     }
   };
+
+  const showInitialLoader = isLoading && loadedCompanies.length === 0;
 
   return (
     <div>
@@ -342,7 +427,7 @@ export default function CompaniesManagement() {
 
       {/* Table */}
       <Card className="overflow-hidden">
-        {isLoading ? (
+        {showInitialLoader ? (
           <div className="p-8 text-center text-gray-600 dark:text-gray-400">
             {t("admin.loading")}
           </div>
@@ -413,11 +498,15 @@ export default function CompaniesManagement() {
                           {getCountryName(
                             company.country.countryCode,
                             currentLanguage.code as "ar" | "en"
-                          ) || company.country.countryName || "-"}
+                          ) ||
+                            company.country.countryName ||
+                            "-"}
                         </span>
                       </div>
                     ) : (
-                      <span className="text-gray-500 dark:text-gray-400">-</span>
+                      <span className="text-gray-500 dark:text-gray-400">
+                        -
+                      </span>
                     )}
                   </TableCell>
                   <TableCell className="text-center">
@@ -504,6 +593,20 @@ export default function CompaniesManagement() {
               ))}
             </TableBody>
           </Table>
+        )}
+        {!showInitialLoader && (
+          <div
+            ref={loadMoreRef}
+            className="py-4 text-center text-sm text-gray-500 dark:text-gray-400"
+          >
+            {isFetchingMore && hasMore
+              ? t("admin.loading")
+              : hasMore
+              ? t("admin.scrollToLoadMore") || "استمر بالنزول لتحميل المزيد"
+              : !hasMore
+              ? t("admin.noMoreUsers") || "لا توجد بيانات إضافية"
+              : null}
+          </div>
         )}
       </Card>
 

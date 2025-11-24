@@ -29,7 +29,6 @@ import {
 import { Card } from "../../../../components/ui/Card";
 import { Button } from "../../../../components/ui/Button";
 import { Input } from "../../../../components/ui/Input";
-import { Badge } from "../../../../components/ui/Badge";
 import {
   Table,
   TableHeader,
@@ -68,6 +67,7 @@ export default function MaterialsPage() {
   const [deletingMaterial, setDeletingMaterial] = useState<Material | null>(
     null
   );
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const [toast, setToast] = useState<{
     message: string;
@@ -97,6 +97,12 @@ export default function MaterialsPage() {
       dispatch(clearMaterialError());
     }
   }, [materialsError, dispatch]);
+
+  useEffect(() => {
+    if (!materialsLoading) {
+      setIsInitialLoading(false);
+    }
+  }, [materialsLoading]);
 
   const handleAddMaterial = () => {
     setEditingMaterial(null);
@@ -289,7 +295,7 @@ export default function MaterialsPage() {
 
       {/* Materials View */}
       <Card className="overflow-hidden">
-        {materialsLoading ? (
+        {materialsLoading && isInitialLoading ? (
           <div className="p-8 text-center text-gray-600 dark:text-gray-400">
             {t("admin.loading")}
           </div>
@@ -315,12 +321,6 @@ export default function MaterialsPage() {
                 <TableHead className="text-center text-gray-700 dark:text-gray-200">
                   {t("admin.materialName")} (AR)
                 </TableHead>
-                <TableHead className="text-center w-40 text-gray-700 dark:text-gray-200">
-                  {t("admin.unitOfMeasure")} (EN)
-                </TableHead>
-                <TableHead className="text-center w-40 text-gray-700 dark:text-gray-200">
-                  {t("admin.unitOfMeasure")} (AR)
-                </TableHead>
                 <TableHead className="text-center w-32 text-gray-700 dark:text-gray-200">
                   {t("admin.actions")}
                 </TableHead>
@@ -342,22 +342,6 @@ export default function MaterialsPage() {
                   <TableCell className="text-center">
                     <div className="font-medium text-gray-900 dark:text-white">
                       {material.i18n?.ar?.name || "-"}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex justify-center">
-                      <Badge variant="info">
-                        {material.i18n?.en?.unitOfMeasure ||
-                          material.unitOfMeasure ||
-                          "-"}
-                      </Badge>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex justify-center">
-                      <Badge variant="info">
-                        {material.i18n?.ar?.unitOfMeasure || "-"}
-                      </Badge>
                     </div>
                   </TableCell>
                   <TableCell className="text-center">

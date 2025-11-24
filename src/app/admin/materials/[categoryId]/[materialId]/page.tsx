@@ -14,6 +14,7 @@ import {
   DollarSign,
   ShoppingCart,
 } from "lucide-react";
+import { Switch } from "@mui/material";
 import { useTranslation } from "../../../../../hooks/useTranslation";
 import { useAppDispatch, useAppSelector } from "../../../../../store/hooks";
 import {
@@ -79,6 +80,8 @@ export default function ListingsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingListing, setEditingListing] = useState<Listing | null>(null);
   const [deletingListing, setDeletingListing] = useState<Listing | null>(null);
+  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
+  const [suppressPageLoader, setSuppressPageLoader] = useState(false);
 
   const [toast, setToast] = useState<{
     message: string;
@@ -167,11 +170,20 @@ export default function ListingsPage() {
   };
 
   const handleSubmitListing = async (data: CreateListingData) => {
+    const successUpdateMessage =
+      t("successMessages.listingUpdated") ||
+      t("listing.listingUpdatedSuccess") ||
+      t("notifications.updateSuccess") ||
+      t("admin.success");
+    const errorUpdateMessage = t("errors.updateListing") || t("admin.error");
+
     try {
       if (!selectedMaterial) {
         setToast({ message: t("admin.error"), type: "error" });
         return;
       }
+
+      setSuppressPageLoader(true);
 
       // Prepare listing data with materialId and seller info
       const listingData: CreateListingData = {
@@ -191,9 +203,7 @@ export default function ListingsPage() {
           })
         ).unwrap();
         setToast({
-          message:
-            t("listing.listingUpdatedSuccess") ||
-            "Listing updated successfully",
+          message: successUpdateMessage,
           type: "success",
         });
       } else {
@@ -208,15 +218,13 @@ export default function ListingsPage() {
       }
       setListingFormOpen(false);
       setEditingListing(null);
-      // Refresh listings without lang parameter to get i18n object
-      if (materialId) {
-        dispatch(getListings({ materialId }));
-      }
     } catch (err: any) {
       setToast({
-        message: err.message || t("admin.error"),
+        message: err.message || errorUpdateMessage,
         type: "error",
       });
+    } finally {
+      setSuppressPageLoader(false);
     }
   };
 
@@ -224,6 +232,7 @@ export default function ListingsPage() {
     if (!deletingListing) return;
 
     try {
+      setSuppressPageLoader(true);
       await dispatch(deleteListing(deletingListing.id)).unwrap();
       setToast({
         message:
@@ -232,12 +241,43 @@ export default function ListingsPage() {
       });
       setDeleteDialogOpen(false);
       setDeletingListing(null);
-      // Refresh listings without lang parameter to get i18n object
-      if (materialId) {
-        dispatch(getListings({ materialId }));
-      }
     } catch (err) {
       setToast({ message: t("admin.error"), type: "error" });
+    } finally {
+      setSuppressPageLoader(false);
+    }
+  };
+
+  const handleToggleListingStatus = async (listing: Listing) => {
+    if (!listing) return;
+    const nextStatus = listing.status === "active" ? "draft" : "active";
+    setStatusUpdatingId(listing.id);
+    setSuppressPageLoader(true);
+    const successToggleMessage =
+      t("successMessages.listingUpdated") ||
+      t("listing.listingUpdatedSuccess") ||
+      t("notifications.updateSuccess") ||
+      t("admin.success");
+    const errorToggleMessage = t("errors.updateListing") || t("admin.error");
+    try {
+      await dispatch(
+        updateListing({
+          id: listing.id,
+          data: { status: nextStatus },
+        })
+      ).unwrap();
+      setToast({
+        message: successToggleMessage,
+        type: "success",
+      });
+    } catch (err: any) {
+      setToast({
+        message: err?.message || errorToggleMessage,
+        type: "error",
+      });
+    } finally {
+      setStatusUpdatingId(null);
+      setSuppressPageLoader(false);
     }
   };
 
@@ -363,7 +403,7 @@ export default function ListingsPage() {
 
       {/* Listings View */}
       <div>
-        {listingsLoading ? (
+        {listingsLoading && !suppressPageLoader ? (
           <Card className="p-8 text-center text-gray-600 dark:text-gray-400">
             {t("admin.loading")}
           </Card>
@@ -491,6 +531,39 @@ export default function ListingsPage() {
                           ? t("listings.biddable")
                           : t("listings.direct")}
                       </Badge>
+                    </div>
+                  </div>
+
+                  {/* Status Toggle */}
+                  <div
+                    className="flex items-center justify-between py-2 border-t border-gray-200 dark:border-gray-700 mb-4"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {t("listings.statusLabel") || t("admin.status")}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {listing.status === "active"
+                          ? t("listings.status.active") || t("admin.active")
+                          : listing.status === "draft"
+                          ? t("listings.status.draft") || t("admin.draft")
+                          : getStatusText(listing.status)}
+                      </span>
+                      <Switch
+                        size="small"
+                        color="primary"
+                        checked={listing.status === "active"}
+                        disabled={
+                          statusUpdatingId === listing.id ||
+                          (listing.status !== "active" &&
+                            listing.status !== "draft")
+                        }
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          handleToggleListingStatus(listing);
+                        }}
+                      />
                     </div>
                   </div>
 

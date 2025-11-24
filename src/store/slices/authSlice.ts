@@ -233,13 +233,15 @@ export const loginGoogle = createAsyncThunk<
 });
 
 export const getCurrentUser = createAsyncThunk<
-  { user: User },
+  User,
   void,
   { rejectValue: string }
 >("auth/getCurrentUser", async (_, { rejectWithValue }) => {
   try {
     const response = await apiClient.get(API_CONFIG.ENDPOINTS.AUTH.ME);
-    return response.data;
+    const data = response.data;
+    // Some endpoints return { user: {...} } while others return the user object directly
+    return (data?.user as User) || (data as User);
   } catch (error: any) {
     return rejectWithValue(
       error.response?.data?.message ||
@@ -405,15 +407,15 @@ const authSlice = createSlice({
       })
       .addCase(
         getCurrentUser.fulfilled,
-        (state, action: PayloadAction<{ user: User }>) => {
+        (state, action: PayloadAction<User>) => {
           state.isLoading = false;
-          state.user = action.payload.user;
+          state.user = action.payload;
           state.isAuthenticated = true;
           state.error = null;
 
           // Update localStorage and cookies
           if (typeof window !== "undefined") {
-            const userStr = JSON.stringify(action.payload.user);
+            const userStr = JSON.stringify(action.payload);
             localStorage.setItem("user", userStr);
 
             // Update cookies for middleware access
@@ -426,11 +428,15 @@ const authSlice = createSlice({
       .addCase(getCurrentUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload || "Failed to get user data";
-        state.isAuthenticated = false;
-        // Clear invalid token
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("user");
+        // Don't clear authentication state if user was already authenticated
+        // Only clear if there's no existing user data
+        if (!state.user) {
+          state.isAuthenticated = false;
+          // Clear invalid token only if no user exists
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("user");
+          }
         }
       })
 

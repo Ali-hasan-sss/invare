@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, Suspense } from "react";
+import React, { useEffect, useState, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Box,
@@ -10,7 +10,6 @@ import {
   CircularProgress,
   Alert,
   Container,
-  Pagination,
   Snackbar,
 } from "@mui/material";
 import { Package } from "lucide-react";
@@ -47,6 +46,12 @@ const ListingsPageContent: React.FC = () => {
     limit,
     setCurrentPage,
   } = useListings();
+  const [loadedListings, setLoadedListings] = useState<typeof listings>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const loadMoreRef = React.useRef<HTMLDivElement | null>(null);
+  const ITEMS_PER_PAGE = 10;
   const { isAuthenticated } = useAuth();
   const { processPayment } = usePaymentProcessing();
   const {
@@ -105,15 +110,12 @@ const ListingsPageContent: React.FC = () => {
   };
 
   const [filters, setFilters] = useState<ListingsFilterData>(getInitialFilters);
-  const [currentPageLocal, setCurrentPageLocal] = useState(
-    parseInt(searchParams.get("page") || "1")
-  );
 
   // Update URL when filters or page change
   useEffect(() => {
     const params = new URLSearchParams();
-    params.append("page", currentPageLocal.toString());
-    params.append("limit", limit.toString());
+    params.append("page", page.toString());
+    params.append("limit", ITEMS_PER_PAGE.toString());
 
     if (filters.categoryId) params.append("categoryId", filters.categoryId);
     if (filters.materialId) params.append("materialId", filters.materialId);
@@ -127,19 +129,9 @@ const ListingsPageContent: React.FC = () => {
       params.append("materialColor", filters.materialColor);
 
     router.push(`/listings?${params.toString()}`);
-  }, [filters, currentPageLocal, limit, router]);
+  }, [filters, page, router]);
 
   // Fetch listings when filters or page change
-  useEffect(() => {
-    const fetchListings = async () => {
-      await getListings({
-        page: currentPageLocal,
-        limit,
-        ...filters,
-      });
-    };
-    fetchListings();
-  }, [filters, currentPageLocal, limit, getListings]);
 
   // Show purchase success toast if returned from payment
   useEffect(() => {
@@ -305,18 +297,82 @@ const ListingsPageContent: React.FC = () => {
     setSelectedListingAmount(null);
   };
 
-  const handlePageChange = (
-    event: React.ChangeEvent<unknown>,
-    value: number
-  ) => {
-    setCurrentPageLocal(value);
-    setCurrentPage(value);
-  };
+  const fetchListingsPage = useCallback(
+    async (targetPage: number, replace = false) => {
+      setIsFetchingMore(true);
+      const result = await getListings({
+        page: targetPage,
+        limit: ITEMS_PER_PAGE,
+        onlyActive: true,
+        ...filters,
+      });
+      if (result.type.endsWith("/fulfilled")) {
+        const data = (result.payload as typeof listings) || [];
+        setLoadedListings((prev) => {
+          if (replace) {
+            return data;
+          }
+          const existingIds = new Set(prev.map((l) => l.id));
+          const merged = data.filter((l) => !existingIds.has(l.id));
+          return [...prev, ...merged];
+        });
+        setHasMore(data.length === ITEMS_PER_PAGE);
+      } else {
+        setHasMore(false);
+      }
+      setCurrentPage(targetPage);
+      setIsFetchingMore(false);
+    },
+    [getListings, filters, setCurrentPage]
+  );
+
+  useEffect(() => {
+    setPage(1);
+    setHasMore(true);
+    setLoadedListings([]);
+    fetchListingsPage(1, true);
+  }, [filters, fetchListingsPage]);
+
+  useEffect(() => {
+    if (listings.length && loadedListings.length === 0) {
+      setLoadedListings(listings);
+    }
+  }, [listings, loadedListings.length]);
+
+  const handleLoadMore = useCallback(() => {
+    if (isFetchingMore || !hasMore) return;
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchListingsPage(nextPage);
+  }, [isFetchingMore, hasMore, page, fetchListingsPage]);
+
+  useEffect(() => {
+    const node = loadMoreRef.current;
+    if (!node || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          handleLoadMore();
+        }
+      },
+      {
+        root: null,
+        rootMargin: "200px",
+        threshold: 0,
+      }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [handleLoadMore, hasMore]);
 
   const handleFilterChange = (newFilters: ListingsFilterData) => {
     setFilters(newFilters);
-    setCurrentPageLocal(1); // Reset to first page when filters change
+    setPage(1);
     setCurrentPage(1);
+    setLoadedListings([]);
+    setHasMore(true);
   };
 
   const handleListingClick = (listingId: string) => {
@@ -390,7 +446,7 @@ const ListingsPageContent: React.FC = () => {
     setIsPaymentMethodDialogOpen(true);
   };
 
-  if (isLoading && !listings.length) {
+  if (isLoading && !loadedListings.length) {
     return (
       <Container maxWidth="lg" className="py-8">
         <Box
@@ -405,7 +461,7 @@ const ListingsPageContent: React.FC = () => {
     );
   }
 
-  if (error && !listings.length) {
+  if (error && !loadedListings.length) {
     return (
       <Container maxWidth="lg" className="py-8">
         <Alert severity="error" className="mb-4">
@@ -414,8 +470,6 @@ const ListingsPageContent: React.FC = () => {
       </Container>
     );
   }
-
-  const totalPages = Math.ceil(totalCount / limit);
 
   return (
     <Container maxWidth="lg" className="py-8">
@@ -456,19 +510,27 @@ const ListingsPageContent: React.FC = () => {
       {/* Main Content */}
       <Grid container spacing={4}>
         {/* Filter Sidebar */}
-        <Grid item xs={12} md={3}>
+        <Grid
+          item
+          xs={12}
+          md={3}
+          sx={{
+            alignSelf: { md: "flex-start" },
+          }}
+        >
           <ListingsFilter
             filters={filters}
             onFilterChange={handleFilterChange}
+            className="md:sticky md:top-6 md:max-h-[calc(100vh-120px)] md:overflow-y-auto"
           />
         </Grid>
 
         {/* Listings Grid */}
         <Grid item xs={12} md={9}>
-          {listings.length > 0 ? (
+          {loadedListings.length > 0 ? (
             <>
               <Grid container spacing={4} className="mb-6">
-                {listings.map((listing) => (
+                {loadedListings.map((listing) => (
                   <Grid item xs={12} sm={6} lg={4} key={listing.id}>
                     <ListingCard
                       id={listing.id}
@@ -495,20 +557,16 @@ const ListingsPageContent: React.FC = () => {
                 ))}
               </Grid>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <Box display="flex" justifyContent="center" className="mt-8">
-                  <Pagination
-                    count={totalPages}
-                    page={currentPageLocal}
-                    onChange={handlePageChange}
-                    color="primary"
-                    size="large"
-                    showFirstButton
-                    showLastButton
-                  />
-                </Box>
-              )}
+              <Box
+                ref={loadMoreRef}
+                className="py-4 text-center text-sm text-gray-500 dark:text-gray-400"
+              >
+                {isFetchingMore && hasMore
+                  ? t("admin.loading")
+                  : hasMore
+                  ? t("admin.scrollToLoadMore") || "استمر بالنزول لتحميل المزيد"
+                  : t("admin.noMoreUsers") || "لا توجد بيانات إضافية"}
+              </Box>
             </>
           ) : (
             <Box className="text-center py-12">
@@ -574,11 +632,11 @@ const ListingsPageContent: React.FC = () => {
         bidAmount={bidAmount}
         setBidAmount={setBidAmount}
         currentPriceLabel={(() => {
-          const l = listings.find((x) => x.id === selectedListingId);
+          const l = loadedListings.find((x) => x.id === selectedListingId);
           return l ? `${l.startingPrice} ${t("common.currency")}` : "";
         })()}
         minAmount={(() => {
-          const l = listings.find((x) => x.id === selectedListingId);
+          const l = loadedListings.find((x) => x.id === selectedListingId);
           return l ? l.startingPrice : undefined;
         })()}
       />

@@ -169,9 +169,9 @@ const Header: React.FC = () => {
                       className: "text-sm text-gray-700 dark:text-gray-300",
                     }}
                   />
-                </ListItemButton>
-              </ListItem>
-              <ListItem disablePadding>
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
                 <ListItemButton
                   className="rounded-lg mb-1 mx-2"
                   onClick={() => {
@@ -185,7 +185,7 @@ const Header: React.FC = () => {
                       className: "text-sm text-gray-700 dark:text-gray-300",
                     }}
                   />
-                </ListItemButton>
+          </ListItemButton>
               </ListItem>
             </List>
           </Box>

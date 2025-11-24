@@ -148,6 +148,7 @@ export interface GetListingsParams {
   status?: string;
   condition?: string;
   materialColor?: string;
+  onlyActive?: boolean;
   lang?: string;
 }
 
@@ -198,6 +199,9 @@ export const getListings = createAsyncThunk<
     }
     if (params?.materialColor) {
       queryParams.append("materialColor", params.materialColor);
+    }
+    if (params?.onlyActive) {
+      queryParams.append("onlyActive", params.onlyActive.toString());
     }
     if (params?.lang) {
       queryParams.append("lang", params.lang);

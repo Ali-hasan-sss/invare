@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   Edit,
   Trash2,
@@ -67,7 +67,6 @@ export default function UsersManagement() {
   const isRTL = currentLanguage.code === "ar";
   const router = useRouter();
   const {
-    users,
     isLoading,
     error,
     getUsers,
@@ -92,11 +91,106 @@ export default function UsersManagement() {
     message: string;
     type: "success" | "error";
   } | null>(null);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [loadedUsers, setLoadedUsers] = useState<User[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const ITEMS_PER_PAGE = 10;
+  const normalizedSearch = debouncedSearch.toLowerCase();
+  const addUserToState = useCallback((user: User) => {
+    setLoadedUsers((prev) => {
+      const existingIndex = prev.findIndex((u) => u.id === user.id);
+      if (existingIndex !== -1) {
+        const cloned = [...prev];
+        cloned[existingIndex] = user;
+        return cloned;
+      }
+      return [user, ...prev];
+    });
+  }, []);
+
+  const updateUserInState = useCallback((user: User) => {
+    setLoadedUsers((prev) => prev.map((u) => (u.id === user.id ? user : u)));
+  }, []);
+
+  const removeUserFromState = useCallback((id: string) => {
+    setLoadedUsers((prev) => prev.filter((u) => u.id !== id));
+  }, []);
 
   useEffect(() => {
-    getUsers();
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  useEffect(() => {
     getCountries();
-  }, []);
+  }, [getCountries]);
+
+  const fetchUsersPage = useCallback(
+    async (targetPage: number, replace = false) => {
+      setIsFetchingMore(true);
+      const result = await getUsers({
+        page: targetPage,
+        limit: ITEMS_PER_PAGE,
+        search: debouncedSearch || undefined,
+      });
+      if (result.type.endsWith("/fulfilled")) {
+        const data = (result.payload as User[]) || [];
+        setLoadedUsers((prev) => {
+          if (replace) {
+            return data;
+          }
+          const existingIds = new Set(prev.map((u) => u.id));
+          const merged = data.filter((u) => !existingIds.has(u.id));
+          return [...prev, ...merged];
+        });
+        setHasMore(data.length === ITEMS_PER_PAGE);
+      } else {
+        setHasMore(false);
+      }
+      setIsFetchingMore(false);
+    },
+    [getUsers, debouncedSearch]
+  );
+
+  useEffect(() => {
+    setPage(1);
+    setHasMore(true);
+    fetchUsersPage(1, true);
+  }, [fetchUsersPage]);
+
+  const handleLoadMore = useCallback(() => {
+    if (isFetchingMore || !hasMore) return;
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchUsersPage(nextPage);
+  }, [isFetchingMore, hasMore, page, fetchUsersPage]);
+
+  useEffect(() => {
+    const node = loadMoreRef.current;
+    if (!node) return;
+    if (!hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          handleLoadMore();
+        }
+      },
+      {
+        root: null,
+        rootMargin: "200px",
+        threshold: 0,
+      }
+    );
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+    };
+  }, [handleLoadMore, hasMore]);
 
   // Helper function to get translated error message
   const getErrorMessage = (errorMsg: string | null): string => {
@@ -168,47 +262,37 @@ export default function UsersManagement() {
         if (result.type.endsWith("/rejected")) {
           throw new Error("Update failed");
         }
+        const updatedUser = result.payload as User;
+        if (updatedUser) {
+          updateUserInState(updatedUser);
+        }
         setToast({ message: t("admin.userUpdatedSuccess"), type: "success" });
       } else {
         const result = await createUser(data as CreateUserData);
         if (result.type.endsWith("/rejected")) {
           throw new Error("Create failed");
         }
+        const createdUser = result.payload as User;
+        if (createdUser) {
+          addUserToState(createdUser);
+        }
 
-        // If user created successfully and materialIds provided, add favorites
-        if (
-          result.type.endsWith("/fulfilled") &&
-          materialIds &&
-          materialIds.length > 0
-        ) {
-          const createdUser = result.payload as User;
-          if (createdUser?.id) {
-            try {
-              const favResult = await addUserFavoriteMaterials({
-                userId: createdUser.id,
-                materialIds: materialIds,
+        if (materialIds && materialIds.length > 0 && createdUser?.id) {
+          try {
+            const favResult = await addUserFavoriteMaterials({
+              userId: createdUser.id,
+              materialIds,
+            });
+            if (favResult.type.endsWith("/fulfilled")) {
+              setToast({
+                message:
+                  t("admin.userCreatedSuccess") +
+                  ". " +
+                  (t("admin.favoriteMaterialsAddedSuccess") ||
+                    "تمت إضافة الاهتمامات بنجاح"),
+                type: "success",
               });
-              if (favResult.type.endsWith("/fulfilled")) {
-                setToast({
-                  message:
-                    t("admin.userCreatedSuccess") +
-                    ". " +
-                    (t("admin.favoriteMaterialsAddedSuccess") ||
-                      "تمت إضافة الاهتمامات بنجاح"),
-                  type: "success",
-                });
-              } else {
-                setToast({
-                  message:
-                    t("admin.userCreatedSuccess") +
-                    ". " +
-                    (t("admin.error") || "حدث خطأ في إضافة الاهتمامات"),
-                  type: "error",
-                });
-              }
-            } catch (favError) {
-              // User created but favorites failed
-              console.error("Failed to add favorites:", favError);
+            } else {
               setToast({
                 message:
                   t("admin.userCreatedSuccess") +
@@ -217,10 +301,14 @@ export default function UsersManagement() {
                 type: "error",
               });
             }
-          } else {
+          } catch (favError) {
+            console.error("Failed to add favorites:", favError);
             setToast({
-              message: t("admin.userCreatedSuccess"),
-              type: "success",
+              message:
+                t("admin.userCreatedSuccess") +
+                ". " +
+                (t("admin.error") || "حدث خطأ في إضافة الاهتمامات"),
+              type: "error",
             });
           }
         } else {
@@ -232,7 +320,6 @@ export default function UsersManagement() {
       }
       setUserFormOpen(false);
       setSelectedUser(null);
-      await getUsers();
     } catch (err: any) {
       const errorMessage = err?.message || error || t("admin.error");
       setToast({
@@ -251,10 +338,10 @@ export default function UsersManagement() {
         if (result.type.endsWith("/rejected")) {
           throw new Error("Delete failed");
         }
+        removeUserFromState(selectedUser.id);
         setToast({ message: t("admin.userDeletedSuccess"), type: "success" });
         setDeleteDialogOpen(false);
         setSelectedUser(null);
-        await getUsers();
       } catch (err: any) {
         const errorMessage = err?.message || error || t("admin.error");
         setToast({
@@ -267,12 +354,14 @@ export default function UsersManagement() {
     }
   };
 
-  const filteredUsers = users.filter(
-    (user) =>
-      user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredUsers = loadedUsers.filter((user) => {
+    if (!normalizedSearch) return true;
+    return (
+      user.firstName.toLowerCase().includes(normalizedSearch) ||
+      user.lastName.toLowerCase().includes(normalizedSearch) ||
+      user.email.toLowerCase().includes(normalizedSearch)
+    );
+  });
 
   const getStatusBadge = (status?: string) => {
     switch (status) {
@@ -286,6 +375,8 @@ export default function UsersManagement() {
         return <Badge>{status || "-"}</Badge>;
     }
   };
+
+  const showInitialLoader = isLoading && loadedUsers.length === 0;
 
   return (
     <div>
@@ -361,7 +452,7 @@ export default function UsersManagement() {
 
       {/* Table */}
       <Card className="overflow-hidden">
-        {isLoading ? (
+        {showInitialLoader ? (
           <div className="p-8 text-center text-gray-600 dark:text-gray-400">
             {t("admin.loading")}
           </div>
@@ -415,7 +506,12 @@ export default function UsersManagement() {
                     {user.email}
                   </TableCell>
                   <TableCell className="text-center text-gray-900 dark:text-white">
-                    {user.phone || "-"}
+                    <span
+                      className="inline-block w-full text-left font-mono"
+                      dir="ltr"
+                    >
+                      {user.phone || "-"}
+                    </span>
                   </TableCell>
                   <TableCell className="text-center">
                     {(() => {
@@ -446,7 +542,8 @@ export default function UsersManagement() {
                           countryCode,
                           currentLanguage.code as "ar" | "en"
                         );
-                        const displayName = translatedName || countryName || "-";
+                        const displayName =
+                          translatedName || countryName || "-";
 
                         return (
                           <div className="flex items-center justify-center gap-2">
@@ -469,7 +566,9 @@ export default function UsersManagement() {
 
                       // If nothing found, show dash
                       return (
-                        <span className="text-gray-500 dark:text-gray-400">-</span>
+                        <span className="text-gray-500 dark:text-gray-400">
+                          -
+                        </span>
                       );
                     })()}
                   </TableCell>
@@ -576,6 +675,20 @@ export default function UsersManagement() {
               ))}
             </TableBody>
           </Table>
+        )}
+        {!showInitialLoader && (
+          <div
+            ref={loadMoreRef}
+            className="py-4 text-center text-sm text-gray-500 dark:text-gray-400"
+          >
+            {isFetchingMore && hasMore
+              ? t("admin.loading")
+              : hasMore
+              ? t("admin.scrollToLoadMore") || "استمر بالنزول لتحميل المزيد"
+              : !hasMore
+              ? t("admin.noMoreUsers") || "لا توجد نتائج إضافية"
+              : null}
+          </div>
         )}
       </Card>
 

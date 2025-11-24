@@ -80,21 +80,20 @@ export const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
       i18n.ar = { name: formData.nameAr.trim() };
     }
 
-    // Build clean payload without undefined values
-    const cleanI18n = Object.keys(i18n).length > 0 ? i18n : undefined;
+    const hasTranslations = Object.keys(i18n).length > 0;
     const categoryName =
       formData.nameEn?.trim() || formData.nameAr?.trim() || "";
 
     if (category) {
       const payload: UpdateMaterialCategoryData = {
         name: categoryName || category.name,
-        ...(cleanI18n && { i18n: cleanI18n }),
+        ...(hasTranslations && { i18n }),
       };
       await onSubmit(payload);
     } else {
       const payload: CreateMaterialCategoryData = {
         name: categoryName,
-        ...(cleanI18n && { i18n: cleanI18n }),
+        ...(hasTranslations && { i18n }),
       };
       await onSubmit(payload);
     }

@@ -69,7 +69,7 @@ export const UserFormDialog: React.FC<UserFormDialogProps> = ({
     accountStatus: "active",
     subscriptionTier: "free",
     countryId: "",
-    roleIds: [],
+    isAdmin: false,
   });
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
   const [materialSearchQuery, setMaterialSearchQuery] = useState("");
@@ -98,6 +98,15 @@ export const UserFormDialog: React.FC<UserFormDialogProps> = ({
 
   useEffect(() => {
     if (user) {
+      const roleFromRoles =
+        user.roles && user.roles.length > 0 ? user.roles[0].name : undefined;
+      const isAdminValue =
+        user.isAdmin === true ||
+        roleFromRoles?.toLowerCase() === "admin" ||
+        (user as any).role === "admin";
+      const derivedCountryId =
+        user.countryId ||
+        (user.country && "id" in user.country ? (user.country as any).id : "");
       setFormData({
         email: user.email || "",
         firstName: user.firstName || "",
@@ -105,8 +114,8 @@ export const UserFormDialog: React.FC<UserFormDialogProps> = ({
         phone: user.phone || "",
         accountStatus: user.accountStatus || "active",
         subscriptionTier: user.subscriptionTier || "free",
-        countryId: user.countryId || "",
-        roleIds: user.roleIds || [],
+        countryId: derivedCountryId || "",
+        isAdmin: isAdminValue,
       });
       setSelectedMaterials([]);
     } else {
@@ -118,7 +127,7 @@ export const UserFormDialog: React.FC<UserFormDialogProps> = ({
         accountStatus: "active",
         subscriptionTier: "free",
         countryId: "",
-        roleIds: [],
+        isAdmin: false,
       });
       setSelectedMaterials([]);
     }
@@ -134,15 +143,10 @@ export const UserFormDialog: React.FC<UserFormDialogProps> = ({
     const cleanedFormData: CreateUserData | UpdateUserData = {
       ...formData,
       countryId: formData.countryId || undefined,
+      isAdmin: formData.isAdmin ?? undefined,
     };
 
-    // Remove roleIds when creating a new user (API doesn't accept it)
-    if (!user) {
-      const { roleIds, ...createData } = cleanedFormData;
-      await onSubmit(createData as CreateUserData, materialIds);
-    } else {
-      await onSubmit(cleanedFormData as UpdateUserData, materialIds);
-    }
+    await onSubmit(cleanedFormData, materialIds);
   };
 
   const handleMaterialToggle = (materialId: string) => {
@@ -475,6 +479,36 @@ export const UserFormDialog: React.FC<UserFormDialogProps> = ({
                   className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                 >
                   Enterprise
+                </SelectOption>
+              </HTMLSelect>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {t("admin.isAdmin") || t("admin.roles")}
+              </label>
+              <HTMLSelect
+                name="isAdmin"
+                value={formData.isAdmin ? "true" : "false"}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    isAdmin: e.target.value === "true",
+                  }))
+                }
+                className="text-gray-900 dark:text-white"
+              >
+                <SelectOption
+                  value="false"
+                  className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                >
+                  {t("admin.roleUser") || "User"}
+                </SelectOption>
+                <SelectOption
+                  value="true"
+                  className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                >
+                  {t("admin.roleAdmin") || "Admin"}
                 </SelectOption>
               </HTMLSelect>
             </div>

@@ -103,6 +103,15 @@ const ListingCard: React.FC<ListingCardProps> = ({
     });
   };
 
+  const getTranslatedUnitOfMeasure = (unit: string) => {
+    const unitKey = unit.toLowerCase();
+    const translated = t(`common.unitOfMeasures.${unitKey}`);
+    // If translation returns the key itself (not found), return original unit
+    return translated === `common.unitOfMeasures.${unitKey}`
+      ? unit
+      : translated;
+  };
+
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "active":
@@ -268,7 +277,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
               variant="body2"
               className="text-gray-500 dark:text-gray-400 text-sm"
             >
-              / {unitOfMeasure}
+              / {getTranslatedUnitOfMeasure(unitOfMeasure)}
             </Typography>
           </Box>
 
@@ -344,7 +353,8 @@ const ListingCard: React.FC<ListingCardProps> = ({
             <Box className="flex items-center gap-1">
               <ShoppingCart size={12} />
               <Typography variant="caption" className="text-xs">
-                {stockAmount} {unitOfMeasure} {t("common.available")}
+                {stockAmount} {getTranslatedUnitOfMeasure(unitOfMeasure)}{" "}
+                {t("common.available")}
               </Typography>
             </Box>
 

@@ -25,6 +25,7 @@ export interface User {
   roleIds?: string[];
   roles?: UserRole[];
   country?: Country | null;
+  isAdmin?: boolean;
 }
 
 export interface UsersState {
@@ -46,6 +47,7 @@ export interface CreateUserData {
   subscriptionTier?: string;
   countryId?: string;
   roleIds?: string[];
+  isAdmin?: boolean;
 }
 
 export interface UpdateUserData {
@@ -57,11 +59,13 @@ export interface UpdateUserData {
   subscriptionTier?: string;
   countryId?: string;
   roleIds?: string[];
+  isAdmin?: boolean;
 }
 
 export interface GetUsersParams {
   page?: number;
   limit?: number;
+  search?: string;
 }
 
 // Initial state
@@ -85,6 +89,7 @@ export const getUsers = createAsyncThunk<
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append("page", params.page.toString());
     if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.search) queryParams.append("search", params.search);
 
     const url = `${API_CONFIG.ENDPOINTS.USERS.LIST}${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
