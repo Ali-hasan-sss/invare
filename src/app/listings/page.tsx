@@ -63,6 +63,7 @@ const ListingsPageContent: React.FC = () => {
   const { materials, getMaterials } = useMaterialsList();
   const { companies, getCompanies } = useCompaniesList();
   const { users, getUsers } = useUsersList();
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   // Payment method selection dialog state (legacy, not used anymore)
   const [isPaymentMethodDialogOpen, setIsPaymentMethodDialogOpen] =
@@ -503,12 +504,29 @@ const ListingsPageContent: React.FC = () => {
           variant="body1"
           className="text-gray-600 dark:text-gray-400"
         >
-          {t("listings.foundResults").replace("{count}", totalCount.toString())}
+          {t("listings.foundResults").replace(
+            "{count}",
+            Math.max(totalCount, loadedListings.length).toString()
+          )}
         </Typography>
       </Box>
 
       {/* Main Content */}
       <Grid container spacing={4}>
+        {/* Mobile filter toggle */}
+        <Grid item xs={12} className="md:hidden">
+          <Box className="flex justify-end mb-2">
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => setShowMobileFilters((prev) => !prev)}
+            >
+              {showMobileFilters
+                ? t("filters.hideFilters")
+                : t("filters.showFilters")}
+            </Button>
+          </Box>
+        </Grid>
         {/* Filter Sidebar */}
         <Grid
           item
@@ -516,6 +534,10 @@ const ListingsPageContent: React.FC = () => {
           md={3}
           sx={{
             alignSelf: { md: "flex-start" },
+            display: {
+              xs: showMobileFilters ? "block" : "none",
+              md: "block",
+            },
           }}
         >
           <ListingsFilter

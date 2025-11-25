@@ -278,43 +278,43 @@ export default function UsersManagement() {
         if (result.type.endsWith("/rejected")) {
           throw new Error("Create failed");
         }
-        const createdUser = result.payload as User;
+          const createdUser = result.payload as User;
         if (createdUser) {
           addUserToState(createdUser);
         }
 
         if (materialIds && materialIds.length > 0 && createdUser?.id) {
-          try {
-            const favResult = await addUserFavoriteMaterials({
-              userId: createdUser.id,
+            try {
+              const favResult = await addUserFavoriteMaterials({
+                userId: createdUser.id,
               materialIds,
-            });
-            if (favResult.type.endsWith("/fulfilled")) {
-              setToast({
-                message:
-                  t("admin.userCreatedSuccess") +
-                  ". " +
-                  (t("admin.favoriteMaterialsAddedSuccess") ||
-                    "تمت إضافة الاهتمامات بنجاح"),
-                type: "success",
               });
-            } else {
+              if (favResult.type.endsWith("/fulfilled")) {
+                setToast({
+                  message:
+                    t("admin.userCreatedSuccess") +
+                    ". " +
+                    (t("admin.favoriteMaterialsAddedSuccess") ||
+                      "تمت إضافة الاهتمامات بنجاح"),
+                  type: "success",
+                });
+              } else {
+                setToast({
+                  message:
+                    t("admin.userCreatedSuccess") +
+                    ". " +
+                    (t("admin.error") || "حدث خطأ في إضافة الاهتمامات"),
+                  type: "error",
+                });
+              }
+            } catch (favError) {
+              console.error("Failed to add favorites:", favError);
               setToast({
                 message:
                   t("admin.userCreatedSuccess") +
                   ". " +
                   (t("admin.error") || "حدث خطأ في إضافة الاهتمامات"),
                 type: "error",
-              });
-            }
-          } catch (favError) {
-            console.error("Failed to add favorites:", favError);
-            setToast({
-              message:
-                t("admin.userCreatedSuccess") +
-                ". " +
-                (t("admin.error") || "حدث خطأ في إضافة الاهتمامات"),
-              type: "error",
             });
           }
         } else {
@@ -516,7 +516,7 @@ export default function UsersManagement() {
                       className="inline-block w-full text-left font-mono"
                       dir="ltr"
                     >
-                      {user.phone || "-"}
+                    {user.phone || "-"}
                     </span>
                   </TableCell>
                   <TableCell className="text-center">

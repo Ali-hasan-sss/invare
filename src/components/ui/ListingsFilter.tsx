@@ -110,6 +110,9 @@ const ListingsFilter: React.FC<ListingsFilterProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.categoryId]);
 
+  const isAwaitingMaterialSelection =
+    Boolean(filters.categoryId) && !filters.materialId;
+
   const handleCategoryChange = (event: SelectChangeEvent<string>) => {
     const value = event.target.value;
     onFilterChange({
@@ -174,122 +177,136 @@ const ListingsFilter: React.FC<ListingsFilterProps> = ({
     <Box
       className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 space-y-4 ${className}`}
     >
-      {/* Category Filter */}
-      <Box className="space-y-2">
-        <Typography
-          variant="body2"
-          className="font-semibold text-gray-900 dark:text-white"
-        >
-          {t("filters.category")}
-        </Typography>
-        <FormControl fullWidth size="small">
-          <Select
-            value={filters.categoryId || "all"}
-            onChange={handleCategoryChange}
-            displayEmpty
-            className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            disabled={isLoadingCategories}
-            IconComponent={() => (
-              <ChevronDown
-                size={20}
-                className="text-gray-600 dark:text-gray-400 mr-2"
-              />
-            )}
-            sx={{
-              "& .MuiOutlinedInput-notchedOutline": {
-                borderColor: "rgba(156, 163, 175, 0.5)",
-              },
-              "&:hover .MuiOutlinedInput-notchedOutline": {
-                borderColor: "rgba(156, 163, 175, 0.8)",
-              },
-              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                borderColor: "#9333ea",
-              },
-              pr: 2,
-              pl: 2,
-              "& .MuiSelect-icon": {
-                right: 8,
-                left: "auto",
-              },
-              '[dir="rtl"] & .MuiSelect-icon': {
-                left: 8,
-                right: "auto",
-              },
-            }}
-            MenuProps={{
-              disableScrollLock: true,
-              PaperProps: {
-                className: "dark:bg-gray-700 dark:text-white",
-              },
-            }}
+      <Box
+        className="space-y-4"
+        sx={
+          isAwaitingMaterialSelection
+            ? {
+                borderWidth: 2,
+                borderColor: "#f97316",
+                borderRadius: "0.75rem",
+                backgroundColor: "rgba(249, 115, 22, 0.08)",
+                padding: 2,
+              }
+            : {}
+        }
+      >
+        {/* Category Filter */}
+        <Box className="space-y-2">
+          <Typography
+            variant="body2"
+            className="font-semibold text-gray-900 dark:text-white"
           >
-            <MenuItem value="all">{t("filters.all")}</MenuItem>
-            {categories.map((category) => (
-              <MenuItem key={category.id} value={category.id}>
-                {category.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
+            {t("filters.category")}
+          </Typography>
+          <FormControl fullWidth size="small">
+            <Select
+              value={filters.categoryId || "all"}
+              onChange={handleCategoryChange}
+              displayEmpty
+              className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              disabled={isLoadingCategories}
+              IconComponent={() => (
+                <ChevronDown
+                  size={20}
+                  className="text-gray-600 dark:text-gray-400 mr-2"
+                />
+              )}
+              sx={{
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgba(156, 163, 175, 0.5)",
+                },
+                "&:hover .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgba(156, 163, 175, 0.8)",
+                },
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "#9333ea",
+                },
+                pr: 2,
+                pl: 2,
+                "& .MuiSelect-icon": {
+                  right: 8,
+                  left: "auto",
+                },
+                '[dir="rtl"] & .MuiSelect-icon': {
+                  left: 8,
+                  right: "auto",
+                },
+              }}
+              MenuProps={{
+                disableScrollLock: true,
+                PaperProps: {
+                  className: "dark:bg-gray-700 dark:text-white",
+                },
+              }}
+            >
+              <MenuItem value="all">{t("filters.all")}</MenuItem>
+              {categories.map((category) => (
+                <MenuItem key={category.id} value={category.id}>
+                  {category.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
 
-      {/* Material Filter */}
-      <Box className="space-y-2">
-        <Typography
-          variant="body2"
-          className="font-semibold text-gray-900 dark:text-white"
-        >
-          {t("filters.material")}
-        </Typography>
-        <FormControl fullWidth size="small">
-          <Select
-            value={filters.materialId || "all"}
-            onChange={handleMaterialChange}
-            displayEmpty
-            className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            IconComponent={() => (
-              <ChevronDown
-                size={20}
-                className="text-gray-600 dark:text-gray-400 mr-2"
-              />
-            )}
-            sx={{
-              "& .MuiOutlinedInput-notchedOutline": {
-                borderColor: "rgba(156, 163, 175, 0.5)",
-              },
-              "&:hover .MuiOutlinedInput-notchedOutline": {
-                borderColor: "rgba(156, 163, 175, 0.8)",
-              },
-              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                borderColor: "#9333ea",
-              },
-              // space for dropdown icon in both LTR/RTL
-              pr: 2,
-              pl: 2,
-              "& .MuiSelect-icon": {
-                right: 8,
-                left: "auto",
-              },
-              '[dir="rtl"] & .MuiSelect-icon': {
-                left: 8,
-                right: "auto",
-              },
-            }}
-            MenuProps={{
-              disableScrollLock: true,
-              PaperProps: {
-                className: "dark:bg-gray-700 dark:text-white",
-              },
-            }}
+        {/* Material Filter */}
+        <Box className="space-y-2">
+          <Typography
+            variant="body2"
+            className="font-semibold text-gray-900 dark:text-white"
           >
-            <MenuItem value="all">{t("filters.all")}</MenuItem>
-            {materials.map((material) => (
-              <MenuItem key={material.id} value={material.id}>
-                {material.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+            {t("filters.material")}
+          </Typography>
+          <FormControl fullWidth size="small">
+            <Select
+              value={filters.materialId || "all"}
+              onChange={handleMaterialChange}
+              displayEmpty
+              className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              IconComponent={() => (
+                <ChevronDown
+                  size={20}
+                  className="text-gray-600 dark:text-gray-400 mr-2"
+                />
+              )}
+              sx={{
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgba(156, 163, 175, 0.5)",
+                },
+                "&:hover .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgba(156, 163, 175, 0.8)",
+                },
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "#9333ea",
+                },
+                pr: 2,
+                pl: 2,
+                "& .MuiSelect-icon": {
+                  right: 8,
+                  left: "auto",
+                },
+                '[dir="rtl"] & .MuiSelect-icon': {
+                  left: 8,
+                  right: "auto",
+                },
+              }}
+              MenuProps={{
+                disableScrollLock: true,
+                PaperProps: {
+                  className: "dark:bg-gray-700 dark:text-white",
+                },
+              }}
+            >
+              <MenuItem value="all">{t("filters.all")}</MenuItem>
+              {materials.map((material) => (
+                <MenuItem key={material.id} value={material.id}>
+                  {material.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
       </Box>
 
       {/* Company Filter */}
@@ -537,10 +554,21 @@ const ListingsFilter: React.FC<ListingsFilterProps> = ({
       <Box className="pt-2">
         <Button
           variant="outlined"
-          color="inherit"
+          color="primary"
           size="small"
           onClick={() => onFilterChange({})}
           className="dark:text-white"
+          sx={{
+            color: "text.primary",
+            borderColor: "rgba(156, 163, 175, 0.8)",
+            "&:hover": {
+              borderColor: "primary.main",
+              backgroundColor: "rgba(124, 58, 237, 0.08)",
+            },
+            ".MuiButton-outlinedPrimary": {
+              borderColor: "rgba(156, 163, 175, 0.8)",
+            },
+          }}
         >
           {t("common.clear") || "مسح الفلاتر"}
         </Button>

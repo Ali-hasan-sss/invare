@@ -498,7 +498,8 @@ export default function AdminListingsPage() {
                       </span>
                       <span className="font-semibold text-green-600 dark:text-green-400">
                         <DollarSign className="h-4 w-4 inline" />
-                        {listing.startingPrice} {t("currency.omr")}
+                        {listing.startingPrice}{" "}
+                        {t("currency.sar") || t("currency.saudiriyal") || "SAR"}
                       </span>
                     </div>
 
