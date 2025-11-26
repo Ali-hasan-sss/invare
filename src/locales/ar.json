@@ -366,7 +366,8 @@
     "condition": "الحالة",
     "materialColor": "لون المادة",
     "showFilters": "اظهار الفيلتر",
-    "hideFilters": "اخفاء الفيلتر"
+    "hideFilters": "اخفاء الفيلتر",
+    "applyFilters": "تطبيق الفلاتر"
   },
   "contact": {
     "title": "اتصل بنا",

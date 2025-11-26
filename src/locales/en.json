@@ -366,7 +366,8 @@
     "condition": "Condition",
     "materialColor": "Material Color",
     "showFilters": "Show Filters",
-    "hideFilters": "Hide Filters"
+    "hideFilters": "Hide Filters",
+    "applyFilters": "Apply Filters"
   },
   "contact": {
     "title": "Contact Us",

@@ -119,7 +119,7 @@ export default function AdminListingsPage() {
     setHasMore(true);
     setLoadedListings([]);
     fetchListingsPage(1, true);
-  }, []);
+  }, [filters, fetchListingsPage]);
 
   const handleLoadMore = useCallback(() => {
     if (isFetchingMore || !hasMore) return;
@@ -386,7 +386,7 @@ export default function AdminListingsPage() {
       {showFilters && (
         <ListingsFilter
           filters={filters}
-          onFilterChange={handleFilterChange}
+          onApply={handleFilterChange}
           className="bg-white dark:bg-gray-900 shadow-sm border border-gray-200 dark:border-gray-700"
         />
       )}

@@ -47,13 +47,13 @@ export interface ListingsFilterData {
 
 export interface ListingsFilterProps {
   filters: ListingsFilterData;
-  onFilterChange: (filters: ListingsFilterData) => void;
+  onApply: (filters: ListingsFilterData) => void;
   className?: string;
 }
 
 const ListingsFilter: React.FC<ListingsFilterProps> = ({
   filters,
-  onFilterChange,
+  onApply,
   className = "",
 }) => {
   const { t } = useTranslation();
@@ -64,6 +64,12 @@ const ListingsFilter: React.FC<ListingsFilterProps> = ({
   const [isLoadingCompanies, setIsLoadingCompanies] = useState(false);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+
+  const [localFilters, setLocalFilters] = useState<ListingsFilterData>(filters);
+
+  useEffect(() => {
+    setLocalFilters(filters);
+  }, [filters]);
 
   // Fetch filter options on mount
   useEffect(() => {
@@ -91,59 +97,66 @@ const ListingsFilter: React.FC<ListingsFilterProps> = ({
 
   // Fetch materials when category changes
   useEffect(() => {
-    if (filters.categoryId) {
+    if (localFilters.categoryId) {
       setIsLoadingMaterials(true);
-      getMaterials({ categoryId: filters.categoryId, limit: 100 }).finally(
+      getMaterials({ categoryId: localFilters.categoryId, limit: 100 }).finally(
         () => {
           setIsLoadingMaterials(false);
         }
       );
-    } else if (!filters.categoryId) {
-      // Reload all materials when category is cleared (if not already loaded)
-      if (materials.length === 0) {
-        setIsLoadingMaterials(true);
-        getMaterials({ limit: 100 }).finally(() => {
-          setIsLoadingMaterials(false);
-        });
-      }
+    } else {
+      // Reload all materials when no category is selected
+      setIsLoadingMaterials(true);
+      getMaterials({ limit: 100 }).finally(() => {
+        setIsLoadingMaterials(false);
+      });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.categoryId]);
+  }, [localFilters.categoryId, getMaterials]);
 
   const isAwaitingMaterialSelection =
-    Boolean(filters.categoryId) && !filters.materialId;
+    Boolean(localFilters.categoryId) && !localFilters.materialId;
+
+  const updateLocalFilters = (
+    key: keyof ListingsFilterData,
+    value: string | boolean | undefined
+  ) => {
+    setLocalFilters((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const handleApplyFilters = () => {
+    onApply(localFilters);
+  };
+
+  const handleClearFilters = () => {
+    setLocalFilters({});
+    onApply({});
+  };
 
   const handleCategoryChange = (event: SelectChangeEvent<string>) => {
     const value = event.target.value;
-    onFilterChange({
-      ...filters,
+    setLocalFilters((prev) => ({
+      ...prev,
       categoryId: value === "all" ? undefined : value,
-      materialId: undefined, // Clear material filter when category changes
-    });
+      materialId: undefined,
+    }));
   };
 
   const handleMaterialChange = (event: SelectChangeEvent<string>) => {
     const value = event.target.value;
-    onFilterChange({
-      ...filters,
-      materialId: value === "all" ? undefined : value,
-    });
+    updateLocalFilters("materialId", value === "all" ? undefined : value);
   };
 
   const handleCompanyChange = (event: SelectChangeEvent<string>) => {
     const value = event.target.value;
-    onFilterChange({
-      ...filters,
-      companyId: value === "all" ? undefined : value,
-    });
+    updateLocalFilters("companyId", value === "all" ? undefined : value);
   };
 
   const handleUserChange = (event: SelectChangeEvent<string>) => {
     const value = event.target.value;
-    onFilterChange({
-      ...filters,
-      userId: value === "all" ? undefined : value,
-    });
+    updateLocalFilters("userId", value === "all" ? undefined : value);
   };
 
   const handleIsBiddableChange = (event: SelectChangeEvent<string>) => {
@@ -151,26 +164,20 @@ const ListingsFilter: React.FC<ListingsFilterProps> = ({
     let isBiddable: boolean | undefined = undefined;
     if (value === "true") isBiddable = true;
     if (value === "false") isBiddable = false;
-    onFilterChange({
-      ...filters,
+    setLocalFilters((prev) => ({
+      ...prev,
       isBiddable,
-    });
+    }));
   };
 
   const handleConditionChange = (event: SelectChangeEvent<string>) => {
     const value = event.target.value;
-    onFilterChange({
-      ...filters,
-      condition: value === "all" ? undefined : value,
-    });
+    updateLocalFilters("condition", value === "all" ? undefined : value);
   };
 
   const handleMaterialColorChange = (event: SelectChangeEvent<string>) => {
     const value = event.target.value;
-    onFilterChange({
-      ...filters,
-      materialColor: value === "all" ? undefined : value,
-    });
+    updateLocalFilters("materialColor", value === "all" ? undefined : value);
   };
 
   return (
@@ -201,7 +208,7 @@ const ListingsFilter: React.FC<ListingsFilterProps> = ({
           </Typography>
           <FormControl fullWidth size="small">
             <Select
-              value={filters.categoryId || "all"}
+              value={localFilters.categoryId || "all"}
               onChange={handleCategoryChange}
               displayEmpty
               className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -260,7 +267,7 @@ const ListingsFilter: React.FC<ListingsFilterProps> = ({
           </Typography>
           <FormControl fullWidth size="small">
             <Select
-              value={filters.materialId || "all"}
+              value={localFilters.materialId || "all"}
               onChange={handleMaterialChange}
               displayEmpty
               className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -319,7 +326,7 @@ const ListingsFilter: React.FC<ListingsFilterProps> = ({
         </Typography>
         <FormControl fullWidth size="small">
           <Select
-            value={filters.companyId || "all"}
+            value={localFilters.companyId || "all"}
             onChange={handleCompanyChange}
             displayEmpty
             className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -378,9 +385,9 @@ const ListingsFilter: React.FC<ListingsFilterProps> = ({
         <FormControl fullWidth size="small">
           <Select
             value={
-              filters.isBiddable === undefined
+              localFilters.isBiddable === undefined
                 ? "all"
-                : filters.isBiddable
+                : localFilters.isBiddable
                 ? "true"
                 : "false"
             }
@@ -438,7 +445,7 @@ const ListingsFilter: React.FC<ListingsFilterProps> = ({
         </Typography>
         <FormControl fullWidth size="small">
           <Select
-            value={filters.condition || "all"}
+            value={localFilters.condition || "all"}
             onChange={handleConditionChange}
             displayEmpty
             className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -496,7 +503,7 @@ const ListingsFilter: React.FC<ListingsFilterProps> = ({
         </Typography>
         <FormControl fullWidth size="small">
           <Select
-            value={filters.materialColor || "all"}
+            value={localFilters.materialColor || "all"}
             onChange={handleMaterialColorChange}
             displayEmpty
             className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -551,13 +558,29 @@ const ListingsFilter: React.FC<ListingsFilterProps> = ({
       </Box>
 
       {/* Clear Filters */}
-      <Box className="pt-2">
+      <Box className="pt-2 flex gap-2">
+        <Button
+          variant="contained"
+          color="primary"
+          size="small"
+          onClick={handleApplyFilters}
+          className="flex-1"
+          sx={{
+            color: "#fff",
+            backgroundColor: "#7c3aed",
+            "&:hover": {
+              backgroundColor: "#6d28d9",
+            },
+          }}
+        >
+          {t("filters.applyFilters") || t("common.apply") || "تطبيق الفلاتر"}
+        </Button>
         <Button
           variant="outlined"
           color="primary"
           size="small"
-          onClick={() => onFilterChange({})}
-          className="dark:text-white"
+          onClick={handleClearFilters}
+          className="dark:text-white flex-1"
           sx={{
             color: "text.primary",
             borderColor: "rgba(156, 163, 175, 0.8)",

@@ -141,6 +141,7 @@ export interface UpdateListingData {
 export interface GetListingsParams {
   page?: number;
   limit?: number;
+  categoryId?: string;
   materialId?: string;
   companyId?: string;
   userId?: string;
@@ -185,6 +186,7 @@ export const getListings = createAsyncThunk<
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append("page", params.page.toString());
     if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.categoryId) queryParams.append("categoryId", params.categoryId);
     if (params?.materialId) queryParams.append("materialId", params.materialId);
     if (params?.companyId) queryParams.append("companyId", params.companyId);
     if (params?.userId) queryParams.append("userId", params.userId);

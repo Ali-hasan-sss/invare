@@ -50,6 +50,7 @@ const ListingsPageContent: React.FC = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [isApplyingFilters, setIsApplyingFilters] = useState(false);
   const loadMoreRef = React.useRef<HTMLDivElement | null>(null);
   const ITEMS_PER_PAGE = 10;
   const { isAuthenticated } = useAuth();
@@ -323,6 +324,9 @@ const ListingsPageContent: React.FC = () => {
       }
       setCurrentPage(targetPage);
       setIsFetchingMore(false);
+      if (replace) {
+        setIsApplyingFilters(false);
+      }
     },
     [getListings, filters, setCurrentPage]
   );
@@ -368,7 +372,8 @@ const ListingsPageContent: React.FC = () => {
     return () => observer.disconnect();
   }, [handleLoadMore, hasMore]);
 
-  const handleFilterChange = (newFilters: ListingsFilterData) => {
+  const handleApplyFilters = (newFilters: ListingsFilterData) => {
+    setIsApplyingFilters(true);
     setFilters(newFilters);
     setPage(1);
     setCurrentPage(1);
@@ -542,71 +547,98 @@ const ListingsPageContent: React.FC = () => {
         >
           <ListingsFilter
             filters={filters}
-            onFilterChange={handleFilterChange}
+            onApply={handleApplyFilters}
             className="md:sticky md:top-6 md:max-h-[calc(100vh-120px)] md:overflow-y-auto"
           />
         </Grid>
 
         {/* Listings Grid */}
         <Grid item xs={12} md={9}>
-          {loadedListings.length > 0 ? (
-            <>
-              <Grid container spacing={4} className="mb-6">
-                {loadedListings.map((listing) => (
-                  <Grid item xs={12} sm={6} lg={4} key={listing.id}>
-                    <ListingCard
-                      id={listing.id}
-                      title={listing.title}
-                      description={listing.description}
-                      startingPrice={listing.startingPrice}
-                      unitOfMeasure={listing.unitOfMeasure}
-                      stockAmount={listing.stockAmount}
-                      status={listing.status}
-                      isBiddable={listing.isBiddable}
-                      expiresAt={listing.expiresAt}
-                      condition={listing.condition}
-                      materialColor={listing.materialColor}
-                      photos={listing.photos}
-                      seller={listing.seller}
-                      material={listing.material}
-                      onClick={handleListingClick}
-                      onFavoriteClick={handleFavoriteClick}
-                      onShareClick={handleShareClick}
-                      onBuyNowClick={handleBuyNowClick}
-                      onStartBiddingClick={handleStartBiddingClick}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
+          <Box sx={{ position: "relative" }}>
+            {loadedListings.length > 0 ? (
+              <>
+                <Grid container spacing={4} className="mb-6">
+                  {loadedListings.map((listing) => (
+                    <Grid item xs={12} sm={6} lg={4} key={listing.id}>
+                      <ListingCard
+                        id={listing.id}
+                        title={listing.title}
+                        description={listing.description}
+                        startingPrice={listing.startingPrice}
+                        unitOfMeasure={listing.unitOfMeasure}
+                        stockAmount={listing.stockAmount}
+                        status={listing.status}
+                        isBiddable={listing.isBiddable}
+                        expiresAt={listing.expiresAt}
+                        condition={listing.condition}
+                        materialColor={listing.materialColor}
+                        photos={listing.photos}
+                        seller={listing.seller}
+                        material={listing.material}
+                        onClick={handleListingClick}
+                        onFavoriteClick={handleFavoriteClick}
+                        onShareClick={handleShareClick}
+                        onBuyNowClick={handleBuyNowClick}
+                        onStartBiddingClick={handleStartBiddingClick}
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
 
-              <Box
-                ref={loadMoreRef}
-                className="py-4 text-center text-sm text-gray-500 dark:text-gray-400"
-              >
-                {isFetchingMore && hasMore
-                  ? t("admin.loading")
-                  : hasMore
-                  ? t("admin.scrollToLoadMore") || "استمر بالنزول لتحميل المزيد"
-                  : t("admin.noMoreUsers") || "لا توجد بيانات إضافية"}
+                <Box
+                  ref={loadMoreRef}
+                  className="py-4 text-center text-sm text-gray-500 dark:text-gray-400"
+                >
+                  {isFetchingMore && hasMore
+                    ? t("admin.loading")
+                    : hasMore
+                    ? t("admin.scrollToLoadMore") ||
+                      "استمر بالنزول لتحميل المزيد"
+                    : t("admin.noMoreUsers") || "لا توجد بيانات إضافية"}
+                </Box>
+              </>
+            ) : (
+              <Box className="text-center py-12">
+                <Package size={64} className="text-gray-400 mx-auto mb-4" />
+                <Typography
+                  variant="h6"
+                  className="text-gray-600 dark:text-gray-400 mb-2"
+                >
+                  {t("listings.noListingsFound")}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  className="text-gray-500 dark:text-gray-500 mb-4"
+                >
+                  {t("listings.noListingsDescription")}
+                </Typography>
               </Box>
-            </>
-          ) : (
-            <Box className="text-center py-12">
-              <Package size={64} className="text-gray-400 mx-auto mb-4" />
-              <Typography
-                variant="h6"
-                className="text-gray-600 dark:text-gray-400 mb-2"
+            )}
+
+            {isApplyingFilters && (
+              <Box
+                sx={(theme) => ({
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor:
+                    theme.palette.mode === "dark"
+                      ? "rgba(15, 23, 42, 0.85)"
+                      : "rgba(255, 255, 255, 0.85)",
+                  backdropFilter: "blur(2px)",
+                  zIndex: 2,
+                  borderRadius: 2,
+                })}
               >
-                {t("listings.noListingsFound")}
-              </Typography>
-              <Typography
-                variant="body2"
-                className="text-gray-500 dark:text-gray-500 mb-4"
-              >
-                {t("listings.noListingsDescription")}
-              </Typography>
-            </Box>
-          )}
+                <CircularProgress />
+              </Box>
+            )}
+          </Box>
         </Grid>
       </Grid>
       {/* Toast */}
