@@ -556,34 +556,34 @@ const ListingsPageContent: React.FC = () => {
         <Grid item xs={12} md={9}>
           <Box sx={{ position: "relative" }}>
             {loadedListings.length > 0 ? (
-              <>
-                <Grid container spacing={4} className="mb-6">
+            <>
+              <Grid container spacing={4} className="mb-6">
                   {loadedListings.map((listing) => (
-                    <Grid item xs={12} sm={6} lg={4} key={listing.id}>
-                      <ListingCard
-                        id={listing.id}
-                        title={listing.title}
-                        description={listing.description}
-                        startingPrice={listing.startingPrice}
-                        unitOfMeasure={listing.unitOfMeasure}
-                        stockAmount={listing.stockAmount}
-                        status={listing.status}
-                        isBiddable={listing.isBiddable}
-                        expiresAt={listing.expiresAt}
-                        condition={listing.condition}
-                        materialColor={listing.materialColor}
-                        photos={listing.photos}
-                        seller={listing.seller}
-                        material={listing.material}
-                        onClick={handleListingClick}
-                        onFavoriteClick={handleFavoriteClick}
-                        onShareClick={handleShareClick}
-                        onBuyNowClick={handleBuyNowClick}
-                        onStartBiddingClick={handleStartBiddingClick}
-                      />
-                    </Grid>
-                  ))}
-                </Grid>
+                  <Grid item xs={12} sm={6} lg={4} key={listing.id}>
+                    <ListingCard
+                      id={listing.id}
+                      title={listing.title}
+                      description={listing.description}
+                      startingPrice={listing.startingPrice}
+                      unitOfMeasure={listing.unitOfMeasure}
+                      stockAmount={listing.stockAmount}
+                      status={listing.status}
+                      isBiddable={listing.isBiddable}
+                      expiresAt={listing.expiresAt}
+                      condition={listing.condition}
+                      materialColor={listing.materialColor}
+                      photos={listing.photos}
+                      seller={listing.seller}
+                      material={listing.material}
+                      onClick={handleListingClick}
+                      onFavoriteClick={handleFavoriteClick}
+                      onShareClick={handleShareClick}
+                      onBuyNowClick={handleBuyNowClick}
+                      onStartBiddingClick={handleStartBiddingClick}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
 
                 <Box
                   ref={loadMoreRef}
@@ -596,24 +596,24 @@ const ListingsPageContent: React.FC = () => {
                       "استمر بالنزول لتحميل المزيد"
                     : t("admin.noMoreUsers") || "لا توجد بيانات إضافية"}
                 </Box>
-              </>
-            ) : (
-              <Box className="text-center py-12">
-                <Package size={64} className="text-gray-400 mx-auto mb-4" />
-                <Typography
-                  variant="h6"
-                  className="text-gray-600 dark:text-gray-400 mb-2"
-                >
-                  {t("listings.noListingsFound")}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  className="text-gray-500 dark:text-gray-500 mb-4"
-                >
-                  {t("listings.noListingsDescription")}
-                </Typography>
-              </Box>
-            )}
+            </>
+          ) : (
+            <Box className="text-center py-12">
+              <Package size={64} className="text-gray-400 mx-auto mb-4" />
+              <Typography
+                variant="h6"
+                className="text-gray-600 dark:text-gray-400 mb-2"
+              >
+                {t("listings.noListingsFound")}
+              </Typography>
+              <Typography
+                variant="body2"
+                className="text-gray-500 dark:text-gray-500 mb-4"
+              >
+                {t("listings.noListingsDescription")}
+              </Typography>
+            </Box>
+          )}
 
             {isApplyingFilters && (
               <Box

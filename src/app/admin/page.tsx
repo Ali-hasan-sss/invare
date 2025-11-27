@@ -1,68 +1,65 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Users, Building2, ListOrdered, DollarSign } from "lucide-react";
 import { useTranslation } from "../../hooks/useTranslation";
-import { useUsers } from "../../hooks/useUsers";
-import { useCompanies } from "../../hooks/useCompanies";
 import { Card } from "../../components/ui/Card";
 import { StatCard } from "../../components/admin/StatCard";
 import { cn } from "../../lib/utils";
+import { useAdminDashboard } from "../../hooks/useAdminDashboard";
 
 export default function AdminDashboard() {
   const { t, currentLanguage } = useTranslation();
   const isRTL = currentLanguage.dir === "rtl";
   const {
-    users,
-    getUsers,
-    totalCount: usersCount,
-    isLoading: usersLoading,
-  } = useUsers();
-  const {
-    companies,
-    getCompanies,
-    totalCount: companiesCount,
-    isLoading: companiesLoading,
-  } = useCompanies();
-  const [isLoading, setIsLoading] = useState(true);
+    stats: dashboardStats,
+    isLoading: statsLoading,
+    getDashboardStats,
+  } = useAdminDashboard();
 
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      await Promise.all([getUsers(), getCompanies()]);
-      setIsLoading(false);
-    };
-    fetchData();
-  }, []);
+    getDashboardStats();
+  }, [getDashboardStats]);
 
-  const stats = [
+  const statCards = [
     {
       title: t("admin.totalUsers"),
-      value: usersCount || users.length,
+      value: dashboardStats.totalUsers,
       icon: Users,
       color: "bg-blue-500",
-      loading: usersLoading,
+      loading: statsLoading,
     },
     {
       title: t("admin.totalCompanies"),
-      value: companiesCount || companies.length,
+      value: dashboardStats.totalCompanies,
       icon: Building2,
       color: "bg-green-500",
-      loading: companiesLoading,
+      loading: statsLoading,
+    },
+    {
+      title: t("admin.totalListings"),
+      value: dashboardStats.totalListings,
+      icon: ListOrdered,
+      color: "bg-purple-500",
+      loading: statsLoading,
     },
     {
       title: t("admin.activeListings"),
-      value: "0",
+      value: dashboardStats.activeListings,
       icon: ListOrdered,
-      color: "bg-purple-500",
-      loading: false,
+      color: "bg-indigo-500",
+      loading: statsLoading,
     },
     {
       title: t("admin.totalRevenue"),
-      value: "0",
+      value: dashboardStats.totalIncome.toLocaleString(currentLanguage.code, {
+        style: "currency",
+        currency: "SAR",
+        maximumFractionDigits: 2,
+      }),
       icon: DollarSign,
       color: "bg-yellow-500",
-      loading: false,
+      loading: statsLoading,
     },
   ];
 
@@ -79,7 +76,7 @@ export default function AdminDashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
+        {statCards.map((stat) => (
           <StatCard
             key={stat.title}
             title={stat.title}

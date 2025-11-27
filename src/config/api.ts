@@ -153,5 +153,8 @@ export const API_CONFIG = {
       IMAGE: "/uploads/image",
       FILE: "/uploads/file",
     },
+    ADMIN: {
+      DASHBOARD: "/admin/dashboard",
+    },
   },
 } as const;

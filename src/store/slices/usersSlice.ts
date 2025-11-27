@@ -11,6 +11,7 @@ export interface UserRole {
 export interface Country {
   id: string;
   name: string;
+  countryCode?: string;
 }
 
 export interface User {

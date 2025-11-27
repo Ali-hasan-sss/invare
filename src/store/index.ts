@@ -22,6 +22,7 @@ import companyAddressesReducer from "./slices/companyAddressesSlice";
 import userAddressesReducer from "./slices/userAddressesSlice";
 import advertisementsReducer from "./slices/advertisementsSlice";
 import notificationsReducer from "./slices/notificationsSlice";
+import adminDashboardReducer from "./slices/adminDashboardSlice";
 
 export const store = configureStore({
   reducer: {
@@ -48,6 +49,7 @@ export const store = configureStore({
     userAddresses: userAddressesReducer,
     advertisements: advertisementsReducer,
     notifications: notificationsReducer,
+    adminDashboard: adminDashboardReducer,
   },
 });
 
