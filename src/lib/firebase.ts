@@ -3,7 +3,7 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyARaSyxZzenwAu9KYm4s12L2ip_SveoU-0",
-  authDomain: "invare-sa.firebaseapp.com",
+  authDomain: "invare.sa",
   projectId: "invare-sa",
   storageBucket: "invare-sa.firebasestorage.app",
   messagingSenderId: "631292521850",

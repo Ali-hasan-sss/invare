@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, ChangeEvent, FormEvent } from "react";
+import { useState, useEffect, useMemo, ChangeEvent, FormEvent } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useUsers } from "@/hooks/useUsers";
 import { useCountries } from "@/hooks/useCountries";
@@ -16,6 +16,12 @@ import { Alert, Snackbar } from "@mui/material";
 import { Save, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getCountryFlag, getCountryName } from "@/lib/countryUtils";
+import {
+  getAllDialCodes,
+  getCountryDialCode,
+  getDefaultDialCode,
+} from "@/lib/phoneUtils";
+import PhoneNumberInput from "@/components/common/PhoneNumberInput";
 import type { User } from "@/store/slices/authSlice";
 
 interface UserProfileFormProps {
@@ -42,9 +48,12 @@ export default function UserProfileForm({ user }: UserProfileFormProps) {
     firstName: user.firstName || "",
     lastName: user.lastName || "",
     email: user.email || "",
-    phone: userWithOptionalFields.phone || "",
     countryId: userWithOptionalFields.countryId || "",
   });
+  const [phoneCountryCode, setPhoneCountryCode] = useState(
+    getDefaultDialCode()
+  );
+  const [phoneNumber, setPhoneNumber] = useState("");
 
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -52,9 +61,52 @@ export default function UserProfileForm({ user }: UserProfileFormProps) {
     "success"
   );
 
+  const dialCodesLookup = useMemo(() => getAllDialCodes(), []);
+
+  const splitPhoneNumber = (
+    fullPhone?: string | null,
+    fallbackCountryCode?: string
+  ) => {
+    const fallbackDial = getCountryDialCode(fallbackCountryCode);
+    const sanitized = (fullPhone || "").replace(/\s+/g, "");
+    if (!sanitized) {
+      return { dialCode: fallbackDial, subscriber: "" };
+    }
+    const normalized = sanitized.startsWith("+") ? sanitized : `+${sanitized}`;
+    const matchedDial =
+      dialCodesLookup.find((dialCode) => normalized.startsWith(dialCode)) ||
+      fallbackDial;
+    return {
+      dialCode: matchedDial,
+      subscriber: normalized.slice(matchedDial.length),
+    };
+  };
+
+  const buildFullPhoneValue = (dialCode: string, subscriber: string) => {
+    const cleanedSubscriber = subscriber.replace(/\D/g, "");
+    return cleanedSubscriber ? `${dialCode}${cleanedSubscriber}` : "";
+  };
+
   useEffect(() => {
     getCountries();
   }, [getCountries]);
+
+  useEffect(() => {
+    const { dialCode, subscriber } = splitPhoneNumber(
+      userWithOptionalFields.phone,
+      userWithOptionalFields?.countryId
+        ? countries.find((c) => c.id === userWithOptionalFields.countryId)
+            ?.countryCode
+        : undefined
+    );
+    setPhoneCountryCode(dialCode);
+    setPhoneNumber(subscriber);
+  }, [
+    userWithOptionalFields.phone,
+    userWithOptionalFields.countryId,
+    countries,
+    dialCodesLookup,
+  ]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -65,10 +117,11 @@ export default function UserProfileForm({ user }: UserProfileFormProps) {
     e.preventDefault();
 
     try {
+      const fullPhoneValue = buildFullPhoneValue(phoneCountryCode, phoneNumber);
       const result = await updateUser(user.id, {
         firstName: formData.firstName,
         lastName: formData.lastName,
-        phone: formData.phone || undefined,
+        phone: fullPhoneValue || undefined,
         countryId: formData.countryId || undefined,
       });
 
@@ -186,20 +239,23 @@ export default function UserProfileForm({ user }: UserProfileFormProps) {
           >
             {t("profile.phone") || "الهاتف"}
           </label>
-          <div>
-            <Input
-              type="tel"
-              id="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder={t("profile.enterPhone") || "أدخل رقم الهاتف"}
-              className={cn(
-                "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 h-11",
-                isRTL && "text-right"
-              )}
-            />
-          </div>
+          <PhoneNumberInput
+            countries={countries}
+            countryValue={phoneCountryCode}
+            numberValue={phoneNumber}
+            languageCode={currentLanguage.code as "ar" | "en"}
+            loading={countriesLoading && countries.length === 0}
+            loadingText={t("common.loading") || "جاري التحميل..."}
+            placeholder={
+              t("profile.enterPhone") || t("admin.phone") || "05XXXXXXXX"
+            }
+            helperText={
+              t("admin.phoneFormatHint") ||
+              "Include the country code once; the full number will be saved without spaces."
+            }
+            onCountryChange={(code: string) => setPhoneCountryCode(code)}
+            onNumberChange={(digits: string) => setPhoneNumber(digits)}
+          />
         </div>
 
         {/* Country */}

@@ -43,6 +43,10 @@ export const initiateGoogleRedirect = async (
     }
 
     const provider = new GoogleAuthProvider();
+    // Force account selection prompt
+    provider.setCustomParameters({
+      prompt: "select_account",
+    });
     const isMobile = isMobileDevice();
 
     if (isMobile) {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -22,6 +22,14 @@ import { cn } from "@/lib/utils";
 import { Material } from "@/store/slices/materialsSlice";
 import { useUsers } from "@/hooks/useUsers";
 import { Input } from "@/components/ui/Input";
+import PhoneNumberInput from "@/components/common/PhoneNumberInput";
+import { useCountriesList } from "@/hooks/useCountries";
+import { getCountryFlag, getCountryName } from "@/lib/countryUtils";
+import {
+  getAllDialCodes,
+  getCountryDialCode,
+  getDefaultDialCode,
+} from "@/lib/phoneUtils";
 
 interface InterestsSectionProps {
   userId?: string;
@@ -44,10 +52,44 @@ const InterestsSection: React.FC<InterestsSectionProps> = ({ userId }) => {
 
   const { categories, getCategories } = useMaterialCategories();
   const { currentUser, getUserById, updateUser } = useUsers();
+  const {
+    countries,
+    getCountries,
+    isLoading: countriesLoading,
+  } = useCountriesList();
 
   const [notifyWhatsApp, setNotifyWhatsApp] = useState(false);
-  const [phoneInput, setPhoneInput] = useState("");
+  const [phoneCountryCode, setPhoneCountryCode] = useState(
+    getDefaultDialCode()
+  );
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [isSavingPhone, setIsSavingPhone] = useState(false);
+
+  const dialCodesLookup = useMemo(() => getAllDialCodes(), []);
+
+  const splitPhoneNumber = (
+    fullPhone?: string | null,
+    fallbackCountryCode?: string
+  ) => {
+    const fallbackDial = getCountryDialCode(fallbackCountryCode);
+    const sanitized = (fullPhone || "").replace(/\s+/g, "");
+    if (!sanitized) {
+      return { dialCode: fallbackDial, subscriber: "" };
+    }
+    const normalized = sanitized.startsWith("+") ? sanitized : `+${sanitized}`;
+    const matchedDial =
+      dialCodesLookup.find((dialCode) => normalized.startsWith(dialCode)) ||
+      fallbackDial;
+    return {
+      dialCode: matchedDial,
+      subscriber: normalized.slice(matchedDial.length),
+    };
+  };
+
+  const buildFullPhoneValue = (dialCode: string, subscriber: string) => {
+    const cleanedSubscriber = subscriber.replace(/\D/g, "");
+    return cleanedSubscriber ? `${dialCode}${cleanedSubscriber}` : "";
+  };
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
@@ -60,23 +102,31 @@ const InterestsSection: React.FC<InterestsSectionProps> = ({ userId }) => {
     if (userId) {
       getUserById(userId);
     }
+    if (countries.length === 0) {
+      getCountries();
+    }
   }, [
     getFavoriteMaterials,
     getCategories,
     getUserById,
+    getCountries,
     userId,
     currentLanguage.code,
+    countries.length,
   ]);
 
   useEffect(() => {
     if (currentUser?.phone) {
-      setPhoneInput(currentUser.phone);
+      const { dialCode, subscriber } = splitPhoneNumber(currentUser.phone);
+      setPhoneCountryCode(dialCode);
+      setPhoneNumber(subscriber);
       setNotifyWhatsApp(true);
     } else {
-      setPhoneInput("");
+      setPhoneCountryCode(getDefaultDialCode());
+      setPhoneNumber("");
       setNotifyWhatsApp(false);
     }
-  }, [currentUser?.phone]);
+  }, [currentUser?.phone, dialCodesLookup]);
 
   // Fetch materials when category is selected
   useEffect(() => {
@@ -147,13 +197,20 @@ const InterestsSection: React.FC<InterestsSectionProps> = ({ userId }) => {
   const handleToggleWhatsApp = (checked: boolean) => {
     setNotifyWhatsApp(checked);
     if (!checked && currentUser?.phone) {
-      setPhoneInput(currentUser.phone);
+      const { dialCode, subscriber } = splitPhoneNumber(currentUser.phone);
+      setPhoneCountryCode(dialCode);
+      setPhoneNumber(subscriber);
+    }
+    if (checked && !currentUser?.phone) {
+      setPhoneCountryCode(getDefaultDialCode());
+      setPhoneNumber("");
     }
   };
 
   const handleSavePhone = async () => {
     if (!userId) return;
-    if (!phoneInput.trim()) {
+    const cleanedSubscriber = phoneNumber.replace(/\D/g, "");
+    if (!cleanedSubscriber) {
       showToast(
         t("onboarding.phoneRequired") || "يرجى إدخال رقم الهاتف",
         "error"
@@ -163,7 +220,11 @@ const InterestsSection: React.FC<InterestsSectionProps> = ({ userId }) => {
 
     try {
       setIsSavingPhone(true);
-      const result = await updateUser(userId, { phone: phoneInput.trim() });
+      const fullPhoneValue = buildFullPhoneValue(
+        phoneCountryCode,
+        cleanedSubscriber
+      );
+      const result = await updateUser(userId, { phone: fullPhoneValue });
       if (result.meta.requestStatus === "fulfilled") {
         showToast(
           t("onboarding.phoneSavedSuccess") || "تم حفظ رقم الواتساب بنجاح",
@@ -304,13 +365,23 @@ const InterestsSection: React.FC<InterestsSectionProps> = ({ userId }) => {
               <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
                 {t("onboarding.phoneInputLabel") || "رقم الواتساب"}
               </label>
-              <Input
-                value={phoneInput}
-                onChange={(e) => setPhoneInput(e.target.value)}
+              <PhoneNumberInput
+                countries={countries}
+                countryValue={phoneCountryCode}
+                numberValue={phoneNumber}
+                languageCode={currentLanguage.code as "ar" | "en"}
+                loading={countriesLoading && countries.length === 0}
+                loadingText={t("common.loading") || "جاري التحميل..."}
                 placeholder={
-                  t("onboarding.phoneInputPlaceholder") || "مثال: 9665XXXXXXX"
+                  t("onboarding.phoneInputPlaceholder") || "مثال: 5XXXXXXX"
+                }
+                helperText={
+                  t("admin.phoneFormatHint") ||
+                  "اختر رمز الدولة ثم أدخل الرقم بدون مسافات، وسيتم حفظه كاملاً تلقائياً."
                 }
                 disabled={isSavingPhone}
+                onCountryChange={(code: string) => setPhoneCountryCode(code)}
+                onNumberChange={(digits: string) => setPhoneNumber(digits)}
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {t("onboarding.phoneHint") ||

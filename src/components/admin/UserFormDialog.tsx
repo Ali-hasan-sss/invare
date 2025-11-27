@@ -35,6 +35,7 @@ import {
   getCountryDialCode,
   getDefaultDialCode,
 } from "../../lib/phoneUtils";
+import PhoneNumberInput from "../common/PhoneNumberInput";
 
 interface UserFormDialogProps {
   open: boolean;
@@ -319,116 +320,27 @@ export const UserFormDialog: React.FC<UserFormDialogProps> = ({
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {t("admin.phone")}
             </label>
-            {countriesLoading ? (
-              <div className="text-center py-2 text-gray-500 dark:text-gray-400 text-sm">
-                {t("admin.loading") || "جاري التحميل..."}
-              </div>
-            ) : (
-              <div className="space-y-1.5" dir="ltr">
-                <div className="flex items-stretch gap-0">
-                  <FormControl
-                    className="w-36 flex-shrink-0"
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderTopRightRadius: 0,
-                        borderBottomRightRadius: 0,
-                        marginRight: "-1px",
-                      },
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "rgb(209 213 219)",
-                      },
-                      "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "rgb(59 130 246)",
-                      },
-                      ".dark & .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "rgb(75 85 99)",
-                      },
-                    }}
-                  >
-                    <Select
-                      value={phoneCountryCode}
-                      onChange={(e: SelectChangeEvent<string>) => {
-                        const newDialCode = e.target.value;
-                        setPhoneCountryCode(newDialCode);
-                        syncPhoneValue(newDialCode, phoneNumber);
-                      }}
-                      displayEmpty
-                      MenuProps={{
-                        PaperProps: {
-                          sx: {
-                            backgroundColor: "rgb(255 255 255)",
-                            ".dark &": {
-                              backgroundColor: "rgb(17 24 39)",
-                            },
-                          },
-                        },
-                      }}
-                      renderValue={(value) => (
-                        <span className="text-gray-900 dark:text-white font-medium">
-                          {value || getDefaultDialCode()}
-                        </span>
-                      )}
-                    >
-                      {countries.map((country) => {
-                        const flag = getCountryFlag(country.countryCode);
-                        const dialCode = getCountryDialCode(
-                          country.countryCode
-                        );
-                        const translatedName = getCountryName(
-                          country.countryCode,
-                          currentLanguage.code as "ar" | "en"
-                        );
-                        const displayName =
-                          translatedName || country.countryName || "";
-                        return (
-                          <MenuItem
-                            key={`${country.id}-${dialCode}`}
-                            value={dialCode}
-                            sx={{
-                              color: "rgb(17 24 39)",
-                              ".dark &": {
-                                color: "rgb(249 250 251)",
-                              },
-                            }}
-                          >
-                            <span className="flex items-center gap-2">
-                              <span className="text-lg">{flag}</span>
-                              <span>{displayName}</span>
-                              <span className="text-gray-500 dark:text-gray-400">
-                                {dialCode}
-                              </span>
-                            </span>
-                          </MenuItem>
-                        );
-                      })}
-                    </Select>
-                  </FormControl>
-                  <Input
-                    type="tel"
-                    inputMode="tel"
-                    name="phoneNumber"
-                    value={phoneNumber}
-                    onChange={(e) => {
-                      const digitsOnly = e.target.value.replace(/\D/g, "");
-                      setPhoneNumber(digitsOnly);
-                      syncPhoneValue(phoneCountryCode, digitsOnly);
-                    }}
-                    placeholder={t("admin.phone") || "05XXXXXXXX"}
-                    className="flex-1 -ml-px"
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderTopLeftRadius: 0,
-                        borderBottomLeftRadius: 0,
-                      },
-                    }}
-                  />
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {t("admin.phoneFormatHint") ||
-                    "Include the country code once; the full number will be saved without spaces."}
-                </p>
-              </div>
-            )}
+            <PhoneNumberInput
+              countries={countries}
+              countryValue={phoneCountryCode}
+              numberValue={phoneNumber}
+              languageCode={currentLanguage.code as "ar" | "en"}
+              loading={countriesLoading && countries.length === 0}
+              loadingText={t("admin.loading") || "جاري التحميل..."}
+              placeholder={t("admin.phone") || "05XXXXXXXX"}
+              helperText={
+                t("admin.phoneFormatHint") ||
+                "Include the country code once; the full number will be saved without spaces."
+              }
+              onCountryChange={(code) => {
+                setPhoneCountryCode(code);
+                syncPhoneValue(code, phoneNumber);
+              }}
+              onNumberChange={(digits) => {
+                setPhoneNumber(digits);
+                syncPhoneValue(phoneCountryCode, digits);
+              }}
+            />
           </div>
 
           <div>
