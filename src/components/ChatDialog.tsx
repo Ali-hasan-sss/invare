@@ -8,6 +8,10 @@ import {
   DialogActions,
   useMediaQuery,
   useTheme,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -24,9 +28,20 @@ import {
   Loader2,
   DollarSign,
   ExternalLink,
+  Image as ImageIcon,
+  XCircle,
+  Paperclip,
+  File,
+  MapPin,
 } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import type { ChatMessage, Chat } from "@/store/slices/chatSlice";
+import { getMessagingInstance, onMessage } from "@/lib/firebase";
+import { subscribeToChatTopic, parseFCMChatMessage } from "@/lib/fcmService";
+import { useAppDispatch } from "@/store/hooks";
+import { addRealtimeMessage } from "@/store/slices/chatSlice";
+import { uploadImage, uploadFile } from "@/services/uploadService";
 
 interface ChatDialogProps {
   open: boolean;
@@ -49,6 +64,7 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
   const { user } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const {
     currentChat,
     chats,
@@ -68,6 +84,13 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
   const [showPriceForm, setShowPriceForm] = useState(false);
   const [newPrice, setNewPrice] = useState("");
   const [isUpdatingPrice, setIsUpdatingPrice] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [attachmentMenuAnchor, setAttachmentMenuAnchor] =
+    useState<null | HTMLElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesLoadedRef = useRef<string | null>(null); // Track which chat's messages have been loaded
@@ -105,8 +128,532 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
       messagesLoadedRef.current = null;
       setShowPriceForm(false);
       setNewPrice("");
+      setSelectedImage(null);
+      setImagePreview(null);
     }
   }, [open]);
+
+  // Fetch messages every time dialog opens
+  useEffect(() => {
+    if (open && currentChat?.id) {
+      // Reset the loaded ref to allow fetching messages again
+      messagesLoadedRef.current = null;
+      // Fetch messages
+      getMessages(currentChat.id);
+    }
+  }, [open, currentChat?.id, getMessages]);
+
+  // Handle attachment menu
+  const handleAttachmentMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAttachmentMenuAnchor(event.currentTarget);
+  };
+
+  const handleAttachmentMenuClose = () => {
+    setAttachmentMenuAnchor(null);
+  };
+
+  // Handle image selection from menu
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleAttachmentMenuClose();
+      handleFileUpload(file, "image");
+    }
+    // Reset input
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
+  };
+
+  // Handle file selection from menu
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleAttachmentMenuClose();
+      handleFileUpload(file, "file");
+    }
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // Handle file upload and send message
+  const handleFileUpload = async (file: File, type: "image" | "file") => {
+    if (!currentChat || !user) return;
+
+    setIsUploading(true);
+
+    try {
+      let fileUrl: string;
+      let messageType: "image" | "file";
+
+      // Upload file
+      if (type === "image") {
+        // Validate image
+        if (!file.type.startsWith("image/")) {
+          showToast(
+            t("chat.invalidImageType") || "Please select an image file",
+            "error"
+          );
+          setIsUploading(false);
+          return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+          showToast(
+            t("chat.imageTooLarge") || "Image size must be less than 10MB",
+            "error"
+          );
+          setIsUploading(false);
+          return;
+        }
+        fileUrl = await uploadImage(file);
+        messageType = "image";
+      } else {
+        // Validate file size (20 MB)
+        if (file.size > 20 * 1024 * 1024) {
+          showToast(
+            t("chat.fileTooLarge") || "File size must be less than 20MB",
+            "error"
+          );
+          setIsUploading(false);
+          return;
+        }
+        fileUrl = await uploadFile(file);
+        messageType = "file";
+      }
+
+      // Send message with attachment URL
+      await sendMessage({
+        chatId: currentChat.id,
+        senderUserId: user.id,
+        content: file.name || (type === "image" ? "صورة" : "ملف"),
+        type: messageType,
+        attachmentUrl: fileUrl,
+        attachmentName: file.name,
+        attachmentMimeType: file.type,
+        attachmentSize: file.size,
+      });
+
+      showToast(
+        type === "image"
+          ? t("chat.imageSent") || "Image sent successfully"
+          : t("chat.fileSent") || "File sent successfully",
+        "success"
+      );
+    } catch (error: any) {
+      console.error("Error uploading file:", error);
+      showToast(
+        error.message || t("chat.uploadError") || "Failed to upload file",
+        "error"
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Remove selected image (legacy - for old image selection)
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // Handle location sharing
+  const handleShareLocation = async () => {
+    if (!currentChat || !user) return;
+
+    handleAttachmentMenuClose();
+    setIsUploading(true);
+
+    try {
+      // Get user's current location
+      if (!navigator.geolocation) {
+        showToast(
+          t("chat.geolocationNotSupported") ||
+            "Geolocation is not supported by your browser",
+          "error"
+        );
+        setIsUploading(false);
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+
+          // Send message with location data
+          await sendMessage({
+            chatId: currentChat.id,
+            senderUserId: user.id,
+            content: t("chat.locationShared") || "موقعي",
+            type: "text",
+            // Store location data in attachmentUrl as JSON string or use a custom field
+            attachmentUrl: `https://www.google.com/maps?q=${latitude},${longitude}`,
+            attachmentName: `${latitude},${longitude}`,
+            attachmentMimeType: "application/location",
+            // Store coordinates in attachmentSize as a way to pass data (or use a custom API field)
+            // For now, we'll encode coordinates in attachmentName
+          });
+
+          showToast(
+            t("chat.locationSent") || "Location sent successfully",
+            "success"
+          );
+          setIsUploading(false);
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          let errorMessage =
+            t("chat.locationError") || "Failed to get location";
+          if (error.code === error.PERMISSION_DENIED) {
+            errorMessage =
+              t("chat.locationPermissionDenied") ||
+              "Location permission denied";
+          } else if (error.code === error.POSITION_UNAVAILABLE) {
+            errorMessage =
+              t("chat.locationUnavailable") || "Location unavailable";
+          } else if (error.code === error.TIMEOUT) {
+            errorMessage =
+              t("chat.locationTimeout") || "Location request timeout";
+          }
+          showToast(errorMessage, "error");
+          setIsUploading(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
+        }
+      );
+    } catch (error: any) {
+      console.error("Error sharing location:", error);
+      showToast(
+        error.message || t("chat.locationError") || "Failed to share location",
+        "error"
+      );
+      setIsUploading(false);
+    }
+  };
+
+  // Notify Service Worker about active chat (to prevent notifications when user is in chat)
+  useEffect(() => {
+    const notifyServiceWorker = async () => {
+      if (!("serviceWorker" in navigator)) {
+        return;
+      }
+
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        if (registration.active) {
+          // Send message to service worker about active chat
+          registration.active.postMessage({
+            type: "CHAT_STATE_CHANGE",
+            chatId: open && currentChat?.id ? currentChat.id : null,
+            isOpen: open,
+          });
+        }
+      } catch (error) {
+        console.error("Error notifying service worker:", error);
+      }
+    };
+
+    notifyServiceWorker();
+  }, [open, currentChat?.id]);
+
+  // Handle messages from Service Worker (for background messages)
+  useEffect(() => {
+    if (!open || !currentChat?.id) {
+      return;
+    }
+
+    // Check if service worker is available
+    if (!("serviceWorker" in navigator)) {
+      return;
+    }
+
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      // Check if this is an FCM message from service worker
+      if (event.data && event.data.type === "FCM_MESSAGE") {
+        const payload = event.data.payload;
+
+        console.log("📨 FCM message received from Service Worker:", {
+          payload,
+          currentChatId: currentChat.id,
+          payloadChatId: payload.data?.chatId,
+        });
+
+        // Parse the message
+        const chatMessage = parseFCMChatMessage(payload);
+
+        console.log("📝 Parsed chat message:", chatMessage);
+
+        // Check if message belongs to current chat
+        if (chatMessage && payload.data?.chatId === currentChat.id) {
+          console.log("✅ Adding message to chat:", currentChat.id);
+          // Add message to Redux store
+          dispatch(
+            addRealtimeMessage({
+              chatId: currentChat.id,
+              message: chatMessage,
+            })
+          );
+        } else {
+          console.log("⚠️ Message not for current chat or failed to parse:", {
+            chatMessage,
+            payloadChatId: payload.data?.chatId,
+            currentChatId: currentChat.id,
+          });
+        }
+      }
+    };
+
+    // Get service worker registration and listen for messages
+    // Use ready promise to ensure service worker is active (important for Edge)
+    let activeWorker: ServiceWorker | null = null;
+
+    const setupServiceWorkerListener = async () => {
+      try {
+        // Wait for service worker to be ready
+        const registration = await navigator.serviceWorker.ready;
+
+        if (!registration) {
+          console.warn("Service Worker not ready");
+          return;
+        }
+
+        // Listen for messages from Service Worker (global listener)
+        navigator.serviceWorker.addEventListener(
+          "message",
+          handleServiceWorkerMessage
+        );
+
+        // Also listen on the active worker (for better Edge compatibility)
+        if (registration.active) {
+          activeWorker = registration.active;
+          (registration.active as any).addEventListener(
+            "message",
+            handleServiceWorkerMessage
+          );
+        }
+
+        console.log(
+          "✅ Service Worker message listener registered for chat:",
+          currentChat.id,
+          "SW state:",
+          registration.active?.state
+        );
+      } catch (error) {
+        console.error("Error setting up Service Worker listener:", error);
+      }
+    };
+
+    setupServiceWorkerListener();
+
+    return () => {
+      // Remove global listener
+      navigator.serviceWorker.removeEventListener(
+        "message",
+        handleServiceWorkerMessage
+      );
+
+      // Remove active worker listener if exists
+      if (activeWorker) {
+        (activeWorker as any).removeEventListener(
+          "message",
+          handleServiceWorkerMessage
+        );
+      }
+    };
+  }, [open, currentChat?.id, dispatch]);
+
+  // Listen for FCM messages when chat dialog is closed to show Toast
+  useEffect(() => {
+    // Only listen when dialog is closed
+    if (open) {
+      return;
+    }
+
+    // Check if service worker is available
+    if (!("serviceWorker" in navigator)) {
+      return;
+    }
+
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      // Check if this is an FCM message from service worker
+      if (event.data && event.data.type === "FCM_MESSAGE") {
+        const payload = event.data.payload;
+
+        console.log("📨 FCM message received (chat closed):", payload);
+
+        // Parse the message
+        const chatMessage = parseFCMChatMessage(payload);
+
+        if (chatMessage) {
+          // Get sender name from message or use default
+          const senderName =
+            (chatMessage.sender?.firstName &&
+              chatMessage.sender?.lastName &&
+              `${chatMessage.sender.firstName} ${chatMessage.sender.lastName}`) ||
+            chatMessage.sender?.firstName ||
+            chatMessage.sender?.email ||
+            payload.notification?.title ||
+            "شخص ما";
+
+          // Get message content (truncate if too long)
+          let messageContent =
+            chatMessage.content ||
+            payload.notification?.body ||
+            payload.data?.content ||
+            "رسالة جديدة";
+
+          // Truncate long messages for Toast
+          if (messageContent.length > 100) {
+            messageContent = messageContent.substring(0, 100) + "...";
+          }
+
+          // Show Toast notification
+          showToast(`${senderName}: ${messageContent}`, "info");
+
+          // Add message to Redux store to update chat list
+          if (payload.data?.chatId) {
+            dispatch(
+              addRealtimeMessage({
+                chatId: payload.data.chatId,
+                message: chatMessage,
+              })
+            );
+          }
+        } else {
+          // If message parsing failed, still show notification from payload
+          const notificationTitle =
+            payload.notification?.title || "رسالة جديدة";
+          const notificationBody =
+            payload.notification?.body ||
+            payload.data?.content ||
+            "لديك رسالة جديدة";
+          showToast(`${notificationTitle}: ${notificationBody}`, "info");
+        }
+      }
+    };
+
+    // Get service worker registration and listen for messages
+    let activeWorker: ServiceWorker | null = null;
+
+    const setupServiceWorkerListener = async () => {
+      try {
+        // Wait for service worker to be ready
+        const registration = await navigator.serviceWorker.ready;
+
+        if (!registration) {
+          console.warn("Service Worker not ready");
+          return;
+        }
+
+        // Listen for messages from Service Worker (global listener)
+        navigator.serviceWorker.addEventListener(
+          "message",
+          handleServiceWorkerMessage
+        );
+
+        // Also listen on the active worker (for better Edge compatibility)
+        if (registration.active) {
+          activeWorker = registration.active;
+          (registration.active as any).addEventListener(
+            "message",
+            handleServiceWorkerMessage
+          );
+        }
+
+        console.log(
+          "✅ Service Worker message listener registered (chat closed - Toast mode)"
+        );
+      } catch (error) {
+        console.error("Error setting up Service Worker listener:", error);
+      }
+    };
+
+    setupServiceWorkerListener();
+
+    return () => {
+      // Remove global listener
+      navigator.serviceWorker.removeEventListener(
+        "message",
+        handleServiceWorkerMessage
+      );
+
+      // Remove active worker listener if exists
+      if (activeWorker) {
+        (activeWorker as any).removeEventListener(
+          "message",
+          handleServiceWorkerMessage
+        );
+      }
+    };
+  }, [open, dispatch, showToast]);
+
+  // Track message listener for cleanup
+  const unsubscribeMessageRef = useRef<(() => void) | null>(null);
+
+  // Subscribe to FCM topic and listen for real-time messages (foreground)
+  useEffect(() => {
+    if (!open || !currentChat?.id) {
+      return;
+    }
+
+    const setupFCM = async () => {
+      try {
+        // Get messaging instance safely
+        const messagingInstance = await getMessagingInstance();
+        if (!messagingInstance) {
+          if (process.env.NODE_ENV === "development") {
+            console.debug("Firebase Messaging is not available");
+          }
+          return;
+        }
+
+        // Subscribe to chat topic
+        await subscribeToChatTopic(currentChat.id);
+
+        // Listen for incoming messages (foreground messages)
+        unsubscribeMessageRef.current = onMessage(
+          messagingInstance,
+          (payload) => {
+            if (process.env.NODE_ENV === "development") {
+              console.log("FCM foreground message received:", payload);
+            }
+
+            // Parse the message
+            const chatMessage = parseFCMChatMessage(payload);
+
+            if (chatMessage && payload.data?.chatId === currentChat.id) {
+              // Add message to Redux store
+              dispatch(
+                addRealtimeMessage({
+                  chatId: currentChat.id,
+                  message: chatMessage,
+                })
+              );
+            }
+          }
+        );
+      } catch (error) {
+        console.error("Error setting up FCM:", error);
+      }
+    };
+
+    setupFCM();
+
+    // Cleanup: only cleanup message listener when chat changes (not unsubscribe from topic)
+    return () => {
+      if (unsubscribeMessageRef.current) {
+        unsubscribeMessageRef.current();
+        unsubscribeMessageRef.current = null;
+      }
+    };
+  }, [open, currentChat?.id, dispatch]);
 
   // Fetch listing details when dialog opens (for seller to see current price)
   useEffect(() => {
@@ -122,17 +669,10 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
       if (open && user) {
         setIsInitializing(true);
         try {
-          // If currentChat is already set (e.g., from chats page), use it and load messages
+          // If currentChat is already set (e.g., from chats page), use it
+          // Messages will be loaded by the useEffect that watches for open && currentChat?.id
           // This prevents creating a new chat when opening from chats page
           if (currentChat?.id) {
-            // Chat is already set (from chats page), just load messages if not already loaded
-            if (
-              messagesLoadedRef.current !== currentChat.id &&
-              (!currentChat.messages || currentChat.messages.length === 0)
-            ) {
-              await getMessages(currentChat.id);
-              messagesLoadedRef.current = currentChat.id;
-            }
             setIsInitializing(false);
             return;
           }
@@ -358,16 +898,22 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
   }, [allMessages]);
 
   const handleSendMessage = async () => {
-    if (!message.trim() || !currentChat || !user) return;
+    if ((!message.trim() && !selectedImage) || !currentChat || !user) return;
 
     const messageContent = message.trim();
     const tempMessageId = `temp-${Date.now()}-${Math.random()}`;
+
+    // Determine message type according to API
+    const messageType: "text" | "image" = selectedImage ? "image" : "text";
 
     // Create optimistic message
     const optimisticMessage: ChatMessage = {
       id: tempMessageId,
       senderUserId: user.id,
       content: messageContent,
+      type: messageType,
+      imageUrl: imagePreview || undefined,
+      messageType: messageType, // Legacy field
       createdAt: new Date().toISOString(),
       isPending: true,
     };
@@ -379,14 +925,23 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
       return newMap;
     });
 
-    // Clear input immediately
+    // Clear input and image immediately
+    const savedMessage = messageContent;
+    const savedImage = selectedImage;
     setMessage("");
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
 
     try {
       const result = await sendMessage({
         chatId: currentChat.id,
         senderUserId: user.id,
         content: messageContent,
+        type: messageType,
+        imageFile: savedImage || undefined, // Will be uploaded first, then message sent
       });
 
       // Message sent successfully
@@ -404,8 +959,16 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
         newMap.delete(tempMessageId);
         return newMap;
       });
-      // Restore message in input on error
-      setMessage(messageContent);
+      // Restore message and image on error
+      setMessage(savedMessage);
+      if (savedImage) {
+        setSelectedImage(savedImage);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(savedImage);
+      }
     }
   };
 
@@ -722,7 +1285,134 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
                           : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700"
                       )}
                     >
-                      <p className="text-sm break-words">{msg.content}</p>
+                      {/* Image/Attachment */}
+                      {(msg.attachmentUrl ||
+                        msg.imageUrl ||
+                        msg.imageThumbnailUrl) &&
+                        (msg.type === "image" ||
+                          msg.messageType === "image") && (
+                          <div className="mb-2 rounded-lg overflow-hidden">
+                            <a
+                              href={
+                                msg.attachmentUrl ||
+                                msg.imageUrl ||
+                                msg.imageThumbnailUrl
+                              }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block"
+                            >
+                              <img
+                                src={
+                                  msg.attachmentUrl ||
+                                  msg.imageThumbnailUrl ||
+                                  msg.imageUrl
+                                }
+                                alt={
+                                  msg.content || msg.attachmentName || "Image"
+                                }
+                                className="max-w-full h-auto max-h-64 object-contain rounded-lg cursor-pointer"
+                                loading="lazy"
+                              />
+                            </a>
+                          </div>
+                        )}
+                      {/* Voice message */}
+                      {msg.type === "voice" && msg.attachmentUrl && (
+                        <div className="mb-2 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-sm font-medium">
+                              {t("chat.voiceMessage") || "Voice message"}
+                            </span>
+                            {msg.attachmentDuration && (
+                              <span className="text-xs text-gray-500">
+                                ({Math.round(msg.attachmentDuration)}s)
+                              </span>
+                            )}
+                          </div>
+                          <audio
+                            controls
+                            className="w-full"
+                            src={msg.attachmentUrl}
+                          >
+                            <source
+                              src={msg.attachmentUrl}
+                              type={msg.attachmentMimeType || "audio/webm"}
+                            />
+                            {t("chat.audioNotSupported") ||
+                              "Your browser does not support audio playback"}
+                          </audio>
+                        </div>
+                      )}
+                      {/* Location message */}
+                      {msg.attachmentUrl &&
+                        msg.attachmentMimeType === "application/location" && (
+                          <div className="mb-2 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                            <div className="flex items-center gap-2 mb-2">
+                              <MapPin className="h-5 w-5 text-secondary-600 dark:text-secondary-400" />
+                              <span className="text-sm font-medium">
+                                {t("chat.locationShared") || "Location shared"}
+                              </span>
+                            </div>
+                            <a
+                              href={msg.attachmentUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 text-sm text-secondary-600 dark:text-secondary-400 hover:underline"
+                            >
+                              <span>
+                                {t("chat.viewOnMap") || "View on Google Maps"}
+                              </span>
+                              <ExternalLink className="h-4 w-4" />
+                            </a>
+                            {msg.attachmentName && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                {msg.attachmentName}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      {/* Other attachment types (video, file) */}
+                      {msg.attachmentUrl &&
+                        msg.type !== "image" &&
+                        msg.type !== "text" &&
+                        msg.type !== "voice" &&
+                        msg.attachmentMimeType !== "application/location" && (
+                          <div className="mb-2 p-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                            <a
+                              href={msg.attachmentUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 text-sm"
+                            >
+                              <File className="h-4 w-4" />
+                              <span>
+                                {msg.attachmentName ||
+                                  t("chat.attachFile") ||
+                                  "Attachment"}
+                              </span>
+                              {msg.attachmentSize && (
+                                <span className="text-xs text-gray-500">
+                                  ({(msg.attachmentSize / 1024).toFixed(1)} KB)
+                                </span>
+                              )}
+                            </a>
+                          </div>
+                        )}
+                      {/* Text content */}
+                      {msg.content &&
+                        !(
+                          msg.attachmentMimeType === "application/location" &&
+                          msg.content === "chat.locationShared"
+                        ) && (
+                          <p className="text-sm break-words">
+                            {msg.content.startsWith("chat.") ||
+                            msg.content.startsWith("common.")
+                              ? t(msg.content) || msg.content
+                              : msg.content}
+                          </p>
+                        )}
+                      {/* Timestamp */}
                       {msg.createdAt && (
                         <p
                           className={cn(
@@ -774,30 +1464,143 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
         }}
         className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
       >
-        <div className="flex items-center gap-2 w-full">
-          <Input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder={t("chat.typeMessage")}
-            disabled={isInitializing || !currentChat}
-            className="flex-1 text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-sm sm:text-base"
-          />
-          <Button
-            onClick={handleSendMessage}
-            disabled={!message.trim() || isInitializing || !currentChat}
-            className="!bg-blue-600 hover:!bg-blue-700 dark:!bg-blue-500 dark:hover:!bg-blue-600 !text-white font-semibold px-3 sm:px-4"
-            size={isMobile ? "sm" : "md"}
-          >
-            <Send
-              className={cn(
-                "h-4 w-4 sm:h-5 sm:w-5",
-                isRTL ? "ml-1 sm:ml-2 rotate-180" : "mr-1 sm:mr-2"
-              )}
+        <div className="flex flex-col gap-2 w-full">
+          {/* Image Preview */}
+          {imagePreview && (
+            <div className="relative inline-block max-w-xs">
+              <button
+                onClick={handleRemoveImage}
+                className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 z-10"
+              >
+                <XCircle className="h-4 w-4" />
+              </button>
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="max-w-full h-auto max-h-32 rounded-lg object-contain"
+              />
+            </div>
+          )}
+          <div className="flex items-center gap-2 w-full">
+            {/* Hidden file inputs */}
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+              className="hidden"
             />
-            <span className="hidden sm:inline">{t("chat.send")}</span>
-          </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            {/* Attachment Menu Button */}
+            <button
+              onClick={handleAttachmentMenuOpen}
+              disabled={isInitializing || !currentChat || isUploading}
+              className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              title={t("chat.attachFile") || "Attach file"}
+            >
+              {isUploading ? (
+                <Loader2 className="h-5 w-5 text-gray-600 dark:text-gray-400 animate-spin" />
+              ) : (
+                <Paperclip className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              )}
+            </button>
+            {/* Share Location Button */}
+            <button
+              onClick={handleShareLocation}
+              disabled={isInitializing || !currentChat || isUploading}
+              className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              title={t("chat.shareLocation") || "Share location"}
+            >
+              {isUploading ? (
+                <Loader2 className="h-5 w-5 text-gray-600 dark:text-gray-400 animate-spin" />
+              ) : (
+                <MapPin className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              )}
+            </button>
+            {/* Attachment Menu */}
+            <Menu
+              anchorEl={attachmentMenuAnchor}
+              open={Boolean(attachmentMenuAnchor)}
+              onClose={handleAttachmentMenuClose}
+              anchorOrigin={{
+                vertical: "top",
+                horizontal: isRTL ? "right" : "left",
+              }}
+              transformOrigin={{
+                vertical: "bottom",
+                horizontal: isRTL ? "right" : "left",
+              }}
+            >
+              <MenuItem
+                onClick={() => {
+                  handleAttachmentMenuClose();
+                  imageInputRef.current?.click();
+                }}
+                disabled={isUploading}
+              >
+                <ListItemIcon>
+                  <ImageIcon className="h-5 w-5" />
+                </ListItemIcon>
+                <ListItemText>
+                  {t("chat.attachImage") || "Attach image"}
+                </ListItemText>
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  handleAttachmentMenuClose();
+                  fileInputRef.current?.click();
+                }}
+                disabled={isUploading}
+              >
+                <ListItemIcon>
+                  <File className="h-5 w-5" />
+                </ListItemIcon>
+                <ListItemText>
+                  {t("chat.attachFile") || "Attach file"}
+                </ListItemText>
+              </MenuItem>
+              <MenuItem onClick={handleShareLocation} disabled={isUploading}>
+                <ListItemIcon>
+                  <MapPin className="h-5 w-5" />
+                </ListItemIcon>
+                <ListItemText>
+                  {t("chat.shareLocation") || "Share location"}
+                </ListItemText>
+              </MenuItem>
+            </Menu>
+            <Input
+              type="text"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder={t("chat.typeMessage")}
+              disabled={isInitializing || !currentChat}
+              className="flex-1 text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-sm sm:text-base"
+            />
+            <Button
+              onClick={handleSendMessage}
+              disabled={
+                (!message.trim() && !selectedImage) ||
+                isInitializing ||
+                !currentChat
+              }
+              className="!bg-blue-600 hover:!bg-blue-700 dark:!bg-blue-500 dark:hover:!bg-blue-600 !text-white font-semibold px-3 sm:px-4"
+              size={isMobile ? "sm" : "md"}
+            >
+              <Send
+                className={cn(
+                  "h-4 w-4 sm:h-5 sm:w-5",
+                  isRTL ? "ml-1 sm:ml-2 rotate-180" : "mr-1 sm:mr-2"
+                )}
+              />
+              <span className="hidden sm:inline">{t("chat.send")}</span>
+            </Button>
+          </div>
         </div>
       </DialogActions>
     </Dialog>

@@ -45,7 +45,7 @@ export const useChat = () => {
 
   // Send message
   const sendMessage = useCallback(
-    async (messageData: AddChatMessageData) => {
+    async (messageData: AddChatMessageData & { imageFile?: File }) => {
       return dispatch(addChatMessage(messageData));
     },
     [dispatch]

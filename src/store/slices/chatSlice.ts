@@ -3,12 +3,38 @@ import apiClient from "../../lib/apiClient";
 import { API_CONFIG } from "../../config/api";
 
 // Types
+export type MessageType =
+  | "text"
+  | "image"
+  | "video"
+  | "audio"
+  | "voice"
+  | "file";
+
 export interface ChatMessage {
   id: string;
   senderUserId: string;
   content: string;
+  type: MessageType; // Message type according to API
+  // Attachment fields (for non-text messages)
+  attachmentUrl?: string;
+  attachmentName?: string;
+  attachmentMimeType?: string;
+  attachmentSize?: number; // Size in bytes
+  attachmentDuration?: number; // Duration in seconds (for audio/video/voice)
+  // Legacy fields for backward compatibility
+  imageUrl?: string;
+  imageThumbnailUrl?: string;
+  messageType?: MessageType; // Deprecated, use type instead
   createdAt?: string;
   isPending?: boolean; // For optimistic updates
+  // Sender info (from API)
+  sender?: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+  };
 }
 
 export interface Chat {
@@ -63,6 +89,17 @@ export interface AddChatMessageData {
   chatId: string;
   senderUserId: string;
   content: string;
+  type?: MessageType; // Message type: text (default), image, video, audio, voice, file
+  // Attachment fields (required for non-text messages)
+  attachmentUrl?: string;
+  attachmentName?: string;
+  attachmentMimeType?: string;
+  attachmentSize?: number;
+  attachmentDuration?: number; // For audio/video/voice
+  // Legacy fields
+  imageFile?: File; // For backward compatibility, will be uploaded first
+  imageUrl?: string;
+  imageThumbnailUrl?: string;
 }
 
 // Initial state
@@ -129,17 +166,106 @@ export const updateChatStatus = createAsyncThunk<
   }
 });
 
+// Upload attachment file first, then send message
+export const uploadChatAttachment = createAsyncThunk<
+  {
+    attachmentUrl: string;
+    attachmentName: string;
+    attachmentMimeType: string;
+    attachmentSize: number;
+    type: MessageType;
+  },
+  { chatId: string; file: File; type: MessageType },
+  { rejectValue: string }
+>(
+  "chat/uploadAttachment",
+  async ({ chatId, file, type }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await apiClient.post(
+        API_CONFIG.ENDPOINTS.CHAT.UPLOAD_ATTACHMENT(chatId, type),
+        formData
+      );
+
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to upload attachment"
+      );
+    }
+  }
+);
+
 export const addChatMessage = createAsyncThunk<
   ChatMessage,
-  AddChatMessageData,
+  AddChatMessageData & { imageFile?: File },
   { rejectValue: string }
 >("chat/addMessage", async (messageData, { rejectWithValue }) => {
   try {
-    const response = await apiClient.post(
-      API_CONFIG.ENDPOINTS.CHAT.ADD_MESSAGE,
-      messageData
-    );
-    return response.data;
+    // If image file is provided, upload it first
+    if (messageData.imageFile) {
+      // Upload the file first
+      const uploadResponse = await apiClient.post(
+        API_CONFIG.ENDPOINTS.CHAT.UPLOAD_ATTACHMENT(
+          messageData.chatId,
+          "image"
+        ),
+        (() => {
+          const formData = new FormData();
+          formData.append("file", messageData.imageFile!);
+          return formData;
+        })()
+      );
+
+      const attachmentData = uploadResponse.data;
+
+      // Now send the message with attachment data
+      const response = await apiClient.post(
+        API_CONFIG.ENDPOINTS.CHAT.ADD_MESSAGE,
+        {
+          chatId: messageData.chatId,
+          senderUserId: messageData.senderUserId,
+          content: messageData.content || "",
+          type: "image",
+          attachmentUrl: attachmentData.attachmentUrl,
+          attachmentName: attachmentData.attachmentName,
+          attachmentMimeType: attachmentData.attachmentMimeType,
+          attachmentSize: attachmentData.attachmentSize,
+        }
+      );
+
+      return response.data;
+    } else {
+      // Regular JSON request for text messages or messages with already uploaded attachments
+      const requestBody: any = {
+        chatId: messageData.chatId,
+        senderUserId: messageData.senderUserId,
+        content: messageData.content,
+        type: messageData.type || "text",
+      };
+
+      // Add attachment fields if provided
+      if (messageData.attachmentUrl) {
+        requestBody.attachmentUrl = messageData.attachmentUrl;
+        requestBody.attachmentName = messageData.attachmentName;
+        requestBody.attachmentMimeType = messageData.attachmentMimeType;
+        requestBody.attachmentSize = messageData.attachmentSize;
+        if (messageData.attachmentDuration !== undefined) {
+          requestBody.attachmentDuration = messageData.attachmentDuration;
+        }
+      }
+
+      const response = await apiClient.post(
+        API_CONFIG.ENDPOINTS.CHAT.ADD_MESSAGE,
+        requestBody
+      );
+
+      return response.data;
+    }
   } catch (error: any) {
     return rejectWithValue(
       error.response?.data?.message || error.message || "Failed to add message"
@@ -179,6 +305,41 @@ const chatSlice = createSlice({
     },
     setCurrentChat: (state, action: PayloadAction<Chat>) => {
       state.currentChat = action.payload;
+    },
+    // Add real-time message from FCM
+    addRealtimeMessage: (
+      state,
+      action: PayloadAction<{ chatId: string; message: ChatMessage }>
+    ) => {
+      const { chatId, message } = action.payload;
+
+      // Add to current chat if it matches
+      if (state.currentChat?.id === chatId) {
+        if (!state.currentChat.messages) {
+          state.currentChat.messages = [];
+        }
+        // Check if message already exists to avoid duplicates
+        const messageExists = state.currentChat.messages.some(
+          (msg) => msg.id === message.id
+        );
+        if (!messageExists) {
+          state.currentChat.messages.push(message);
+        }
+      }
+
+      // Also update in chats list if the chat exists there
+      const chatIndex = state.chats.findIndex((c) => c.id === chatId);
+      if (chatIndex !== -1) {
+        if (!state.chats[chatIndex].messages) {
+          state.chats[chatIndex].messages = [];
+        }
+        const messageExists = state.chats[chatIndex].messages?.some(
+          (msg) => msg.id === message.id
+        );
+        if (!messageExists) {
+          state.chats[chatIndex].messages?.push(message);
+        }
+      }
     },
   },
   extraReducers: (builder) => {
@@ -277,8 +438,19 @@ const chatSlice = createSlice({
                 action.payload.sender?.id ||
                 action.payload.senderUserId ||
                 action.payload.senderId,
-              content: action.payload.content,
+              content: action.payload.content || "",
+              type: action.payload.type || "text",
+              attachmentUrl: action.payload.attachmentUrl,
+              attachmentName: action.payload.attachmentName,
+              attachmentMimeType: action.payload.attachmentMimeType,
+              attachmentSize: action.payload.attachmentSize,
+              attachmentDuration: action.payload.attachmentDuration,
+              // Legacy fields for backward compatibility
+              imageUrl: action.payload.attachmentUrl || action.payload.imageUrl,
+              imageThumbnailUrl: action.payload.imageThumbnailUrl,
+              messageType: action.payload.type || action.payload.messageType,
               createdAt: action.payload.createdAt,
+              sender: action.payload.sender,
             };
             // Check if message already exists (from pending) to avoid duplicates
             const messageExists = state.currentChat.messages.some(
@@ -307,14 +479,24 @@ const chatSlice = createSlice({
           state.isLoading = false;
           if (state.currentChat) {
             // Transform API response to ChatMessage format
-            // API returns messages with sender object, we need senderUserId
             const transformedMessages: ChatMessage[] = action.payload.map(
               (msg: any) => ({
                 id: msg.id,
                 senderUserId:
                   msg.sender?.id || msg.senderUserId || msg.senderId,
-                content: msg.content,
+                content: msg.content || "",
+                type: msg.type || "text",
+                attachmentUrl: msg.attachmentUrl,
+                attachmentName: msg.attachmentName,
+                attachmentMimeType: msg.attachmentMimeType,
+                attachmentSize: msg.attachmentSize,
+                attachmentDuration: msg.attachmentDuration,
+                // Legacy fields for backward compatibility
+                imageUrl: msg.attachmentUrl || msg.imageUrl,
+                imageThumbnailUrl: msg.imageThumbnailUrl,
+                messageType: msg.type || msg.messageType,
                 createdAt: msg.createdAt,
+                sender: msg.sender,
               })
             );
             state.currentChat.messages = transformedMessages;
@@ -329,6 +511,10 @@ const chatSlice = createSlice({
   },
 });
 
-export const { clearError, clearCurrentChat, setCurrentChat } =
-  chatSlice.actions;
+export const {
+  clearError,
+  clearCurrentChat,
+  setCurrentChat,
+  addRealtimeMessage,
+} = chatSlice.actions;
 export default chatSlice.reducer;

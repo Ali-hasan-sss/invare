@@ -136,6 +136,10 @@ export const API_CONFIG = {
       UPDATE_STATUS: (chatId: string) => `/chat/${chatId}/status`,
       ADD_MESSAGE: "/chat/message",
       GET_MESSAGES: (chatId: string) => `/chat/${chatId}/messages`,
+      UPLOAD_ATTACHMENT: (chatId: string, type: string) =>
+        `/chat/${chatId}/attachment?type=${type}`,
+      SUBSCRIBE: (chatId: string) => `/chat/${chatId}/subscribe`,
+      UNSUBSCRIBE: (chatId: string) => `/chat/${chatId}/subscribe`,
     },
     ADVERTISEMENTS: {
       BASE: "/advertisements",

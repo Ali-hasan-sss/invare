@@ -111,6 +111,14 @@ export const initiateGoogleRedirect = async (
       };
     }
 
+    if (error.code === "auth/network-request-failed") {
+      return {
+        success: false,
+        error:
+          "Network error. Please check your internet connection and make sure 'localhost' is added to Authorized domains in Firebase Console.",
+      };
+    }
+
     if (error.code === "auth/popup-closed-by-user") {
       return {
         success: false,

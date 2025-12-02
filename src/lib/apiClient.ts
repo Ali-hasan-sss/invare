@@ -25,6 +25,11 @@ apiClient.interceptors.request.use(
       }
     }
 
+    // If data is FormData, remove Content-Type header to let axios set it with boundary
+    if (config.data instanceof FormData && config.headers) {
+      delete config.headers["Content-Type"];
+    }
+
     if (process.env.NODE_ENV === "development") {
       console.log("[apiClient] Request:", {
         method: config.method?.toUpperCase(),
@@ -32,6 +37,7 @@ apiClient.interceptors.request.use(
         baseURL: config.baseURL,
         fullURL: `${config.baseURL}${config.url}`,
         timeout: config.timeout,
+        isFormData: config.data instanceof FormData,
       });
     }
 
