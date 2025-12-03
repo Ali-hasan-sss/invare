@@ -76,7 +76,7 @@ export default function RootLayout({
     <html lang="ar" dir="rtl">
       <head>
         {/* Basic Meta Tags */}
-        <title>انفير - منصة مزادات إعادة التدوير</title>
+        <title>invare</title>
         <meta
           name="description"
           content="انفير - منصة المزادات الرائدة لإعادة التدوير في الشرق الأوسط. اكتشف أفضل المواد المعاد تدويرها وشارك في المزادات الحية."
@@ -85,7 +85,7 @@ export default function RootLayout({
           name="keywords"
           content="مزادات, إعادة التدوير, مواد معاد تدويرها, مزادات حية, بيئة, استدامة, الشرق الأوسط"
         />
-        <meta name="author" content="انفير" />
+        <meta name="author" content="invare" />
         <meta name="robots" content="index, follow" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
@@ -98,7 +98,7 @@ export default function RootLayout({
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://invare.com" />
         <meta property="og:image" content="/images/logo.png" />
-        <meta property="og:site_name" content="انفير" />
+        <meta property="og:site_name" content="invare" />
         <meta property="og:locale" content="ar_SA" />
 
         {/* Twitter Card Meta Tags */}
@@ -130,7 +130,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="انفير" />
+        <meta name="apple-mobile-web-app-title" content="invare" />
 
         {/* Canonical URL */}
         <link rel="canonical" href="https://invare.com" />
