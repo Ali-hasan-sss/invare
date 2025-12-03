@@ -233,20 +233,20 @@ const Footer: React.FC = () => {
             isRTL ? "md:flex-row-reverse" : ""
           )}
         >
-          {/* <div className="flex flex-wrap items-center gap-6 text-sm text-gray-400">
+          <div className="flex flex-wrap items-center gap-6 text-sm text-gray-400">
             <Link
-              href="/privacy"
+              href="/policy"
               className="hover:text-secondary-400 transition-colors"
             >
-              {t("footer.privacyPolicy")}
+              Privacy Policy
             </Link>
             <Link
               href="/terms"
               className="hover:text-secondary-400 transition-colors"
             >
-              {t("footer.termsOfService")}
+              Terms of Service
             </Link>
-          </div> */}
+          </div>
           <p className="text-sm text-gray-400">
             © {currentYear} {t("footer.companyName")}.{" "}
             {t("footer.allRightsReserved")}

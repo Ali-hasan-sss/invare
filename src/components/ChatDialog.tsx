@@ -1411,7 +1411,7 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
                               ? t(msg.content) || msg.content
                               : msg.content}
                           </p>
-                        )}
+                      )}
                       {/* Timestamp */}
                       {msg.createdAt && (
                         <p
