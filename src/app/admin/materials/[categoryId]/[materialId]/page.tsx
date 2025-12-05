@@ -11,7 +11,6 @@ import {
   ArrowRight,
   Image as ImageIcon,
   Calendar,
-  DollarSign,
   ShoppingCart,
 } from "lucide-react";
 import { Switch } from "@mui/material";
@@ -486,7 +485,6 @@ export default function ListingsPage() {
                         {t("listings.price")}
                       </span>
                       <span className="font-semibold text-green-600 dark:text-green-400">
-                        <DollarSign className="h-4 w-4 inline" />
                         {listing.startingPrice} {t("currency.omr")}
                       </span>
                     </div>

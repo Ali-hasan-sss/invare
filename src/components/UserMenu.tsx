@@ -24,6 +24,8 @@ import { Avatar } from "@/components/ui/Avatar";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
+import { useAppSelector } from "@/store/hooks";
+import { Badge } from "@mui/material";
 
 interface UserMenuProps {
   anchorEl: HTMLElement | null;
@@ -84,6 +86,9 @@ const UserMenu: React.FC<UserMenuProps> = ({ anchorEl, open, onClose }) => {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const router = useRouter();
+  const unreadChatsCount = useAppSelector(
+    (state) => state.chat.unreadChatsCount
+  );
 
   // Check if current user is admin
   const isAdmin = user ? isAdminUser(user) : false;
@@ -244,7 +249,28 @@ const UserMenu: React.FC<UserMenuProps> = ({ anchorEl, open, onClose }) => {
         <ListItemIcon className="text-gray-600 dark:text-gray-300">
           <MessageCircle size={20} />
         </ListItemIcon>
-        <ListItemText primary={t("chat.myChats") || "محادثاتي"} />
+        <ListItemText
+          primary={
+            <div className="flex items-center justify-between w-full">
+              <span>{t("chat.myChats") || "محادثاتي"}</span>
+              {unreadChatsCount > 0 && (
+                <Badge
+                  badgeContent={unreadChatsCount}
+                  color="error"
+                  max={99}
+                  sx={{
+                    "& .MuiBadge-badge": {
+                      fontSize: "0.7rem",
+                      height: "16px",
+                      minWidth: "16px",
+                      padding: "0 4px",
+                    },
+                  }}
+                />
+              )}
+            </div>
+          }
+        />
       </MenuItem>
 
       <MenuItem

@@ -21,7 +21,6 @@ import {
   Edit,
   ShoppingCart,
   Calendar,
-  DollarSign,
 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useUsers } from "@/hooks/useUsers";
@@ -733,7 +732,6 @@ export default function AdminUserDetailsPage() {
                           {t("listings.price")}
                         </span>
                         <span className="font-semibold text-green-600 dark:text-green-400">
-                          <DollarSign className="h-4 w-4 inline" />
                           {listing.startingPrice} {t("currency.omr")}
                         </span>
                       </div>

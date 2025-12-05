@@ -4,6 +4,7 @@ import React from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAppSelector } from "@/store/hooks";
 import {
   Tag,
   ShoppingBag,
@@ -11,12 +12,16 @@ import {
   MessageCircle,
   LayoutDashboard,
 } from "lucide-react";
+import { Badge } from "@mui/material";
 
 const BottomNav: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
   const { t, currentLanguage } = useTranslation();
   const isRTL = currentLanguage.code === "ar";
+  const unreadChatsCount = useAppSelector(
+    (state) => state.chat.unreadChatsCount
+  );
 
   const menuItems = [
     {
@@ -67,13 +72,38 @@ const BottomNav: React.FC = () => {
               key={item.id}
               onClick={() => handleNavigation(item.path)}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-0 flex-1",
+                "flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-0 flex-1 relative",
                 isActive
                   ? "text-purple-600 dark:text-purple-400"
                   : "text-gray-600 dark:text-gray-400"
               )}
             >
-              <Icon className={cn("h-5 w-5", isActive && "text-purple-600 dark:text-purple-400")} />
+              <div className="relative">
+                <Icon
+                  className={cn(
+                    "h-5 w-5",
+                    isActive && "text-purple-600 dark:text-purple-400"
+                  )}
+                />
+                {item.id === "chats" && unreadChatsCount > 0 && (
+                  <Badge
+                    badgeContent={unreadChatsCount}
+                    color="error"
+                    max={99}
+                    sx={{
+                      position: "absolute",
+                      top: -8,
+                      right: -8,
+                      "& .MuiBadge-badge": {
+                        fontSize: "0.65rem",
+                        height: "16px",
+                        minWidth: "16px",
+                        padding: "0 3px",
+                      },
+                    }}
+                  />
+                )}
+              </div>
               <span className="text-xs truncate w-full">{item.label}</span>
             </button>
           );
@@ -84,4 +114,3 @@ const BottomNav: React.FC = () => {
 };
 
 export default BottomNav;
-

@@ -28,7 +28,7 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
-
+invare-sa-660e4-firebase-adminsdk-fbsvc-0aebbce22b.json
 # vercel
 .vercel
 

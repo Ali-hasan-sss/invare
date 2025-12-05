@@ -26,7 +26,6 @@ import {
   X,
   MessageCircle,
   Loader2,
-  DollarSign,
   ExternalLink,
   Image as ImageIcon,
   XCircle,
@@ -40,7 +39,11 @@ import type { ChatMessage, Chat } from "@/store/slices/chatSlice";
 import { getMessagingInstance, onMessage } from "@/lib/firebase";
 import { subscribeToChatTopic, parseFCMChatMessage } from "@/lib/fcmService";
 import { useAppDispatch } from "@/store/hooks";
-import { addRealtimeMessage } from "@/store/slices/chatSlice";
+import {
+  addRealtimeMessage,
+  addNewChatNotification,
+  getUserChatsSilently,
+} from "@/store/slices/chatSlice";
 import { uploadImage, uploadFile } from "@/services/uploadService";
 
 interface ChatDialogProps {
@@ -385,21 +388,54 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
           payloadChatId: payload.data?.chatId,
         });
 
+        // Check if this is a chat_created notification
+        if (payload.data?.type === "chat_created") {
+          const chatId = payload.data?.chatId;
+          if (chatId) {
+            console.log("✅ New chat created notification:", chatId);
+            // Add new chat notification to Redux store
+            dispatch(
+              addNewChatNotification({
+                chatId,
+                currentUserId: user?.id,
+              })
+            );
+          }
+          return;
+        }
+
         // Parse the message
         const chatMessage = parseFCMChatMessage(payload);
 
         console.log("📝 Parsed chat message:", chatMessage);
 
-        // Check if message belongs to current chat
-        if (chatMessage && payload.data?.chatId === currentChat.id) {
-          console.log("✅ Adding message to chat:", currentChat.id);
-          // Add message to Redux store
-          dispatch(
-            addRealtimeMessage({
-              chatId: currentChat.id,
-              message: chatMessage,
-            })
-          );
+        // Always add message to Redux store if it's a valid message
+        // This ensures badges appear on chat cards even when dialog is open for another chat
+        if (chatMessage && payload.data?.chatId) {
+          const messageChatId = payload.data.chatId;
+
+          // Check if message belongs to current chat
+          if (messageChatId === currentChat.id) {
+            console.log("✅ Adding message to current chat:", currentChat.id);
+            // Add message to Redux store
+            dispatch(
+              addRealtimeMessage({
+                chatId: currentChat.id,
+                message: chatMessage,
+                currentUserId: user?.id,
+              })
+            );
+          } else {
+            // Message is for a different chat - add it to update that chat's card badge
+            console.log("✅ Adding message to other chat:", messageChatId);
+            dispatch(
+              addRealtimeMessage({
+                chatId: messageChatId,
+                message: chatMessage,
+                currentUserId: user?.id,
+              })
+            );
+          }
         } else {
           console.log("⚠️ Message not for current chat or failed to parse:", {
             chatMessage,
@@ -488,6 +524,42 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
 
         console.log("📨 FCM message received (chat closed):", payload);
 
+        // Check if this is a chat_created notification
+        if (payload.data?.type === "chat_created") {
+          const chatId = payload.data?.chatId;
+          if (chatId && user?.id) {
+            console.log("✅ New chat created notification:", chatId);
+            // Add new chat notification to Redux store
+            dispatch(
+              addNewChatNotification({
+                chatId,
+                currentUserId: user.id,
+              })
+            );
+
+            // Fetch chats silently (in background) to update the list
+            dispatch(getUserChatsSilently(user.id));
+
+            // Show toast notification
+            const chatData = payload.data?.chat
+              ? JSON.parse(payload.data.chat)
+              : null;
+            const createdBy = chatData?.createdBy;
+            const senderName = createdBy
+              ? `${createdBy.firstName || ""} ${
+                  createdBy.lastName || ""
+                }`.trim() || createdBy.email
+              : "شخص ما";
+            showToast(
+              `${senderName}: ${
+                t("chat.newChatCreated") || "بدأ محادثة جديدة"
+              }`,
+              "info"
+            );
+          }
+          return;
+        }
+
         // Parse the message
         const chatMessage = parseFCMChatMessage(payload);
 
@@ -523,6 +595,7 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
               addRealtimeMessage({
                 chatId: payload.data.chatId,
                 message: chatMessage,
+                currentUserId: user?.id,
               })
             );
           }
@@ -634,6 +707,7 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
                 addRealtimeMessage({
                   chatId: currentChat.id,
                   message: chatMessage,
+                  currentUserId: user?.id,
                 })
               );
             }
@@ -738,11 +812,11 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
             }
           } else {
             // Create a new chat with the seller
+            // Include both participantUserIds and participants array with both user IDs
             await createNewChat({
               topic: listingTitle,
               createdByUserId: user.id,
               participantUserIds: [user.id, sellerUserId],
-              listingId: listingId,
             });
             // currentChat is automatically set by Redux reducer after createChat.fulfilled
           }
@@ -1147,7 +1221,6 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
                 className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors text-secondary-600 dark:text-secondary-400 text-sm font-medium"
                 title={t("chat.updatePrice")}
               >
-                <DollarSign className="h-4 w-4" />
                 <span className="hidden sm:inline">
                   {t("chat.updatePrice")}
                 </span>
@@ -1411,7 +1484,7 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({
                               ? t(msg.content) || msg.content
                               : msg.content}
                           </p>
-                      )}
+                        )}
                       {/* Timestamp */}
                       {msg.createdAt && (
                         <p

@@ -11,6 +11,14 @@ export const getChatTopic = (chatId: string): string => {
 };
 
 /**
+ * Generates FCM topic name from userId
+ * Format: user_{userId_with_underscores}
+ */
+export const getUserTopic = (userId: string): string => {
+  return `user_${userId.replace(/-/g, "_")}`;
+};
+
+/**
  * Subscribe to a chat topic for real-time messages
  */
 export const subscribeToChatTopic = async (
@@ -184,6 +192,131 @@ export const unsubscribeFromChatTopic = async (
     return true;
   } catch (error) {
     console.error("Error unsubscribing from chat topic:", error);
+    return false;
+  }
+};
+
+/**
+ * Subscribe to user topic for notifications directly via Firebase REST API
+ * This subscribes the device to the user topic without sending requests to backend
+ */
+export const subscribeToUserTopic = async (
+  userId: string
+): Promise<boolean> => {
+  try {
+    const messaging = await getMessagingInstance();
+    if (!messaging) {
+      if (process.env.NODE_ENV === "development") {
+        console.debug(
+          "Firebase Messaging is not available for user topic subscription"
+        );
+      }
+      return false;
+    }
+
+    // Check if VAPID key is configured
+    const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+    if (!vapidKey) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn(
+          "NEXT_PUBLIC_FIREBASE_VAPID_KEY is not configured. Please add it to your .env.local file."
+        );
+      }
+      return false;
+    }
+
+    // Get FCM token (needed for Firebase REST API subscription)
+    let token: string | null = null;
+    try {
+      token = await getToken(messaging, {
+        vapidKey: vapidKey,
+      });
+    } catch (error: any) {
+      const errorCode = error?.code || "";
+      const errorMessage = error?.message || "";
+
+      if (
+        errorCode === "messaging/token-subscribe-failed" ||
+        errorCode === "messaging/invalid-vapid-key" ||
+        errorMessage.includes("authentication credential") ||
+        errorMessage.includes("UNAUTHENTICATED") ||
+        errorMessage.includes("OAuth 2 access token")
+      ) {
+        if (process.env.NODE_ENV === "development") {
+          console.error(
+            "❌ Firebase Messaging VAPID Key Error:",
+            "\n1. Make sure NEXT_PUBLIC_FIREBASE_VAPID_KEY is set in .env.local",
+            "\n2. Get your VAPID key from Firebase Console:",
+            "\n   Project Settings → Cloud Messaging → Web Push certificates",
+            "\n3. Ensure the VAPID key matches your Firebase project",
+            "\n4. Restart the dev server after adding the key",
+            "\n\nError details:",
+            error
+          );
+        }
+        return false;
+      }
+
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error getting FCM token for user topic:", error);
+      }
+      return false;
+    }
+
+    if (!token) {
+      if (process.env.NODE_ENV === "development") {
+        console.debug("No FCM token available for user topic subscription");
+      }
+      return false;
+    }
+
+    // Generate topic name
+    const topic = getUserTopic(userId);
+
+    // Subscribe to user topic via Next.js API route
+    // The API route uses OAuth2 token (not deprecated server key) to subscribe
+    // POST /api/notifications/user/subscribe
+    // Use fetch directly instead of apiClient to call Next.js API route (not external backend)
+    try {
+      const response = await fetch("/api/notifications/user/subscribe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          topic: topic,
+          deviceToken: token,
+        }),
+      });
+
+      if (response.ok) {
+        if (process.env.NODE_ENV === "development") {
+          console.log(`✅ Successfully subscribed to user topic: ${topic}`);
+        }
+        return true;
+      } else {
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: "Unknown error" }));
+        if (process.env.NODE_ENV === "development") {
+          console.warn(
+            `Failed to subscribe to user topic: ${topic}. Status: ${response.status}`,
+            errorData
+          );
+        }
+        return false;
+      }
+    } catch (error: any) {
+      if (process.env.NODE_ENV === "development") {
+        console.error(
+          `Error subscribing to user topic: ${topic}.`,
+          error?.message || error
+        );
+      }
+      return false;
+    }
+  } catch (error) {
+    console.error("Error subscribing to user topic:", error);
     return false;
   }
 };

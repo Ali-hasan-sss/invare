@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import {
   AppBar,
   Toolbar,
@@ -33,6 +33,12 @@ import UserMenu from "@/components/UserMenu";
 import NotificationDropdown from "@/components/NotificationDropdown";
 import NotificationBell from "@/components/NotificationBell";
 import Logo from "@/components/ui/logo";
+import { Badge } from "@mui/material";
+import { useAppDispatch } from "@/store/hooks";
+import {
+  addNewChatNotification,
+  getUserChatsSilently,
+} from "@/store/slices/chatSlice";
 
 const Header: React.FC = () => {
   const { t } = useTranslation();
@@ -41,6 +47,86 @@ const Header: React.FC = () => {
   const router = useRouter();
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down("md"));
+  const dispatch = useAppDispatch();
+  const unreadChatsCount = useAppSelector(
+    (state) => state.chat.unreadChatsCount
+  );
+
+  // Listen for chat_created notifications globally
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      return;
+    }
+
+    // Check if service worker is available
+    if (!("serviceWorker" in navigator)) {
+      return;
+    }
+
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      // Check if this is an FCM message from service worker
+      if (event.data && event.data.type === "FCM_MESSAGE") {
+        const payload = event.data.payload;
+
+        // Check if this is a chat_created notification
+        if (payload.data?.type === "chat_created") {
+          const chatId = payload.data?.chatId;
+          if (chatId && user?.id) {
+            console.log("✅ New chat created notification (Header):", chatId);
+            // Add new chat notification to Redux store
+            dispatch(
+              addNewChatNotification({
+                chatId,
+                currentUserId: user.id,
+              })
+            );
+            // Fetch chats silently (in background) to update the list
+            dispatch(getUserChatsSilently(user.id));
+          }
+        }
+      }
+    };
+
+    const setupServiceWorkerListener = async () => {
+      try {
+        // Wait for service worker to be ready
+        const registration = await navigator.serviceWorker.ready;
+
+        if (!registration) {
+          return;
+        }
+
+        // Listen for messages from Service Worker (global listener)
+        navigator.serviceWorker.addEventListener(
+          "message",
+          handleServiceWorkerMessage
+        );
+
+        // Also listen on the active worker (for better Edge compatibility)
+        if (registration.active) {
+          (registration.active as any).addEventListener(
+            "message",
+            handleServiceWorkerMessage
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Error setting up Service Worker listener in Header:",
+          error
+        );
+      }
+    };
+
+    setupServiceWorkerListener();
+
+    return () => {
+      // Remove global listener
+      navigator.serviceWorker.removeEventListener(
+        "message",
+        handleServiceWorkerMessage
+      );
+    };
+  }, [isAuthenticated, user, dispatch]);
 
   // Desktop menu states
 
@@ -130,6 +216,41 @@ const Header: React.FC = () => {
             <MuiListItemText primary={t("listings.allListings")} />
           </ListItemButton>
         </ListItem>
+        {/* Chats link - Only show if authenticated */}
+        {isAuthenticated && user && (
+          <ListItem disablePadding>
+            <ListItemButton
+              className="rounded-lg mb-2"
+              onClick={() => {
+                router.push("/user/chat");
+                handleDrawerToggle();
+              }}
+            >
+              <MuiListItemText
+                primary={
+                  <div className="flex items-center justify-between w-full">
+                    <span>{t("chat.myChats") || "محادثاتي"}</span>
+                    {unreadChatsCount > 0 && (
+                      <Badge
+                        badgeContent={unreadChatsCount}
+                        color="error"
+                        max={99}
+                        sx={{
+                          "& .MuiBadge-badge": {
+                            fontSize: "0.7rem",
+                            height: "16px",
+                            minWidth: "16px",
+                            padding: "0 4px",
+                          },
+                        }}
+                      />
+                    )}
+                  </div>
+                }
+              />
+            </ListItemButton>
+          </ListItem>
+        )}
         {/* Support Section */}
         <ListItem disablePadding className="flex-col items-start mb-2">
           <Box className="w-full">
@@ -169,9 +290,9 @@ const Header: React.FC = () => {
                       className: "text-sm text-gray-700 dark:text-gray-300",
                     }}
                   />
-          </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
+                </ListItemButton>
+              </ListItem>
+              <ListItem disablePadding>
                 <ListItemButton
                   className="rounded-lg mb-1 mx-2"
                   onClick={() => {
@@ -185,7 +306,7 @@ const Header: React.FC = () => {
                       className: "text-sm text-gray-700 dark:text-gray-300",
                     }}
                   />
-          </ListItemButton>
+                </ListItemButton>
               </ListItem>
             </List>
           </Box>
@@ -304,13 +425,27 @@ const Header: React.FC = () => {
                         className="flex items-center space-x-2 rtl:space-x-reverse cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg p-1.5 transition-colors"
                         onClick={handleUserMenuClick}
                       >
-                        <Avatar
-                          size="small"
-                          src={user.avatar}
-                          fallback={user.firstName + " " + user.lastName}
-                          alt={user.firstName}
-                          className="w-8 h-8"
-                        />
+                        <Badge
+                          badgeContent={unreadChatsCount}
+                          color="error"
+                          max={99}
+                          sx={{
+                            "& .MuiBadge-badge": {
+                              fontSize: "0.75rem",
+                              height: "18px",
+                              minWidth: "18px",
+                              padding: "0 4px",
+                            },
+                          }}
+                        >
+                          <Avatar
+                            size="small"
+                            src={user.avatar}
+                            fallback={user.firstName + " " + user.lastName}
+                            alt={user.firstName}
+                            className="w-8 h-8"
+                          />
+                        </Badge>
                         <span className="text-black dark:text-white font-medium text-sm hidden sm:block">
                           {user.firstName} {user.lastName}
                         </span>
@@ -387,12 +522,26 @@ const Header: React.FC = () => {
                         className="flex items-center space-x-3 rtl:space-x-reverse cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg p-2 transition-colors"
                         onClick={handleUserMenuClick}
                       >
-                        <Avatar
-                          size="medium"
-                          src={user.avatar}
-                          fallback={user.firstName + " " + user.lastName}
-                          alt={user.firstName}
-                        />
+                        <Badge
+                          badgeContent={unreadChatsCount}
+                          color="error"
+                          max={99}
+                          sx={{
+                            "& .MuiBadge-badge": {
+                              fontSize: "0.75rem",
+                              height: "18px",
+                              minWidth: "18px",
+                              padding: "0 4px",
+                            },
+                          }}
+                        >
+                          <Avatar
+                            size="medium"
+                            src={user.avatar}
+                            fallback={user.firstName + " " + user.lastName}
+                            alt={user.firstName}
+                          />
+                        </Badge>
                         <span className="text-black dark:text-white font-medium">
                           {user.firstName} {user.lastName}
                         </span>

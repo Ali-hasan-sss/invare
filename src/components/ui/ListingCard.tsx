@@ -19,6 +19,7 @@ import {
   Eye,
   ShoppingCart,
   Star,
+  MessageCircle,
 } from "lucide-react";
 import { Avatar } from "./Avatar";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -60,6 +61,11 @@ export interface ListingCardProps {
     stockAmount: number;
   }) => void;
   onStartBiddingClick?: (id: string) => void;
+  onChatClick?: (data: {
+    listingId: string;
+    sellerUserId: string;
+    listingTitle: string;
+  }) => void;
   className?: string;
 }
 
@@ -83,6 +89,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
   onShareClick,
   onBuyNowClick,
   onStartBiddingClick,
+  onChatClick,
   className = "",
 }) => {
   const { t } = useTranslation();
@@ -175,6 +182,17 @@ const ListingCard: React.FC<ListingCardProps> = ({
     }
   };
 
+  const handleChatClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onChatClick) {
+      onChatClick({
+        listingId: id,
+        sellerUserId: "", // Will be resolved in parent component from listing data
+        listingTitle: title,
+      });
+    }
+  };
+
   const handleBuyNowClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onBuyNowClick) {
@@ -220,6 +238,16 @@ const ListingCard: React.FC<ListingCardProps> = ({
 
         {/* Top Right Actions */}
         <Box className="absolute top-4  ltr:right-4 rtl:left-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+          {onChatClick && seller?.id && (
+            <IconButton
+              size="small"
+              onClick={handleChatClick}
+              className="bg-white/90 backdrop-blur-sm text-gray-700 hover:bg-white shadow-lg"
+              title={t("chat.contactSeller") || "محادثة مع البائع"}
+            >
+              <MessageCircle size={16} />
+            </IconButton>
+          )}
           <IconButton
             size="small"
             onClick={handleFavoriteClick}

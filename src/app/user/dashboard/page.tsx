@@ -16,12 +16,15 @@ import {
 } from "lucide-react";
 import { cn } from "../../../lib/utils";
 import { Button } from "../../../components/ui/Button";
+import { useAppSelector } from "../../../store/hooks";
+import { Badge } from "@mui/material";
 
 export default function DashboardPage() {
   const { t, currentLanguage } = useTranslation();
   const { user } = useAuth();
   const router = useRouter();
   const isRTL = currentLanguage.code === "ar";
+  const unreadChatsCount = useAppSelector((state) => state.chat.unreadChatsCount);
 
   const dashboardItems = [
     {
@@ -86,13 +89,30 @@ export default function DashboardPage() {
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div
-                    className={cn(
-                      "w-12 h-12 rounded-lg flex items-center justify-center mb-4",
-                      item.color
+                  <div className="flex items-center gap-3 mb-4">
+                    <div
+                      className={cn(
+                        "w-12 h-12 rounded-lg flex items-center justify-center",
+                        item.color
+                      )}
+                    >
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    {item.id === "chats" && unreadChatsCount > 0 && (
+                      <Badge
+                        badgeContent={unreadChatsCount}
+                        color="error"
+                        max={99}
+                        sx={{
+                          "& .MuiBadge-badge": {
+                            fontSize: "0.75rem",
+                            height: "20px",
+                            minWidth: "20px",
+                            padding: "0 6px",
+                          },
+                        }}
+                      />
                     )}
-                  >
-                    <Icon className="h-6 w-6" />
                   </div>
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                     {item.title}

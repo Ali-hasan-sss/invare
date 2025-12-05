@@ -72,12 +72,16 @@ export interface ChatState {
   currentChat: Chat | null;
   isLoading: boolean;
   error: string | null;
+  unreadChatsCount: number; // Count of chats with unread messages
+  newChatIds: string[]; // Array of new chat IDs that haven't been opened yet
+  processedChatNotifications: string[]; // Array of chat IDs that have been processed to prevent duplicates
 }
 
 export interface CreateChatData {
   topic: string;
   createdByUserId: string;
   participantUserIds?: string[];
+
   listingId?: string;
 }
 
@@ -102,12 +106,88 @@ export interface AddChatMessageData {
   imageThumbnailUrl?: string;
 }
 
+// Helper functions for localStorage
+const STORAGE_KEY_UNREAD_CHATS = "invare_unread_chats";
+const STORAGE_KEY_NEW_CHAT_IDS = "invare_new_chat_ids";
+
+const loadUnreadChatsFromStorage = (): {
+  unreadChatsCount: number;
+  newChatIds: string[];
+} => {
+  if (typeof window === "undefined") {
+    return { unreadChatsCount: 0, newChatIds: [] };
+  }
+
+  try {
+    const unreadCount = localStorage.getItem(STORAGE_KEY_UNREAD_CHATS);
+    const newChatIds = localStorage.getItem(STORAGE_KEY_NEW_CHAT_IDS);
+
+    return {
+      unreadChatsCount: unreadCount ? parseInt(unreadCount, 10) : 0,
+      newChatIds: newChatIds ? JSON.parse(newChatIds) : [],
+    };
+  } catch (error) {
+    console.error("Error loading unread chats from localStorage:", error);
+    return { unreadChatsCount: 0, newChatIds: [] };
+  }
+};
+
+const saveUnreadChatsToStorage = (
+  unreadChatsCount: number,
+  newChatIds: string[]
+) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    localStorage.setItem(STORAGE_KEY_UNREAD_CHATS, unreadChatsCount.toString());
+    localStorage.setItem(STORAGE_KEY_NEW_CHAT_IDS, JSON.stringify(newChatIds));
+  } catch (error) {
+    console.error("Error saving unread chats to localStorage:", error);
+  }
+};
+
+const removeChatFromStorage = (chatId: string) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    const newChatIds = localStorage.getItem(STORAGE_KEY_NEW_CHAT_IDS);
+    if (newChatIds) {
+      const ids: string[] = JSON.parse(newChatIds);
+      const updatedIds = ids.filter((id) => id !== chatId);
+      localStorage.setItem(
+        STORAGE_KEY_NEW_CHAT_IDS,
+        JSON.stringify(updatedIds)
+      );
+
+      // Update unread count
+      const unreadCount = localStorage.getItem(STORAGE_KEY_UNREAD_CHATS);
+      if (unreadCount) {
+        const count = parseInt(unreadCount, 10);
+        const updatedCount = Math.max(0, count - 1);
+        localStorage.setItem(STORAGE_KEY_UNREAD_CHATS, updatedCount.toString());
+      }
+    }
+  } catch (error) {
+    console.error("Error removing chat from localStorage:", error);
+  }
+};
+
+// Load initial state from localStorage
+const storedData = loadUnreadChatsFromStorage();
+
 // Initial state
 const initialState: ChatState = {
   chats: [],
   currentChat: null,
   isLoading: false,
   error: null,
+  unreadChatsCount: storedData.unreadChatsCount,
+  newChatIds: storedData.newChatIds,
+  processedChatNotifications: [],
 };
 
 // Async thunks
@@ -116,6 +196,24 @@ export const getUserChats = createAsyncThunk<
   string,
   { rejectValue: string }
 >("chat/getUserChats", async (userId, { rejectWithValue }) => {
+  try {
+    const response = await apiClient.get(
+      API_CONFIG.ENDPOINTS.CHAT.GET_BY_USER(userId)
+    );
+    return response.data;
+  } catch (error: any) {
+    return rejectWithValue(
+      error.response?.data?.message || error.message || "Failed to fetch chats"
+    );
+  }
+});
+
+// Get user chats silently (without loading state) - for background refresh
+export const getUserChatsSilently = createAsyncThunk<
+  Chat[],
+  string,
+  { rejectValue: string }
+>("chat/getUserChatsSilently", async (userId, { rejectWithValue }) => {
   try {
     const response = await apiClient.get(
       API_CONFIG.ENDPOINTS.CHAT.GET_BY_USER(userId)
@@ -309,9 +407,17 @@ const chatSlice = createSlice({
     // Add real-time message from FCM
     addRealtimeMessage: (
       state,
-      action: PayloadAction<{ chatId: string; message: ChatMessage }>
+      action: PayloadAction<{
+        chatId: string;
+        message: ChatMessage;
+        currentUserId?: string;
+      }>
     ) => {
-      const { chatId, message } = action.payload;
+      const { chatId, message, currentUserId } = action.payload;
+
+      // Check if message is from another user (not the current user)
+      const isFromOtherUser =
+        currentUserId && message.senderUserId !== currentUserId;
 
       // Add to current chat if it matches
       if (state.currentChat?.id === chatId) {
@@ -324,6 +430,50 @@ const chatSlice = createSlice({
         );
         if (!messageExists) {
           state.currentChat.messages.push(message);
+        }
+      } else if (isFromOtherUser) {
+        // If chat is not currently open and message is from another user, increment unread count
+        // Check if this chat already exists in the list
+        const chatIndex = state.chats.findIndex((c) => c.id === chatId);
+        if (chatIndex === -1) {
+          // New chat with unread message, increment count
+          state.unreadChatsCount += 1;
+          // Add to new chat IDs if not already present
+          if (!state.newChatIds.includes(chatId)) {
+            state.newChatIds.push(chatId);
+          }
+          // Save to localStorage
+          saveUnreadChatsToStorage(state.unreadChatsCount, state.newChatIds);
+        } else {
+          // Existing chat - check if it's already counted as unread
+          // For simplicity, we'll increment if this is a new message
+          // The count will be recalculated when chats are fetched
+          const existingMessages = state.chats[chatIndex].messages || [];
+          const messageExists = existingMessages.some(
+            (msg) => msg.id === message.id
+          );
+          if (!messageExists) {
+            // This is a new unread message for an existing chat
+            // We'll increment, but ideally this should be recalculated from server
+            state.unreadChatsCount += 1;
+            // Add to new chat IDs to show red dot badge on chat card
+            // Always add if chat is not currently open, even if already in list
+            if (!state.newChatIds.includes(chatId)) {
+              state.newChatIds.push(chatId);
+            }
+            // Save to localStorage
+            saveUnreadChatsToStorage(state.unreadChatsCount, state.newChatIds);
+          } else {
+            // Message already exists, but ensure chatId is in newChatIds if chat is not open
+            // This handles the case where message was added but badge wasn't shown
+            if (!state.newChatIds.includes(chatId)) {
+              state.newChatIds.push(chatId);
+              saveUnreadChatsToStorage(
+                state.unreadChatsCount,
+                state.newChatIds
+              );
+            }
+          }
         }
       }
 
@@ -340,6 +490,99 @@ const chatSlice = createSlice({
           state.chats[chatIndex].messages?.push(message);
         }
       }
+    },
+    // Increment unread chats count
+    incrementUnreadChatsCount: (state) => {
+      state.unreadChatsCount += 1;
+      saveUnreadChatsToStorage(state.unreadChatsCount, state.newChatIds);
+    },
+    // Decrement unread chats count
+    decrementUnreadChatsCount: (state) => {
+      if (state.unreadChatsCount > 0) {
+        state.unreadChatsCount -= 1;
+        saveUnreadChatsToStorage(state.unreadChatsCount, state.newChatIds);
+      }
+    },
+    // Set unread chats count
+    setUnreadChatsCount: (state, action: PayloadAction<number>) => {
+      state.unreadChatsCount = Math.max(0, action.payload);
+      saveUnreadChatsToStorage(state.unreadChatsCount, state.newChatIds);
+    },
+    // Reset unread chats count (when user views chats)
+    resetUnreadChatsCount: (state) => {
+      state.unreadChatsCount = 0;
+      state.newChatIds = [];
+      // Clear localStorage
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.removeItem(STORAGE_KEY_UNREAD_CHATS);
+          localStorage.removeItem(STORAGE_KEY_NEW_CHAT_IDS);
+        } catch (error) {
+          console.error(
+            "Error clearing unread chats from localStorage:",
+            error
+          );
+        }
+      }
+    },
+    // Add new chat notification (when chat_created notification is received)
+    addNewChatNotification: (
+      state,
+      action: PayloadAction<{
+        chatId: string;
+        currentUserId?: string;
+        shouldFetchChats?: boolean;
+      }>
+    ) => {
+      const { chatId, currentUserId } = action.payload;
+
+      // Check if this notification has already been processed
+      if (state.processedChatNotifications.includes(chatId)) {
+        console.log("⚠️ Chat notification already processed:", chatId);
+        return;
+      }
+
+      // Mark as processed
+      if (!state.processedChatNotifications.includes(chatId)) {
+        state.processedChatNotifications.push(chatId);
+      }
+
+      // Check if this chat already exists in the list
+      const chatExists = state.chats.some((c) => c.id === chatId);
+
+      // Only increment if chat doesn't exist and it's not from current user
+      // (We assume if currentUserId is provided, we can check if the chat was created by current user)
+      if (!chatExists) {
+        state.unreadChatsCount += 1;
+        // Add to new chat IDs if not already present
+        if (!state.newChatIds.includes(chatId)) {
+          state.newChatIds.push(chatId);
+        }
+        // Save to localStorage
+        saveUnreadChatsToStorage(state.unreadChatsCount, state.newChatIds);
+      }
+    },
+    // Clear processed notifications (useful for cleanup)
+    clearProcessedNotifications: (state) => {
+      state.processedChatNotifications = [];
+    },
+    // Mark chat as read (decrement count when chat is opened)
+    markChatAsRead: (state, action: PayloadAction<string>) => {
+      const chatId = action.payload;
+
+      // Remove from new chat IDs
+      const wasNewChat = state.newChatIds.includes(chatId);
+      state.newChatIds = state.newChatIds.filter((id) => id !== chatId);
+
+      // Check if this chat exists and has unread messages
+      if (wasNewChat && state.unreadChatsCount > 0) {
+        // Decrement count (simple approach - in production, you might want to track per-chat)
+        state.unreadChatsCount = Math.max(0, state.unreadChatsCount - 1);
+      }
+
+      // Remove from localStorage and update
+      removeChatFromStorage(chatId);
+      saveUnreadChatsToStorage(state.unreadChatsCount, state.newChatIds);
     },
   },
   extraReducers: (builder) => {
@@ -360,6 +603,24 @@ const chatSlice = createSlice({
       .addCase(getUserChats.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload || "Failed to fetch chats";
+      })
+      // Get User Chats Silently (background refresh)
+      .addCase(getUserChatsSilently.pending, (state) => {
+        // Don't set isLoading to true for silent refresh
+        state.error = null;
+      })
+      .addCase(
+        getUserChatsSilently.fulfilled,
+        (state, action: PayloadAction<Chat[]>) => {
+          // Update chats without showing loading state
+          state.chats = action.payload;
+          state.error = null;
+        }
+      )
+      .addCase(getUserChatsSilently.rejected, (state, action) => {
+        // Don't show error for silent refresh, just log it
+        console.error("Silent chat refresh failed:", action.payload);
+        state.error = null;
       })
 
       // Create Chat
@@ -516,5 +777,12 @@ export const {
   clearCurrentChat,
   setCurrentChat,
   addRealtimeMessage,
+  incrementUnreadChatsCount,
+  decrementUnreadChatsCount,
+  setUnreadChatsCount,
+  resetUnreadChatsCount,
+  addNewChatNotification,
+  markChatAsRead,
+  clearProcessedNotifications,
 } = chatSlice.actions;
 export default chatSlice.reducer;

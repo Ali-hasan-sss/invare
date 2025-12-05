@@ -19,6 +19,7 @@ import { useMaterials } from "@/hooks/useMaterials";
 import { useTranslation } from "@/hooks/useTranslation";
 import { usePaymentProcessing } from "@/hooks/usePayments";
 import { useAuth } from "@/hooks/useAuth";
+import { useChat } from "@/hooks/useChat";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import ListingCard from "@/components/ui/ListingCard";
 import ClientOnly from "@/components/ClientOnly";
@@ -45,12 +46,13 @@ const MaterialListingsPage: React.FC = () => {
   } = useListings();
   const { getMaterialById, currentMaterial } = useMaterials();
   const [currentPageLocal, setCurrentPageLocal] = useState(1);
-  const { isAuthenticated, company } = useAuth();
+  const { isAuthenticated, company, user } = useAuth();
   const {
     processPayment,
     isLoading: isPaymentLoading,
     error: paymentError,
   } = usePaymentProcessing();
+  const { createNewChat, isLoading: isChatLoading } = useChat();
 
   // Payment method selection dialog state
   const [isPaymentMethodDialogOpen, setIsPaymentMethodDialogOpen] =
@@ -167,6 +169,80 @@ const MaterialListingsPage: React.FC = () => {
     }
     setSelectedListingId(listingId);
     setIsBiddingDialogOpen(true);
+  };
+
+  const handleChatClick = async (data: {
+    listingId: string;
+    sellerUserId: string;
+    listingTitle: string;
+  }) => {
+    if (!isAuthenticated || !user?.id) {
+      setToastMessage(t("bidding.loginRequired") || "يجب تسجيل الدخول أولاً");
+      setToastSeverity("warning");
+      setToastOpen(true);
+      return;
+    }
+
+    try {
+      // Get the full listing to access sellerUser if available
+      const listing = listings.find((l) => l.id === data.listingId);
+
+      // Try to get sellerUserId from listing
+      // sellerUserId is the user ID of the seller (not company ID)
+      const sellerUserId =
+        listing?.sellerUserId ||
+        (listing as any)?.sellerUser?.id ||
+        data.sellerUserId;
+
+      if (!sellerUserId) {
+        setToastMessage(
+          t("chat.sellerNotFound") || "لم يتم العثور على معلومات البائع"
+        );
+        setToastSeverity("error");
+        setToastOpen(true);
+        return;
+      }
+
+      // Don't allow user to chat with themselves
+      if (String(user.id) === String(sellerUserId)) {
+        setToastMessage(
+          t("chat.cannotChatWithSelf") || "لا يمكنك المحادثة مع نفسك"
+        );
+        setToastSeverity("warning");
+        setToastOpen(true);
+        return;
+      }
+
+      // Create new chat with POST request
+      const result = await createNewChat({
+        topic: data.listingTitle,
+        createdByUserId: user.id,
+        participantUserIds: [user.id, sellerUserId],
+        listingId: data.listingId,
+      });
+
+      if (result.type === "chat/createChat/fulfilled") {
+        setToastMessage(t("chat.chatCreated") || "تم إنشاء المحادثة بنجاح");
+        setToastSeverity("success");
+        setToastOpen(true);
+        // Optionally redirect to chat page or open chat dialog
+        router.push("/chat");
+      } else {
+        const errorMessage =
+          typeof result.payload === "string"
+            ? result.payload
+            : t("chat.createChat") || "فشل في إنشاء المحادثة";
+        setToastMessage(errorMessage);
+        setToastSeverity("error");
+        setToastOpen(true);
+      }
+    } catch (error: any) {
+      setToastMessage(
+        error?.message || t("chat.createChat") || "فشل في إنشاء المحادثة"
+      );
+      setToastSeverity("error");
+      setToastOpen(true);
+    }
   };
 
   const handleSubmitBidFromDialog = async () => {
@@ -448,6 +524,7 @@ const MaterialListingsPage: React.FC = () => {
                   onShareClick={handleShareClick}
                   onBuyNowClick={handleBuyNowClick}
                   onStartBiddingClick={handleStartBiddingClick}
+                  onChatClick={handleChatClick}
                 />
               </Grid>
             ))}

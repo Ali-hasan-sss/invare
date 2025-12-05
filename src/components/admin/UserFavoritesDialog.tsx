@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,11 +10,19 @@ import {
 } from "../ui/Dialog";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
-import { Checkbox, FormControlLabel } from "@mui/material";
-import { Trash2, Plus, Loader2, Search } from "lucide-react";
+import {
+  Checkbox,
+  FormControlLabel,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+} from "@mui/material";
+import { Trash2, Plus, Loader2, Search, ChevronDown } from "lucide-react";
 import { useTranslation } from "../../hooks/useTranslation";
 import { useMaterials } from "../../hooks/useMaterials";
+import { useMaterialCategories } from "../../hooks/useMaterialCategories";
 import { Material } from "../../store/slices/materialsSlice";
+import { MaterialCategory } from "../../store/slices/materialCategoriesSlice";
 import { User } from "../../store/slices/usersSlice";
 import { cn } from "../../lib/utils";
 
@@ -45,6 +53,11 @@ export const UserFavoritesDialog: React.FC<UserFavoritesDialogProps> = ({
     getMaterials,
     isLoading,
   } = useMaterials();
+  const {
+    categories,
+    getCategories,
+    isLoading: isLoadingCategories,
+  } = useMaterialCategories();
 
   const [userFavorites, setUserFavorites] = useState<Material[]>([]);
   const [favoriteIdMap, setFavoriteIdMap] = useState<Map<string, string>>(
@@ -57,6 +70,7 @@ export const UserFavoritesDialog: React.FC<UserFavoritesDialogProps> = ({
   const [loadingDelete, setLoadingDelete] = useState<string | null>(null);
   const [showAddSection, setShowAddSection] = useState(false);
   const [materialSearchQuery, setMaterialSearchQuery] = useState("");
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
   // Fetch user favorites when dialog opens or language changes
   useEffect(() => {
@@ -64,6 +78,8 @@ export const UserFavoritesDialog: React.FC<UserFavoritesDialogProps> = ({
       fetchUserFavorites();
       // Also fetch all available materials
       fetchAllMaterials();
+      // Fetch material categories
+      fetchCategories();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, effectiveUserId, currentLanguage.code]);
@@ -77,6 +93,7 @@ export const UserFavoritesDialog: React.FC<UserFavoritesDialogProps> = ({
       setShowAddSection(false);
       setLoadingDelete(null);
       setMaterialSearchQuery("");
+      setExpandedCategories([]);
     }
   }, [open]);
 
@@ -139,6 +156,14 @@ export const UserFavoritesDialog: React.FC<UserFavoritesDialogProps> = ({
       console.error("Failed to fetch materials:", error);
     } finally {
       setLoadingMaterials(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      await getCategories({ lang: currentLanguage.code });
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
     }
   };
 
@@ -219,6 +244,69 @@ export const UserFavoritesDialog: React.FC<UserFavoritesDialogProps> = ({
     );
   });
 
+  // Group materials by category
+  const materialsByCategory = useMemo(() => {
+    const grouped: Map<
+      string,
+      { category: MaterialCategory | null; materials: Material[] }
+    > = new Map();
+
+    // Add "No Category" group for materials without category
+    grouped.set("no-category", {
+      category: null,
+      materials: [],
+    });
+
+    // Initialize groups for each category
+    categories.forEach((category) => {
+      grouped.set(category.id, {
+        category,
+        materials: [],
+      });
+    });
+
+    // Group filtered materials by category
+    filteredAvailableMaterials.forEach((material) => {
+      const categoryId =
+        material.categoryId || material.category?.id || "no-category";
+      if (!grouped.has(categoryId)) {
+        // If category doesn't exist in our list, try to find it in categories
+        const fullCategory = categories.find((c) => c.id === categoryId);
+        grouped.set(categoryId, {
+          category: fullCategory ?? null,
+          materials: [],
+        });
+      }
+      grouped.get(categoryId)!.materials.push(material);
+    });
+
+    // Filter out empty categories (if no materials match search)
+    const result: Array<{
+      category: MaterialCategory | null;
+      materials: Material[];
+    }> = [];
+    grouped.forEach((value) => {
+      if (value.materials.length > 0) {
+        result.push(value);
+      }
+    });
+
+    // Sort: categories first (alphabetically), then "no category" at the end
+    result.sort((a, b) => {
+      if (!a.category && !b.category) return 0;
+      if (!a.category) return 1;
+      if (!b.category) return -1;
+
+      const nameA =
+        a.category.i18n?.[currentLanguage.code]?.name || a.category.name || "";
+      const nameB =
+        b.category.i18n?.[currentLanguage.code]?.name || b.category.name || "";
+      return nameA.localeCompare(nameB, currentLanguage.code);
+    });
+
+    return result;
+  }, [filteredAvailableMaterials, categories, currentLanguage.code]);
+
   const handleSelectAll = () => {
     const filteredIds = filteredAvailableMaterials.map(
       (material) => material.id
@@ -237,6 +325,31 @@ export const UserFavoritesDialog: React.FC<UserFavoritesDialogProps> = ({
       setSelectedMaterials((prev) => {
         const newSelection = [...prev];
         filteredIds.forEach((id) => {
+          if (!newSelection.includes(id)) {
+            newSelection.push(id);
+          }
+        });
+        return newSelection;
+      });
+    }
+  };
+
+  const handleSelectAllInCategory = (categoryMaterials: Material[]) => {
+    const categoryIds = categoryMaterials.map((m) => m.id);
+    const allSelected = categoryIds.every((id) =>
+      selectedMaterials.includes(id)
+    );
+
+    if (allSelected) {
+      // Deselect all materials in this category
+      setSelectedMaterials((prev) =>
+        prev.filter((id) => !categoryIds.includes(id))
+      );
+    } else {
+      // Select all materials in this category
+      setSelectedMaterials((prev) => {
+        const newSelection = [...prev];
+        categoryIds.forEach((id) => {
           if (!newSelection.includes(id)) {
             newSelection.push(id);
           }
@@ -366,16 +479,16 @@ export const UserFavoritesDialog: React.FC<UserFavoritesDialogProps> = ({
                 </div>
               )}
 
-              {/* Materials List */}
+              {/* Materials List by Category */}
               <div className="mt-2">
-                {loadingMaterials ? (
+                {loadingMaterials || isLoadingCategories ? (
                   <div className="flex items-center justify-center py-3">
                     <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
                     <span className="ml-2 text-xs text-gray-600 dark:text-gray-400">
                       {t("admin.loading") || "جاري التحميل..."}
                     </span>
                   </div>
-                ) : filteredAvailableMaterials.length === 0 ? (
+                ) : materialsByCategory.length === 0 ? (
                   <div className="text-center py-3 text-xs text-gray-500 dark:text-gray-400">
                     {materialSearchQuery.trim()
                       ? t("admin.noMaterialsFound") || "لا توجد نتائج للبحث"
@@ -383,49 +496,178 @@ export const UserFavoritesDialog: React.FC<UserFavoritesDialogProps> = ({
                         "لا توجد مواد متاحة للإضافة"}
                   </div>
                 ) : (
-                  <div className="max-h-64 overflow-y-auto space-y-1 mb-2">
-                    {filteredAvailableMaterials.map((material) => (
-                      <div
-                        key={material.id}
-                        className={cn(
-                          "p-2 rounded-lg border transition-colors",
-                          selectedMaterials.includes(material.id)
-                            ? "bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700"
-                            : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
-                        )}
-                      >
-                        <FormControlLabel
-                          control={
-                            <Checkbox
-                              checked={selectedMaterials.includes(material.id)}
-                              onChange={() => handleMaterialToggle(material.id)}
+                  <div className="max-h-64 overflow-y-auto space-y-2 mb-2">
+                    {materialsByCategory.map(
+                      ({ category, materials: categoryMaterials }) => {
+                        const categoryName = category
+                          ? category.i18n?.[currentLanguage.code]?.name ||
+                            category.name
+                          : t("admin.noCategory") || "بدون فئة";
+                        const allCategorySelected =
+                          categoryMaterials.length > 0 &&
+                          categoryMaterials.every((m) =>
+                            selectedMaterials.includes(m.id)
+                          );
+                        const someCategorySelected = categoryMaterials.some(
+                          (m) => selectedMaterials.includes(m.id)
+                        );
+
+                        const categoryId = category?.id || "no-category";
+                        const isExpanded =
+                          expandedCategories.includes(categoryId);
+
+                        const handleAccordionChange = (
+                          _event: React.SyntheticEvent,
+                          isExpandedNow: boolean
+                        ) => {
+                          if (isExpandedNow) {
+                            setExpandedCategories((prev) => [
+                              ...prev,
+                              categoryId,
+                            ]);
+                          } else {
+                            setExpandedCategories((prev) =>
+                              prev.filter((id) => id !== categoryId)
+                            );
+                          }
+                        };
+
+                        return (
+                          <Accordion
+                            key={categoryId}
+                            expanded={isExpanded}
+                            onChange={handleAccordionChange}
+                            sx={{
+                              boxShadow: "none",
+                              border: "1px solid",
+                              borderColor: "rgb(229 231 235)",
+                              "&:before": { display: "none" },
+                              "&.Mui-expanded": {
+                                margin: "0 0 8px 0",
+                              },
+                              ".dark &": {
+                                borderColor: "rgb(55 65 81)",
+                                backgroundColor: "rgb(31 41 55)",
+                              },
+                            }}
+                          >
+                            <AccordionSummary
+                              expandIcon={
+                                <ChevronDown
+                                  className={cn(
+                                    "h-4 w-4 text-gray-600 dark:text-gray-400 transition-transform",
+                                    isRTL && "rotate-180"
+                                  )}
+                                />
+                              }
                               sx={{
-                                color: "rgb(59 130 246)",
-                                "&.Mui-checked": {
-                                  color: "rgb(59 130 246)",
+                                minHeight: "40px !important",
+                                "& .MuiAccordionSummary-content": {
+                                  margin: "8px 0 !important",
+                                  alignItems: "center",
+                                },
+                                backgroundColor: "transparent",
+                                ".dark &": {
+                                  backgroundColor: "transparent",
                                 },
                               }}
-                            />
-                          }
-                          label={
-                            <span className="text-sm font-medium text-gray-900 dark:text-white">
-                              {material.i18n?.[currentLanguage.code]?.name ||
-                                material.name}
-                              {material.i18n?.[currentLanguage.code]
-                                ?.unitOfMeasure || material.unitOfMeasure ? (
-                                <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
-                                  (
-                                  {material.i18n?.[currentLanguage.code]
-                                    ?.unitOfMeasure || material.unitOfMeasure}
-                                  )
+                            >
+                              <div className="flex items-center justify-between w-full pr-2">
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                  {categoryName}
                                 </span>
-                              ) : null}
-                            </span>
-                          }
-                          className="w-full"
-                        />
-                      </div>
-                    ))}
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                                    ({categoryMaterials.length})
+                                  </span>
+                                  <FormControlLabel
+                                    control={
+                                      <Checkbox
+                                        checked={allCategorySelected}
+                                        indeterminate={
+                                          someCategorySelected &&
+                                          !allCategorySelected
+                                        }
+                                        onChange={() =>
+                                          handleSelectAllInCategory(
+                                            categoryMaterials
+                                          )
+                                        }
+                                        onClick={(e) => e.stopPropagation()}
+                                        sx={{
+                                          color: "rgb(59 130 246)",
+                                          "&.Mui-checked": {
+                                            color: "rgb(59 130 246)",
+                                          },
+                                          "&.MuiCheckbox-indeterminate": {
+                                            color: "rgb(59 130 246)",
+                                          },
+                                        }}
+                                      />
+                                    }
+                                    label=""
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                </div>
+                              </div>
+                            </AccordionSummary>
+                            <AccordionDetails sx={{ padding: "0 8px 8px 8px" }}>
+                              <div className="space-y-1">
+                                {categoryMaterials.map((material) => (
+                                  <div
+                                    key={material.id}
+                                    className={cn(
+                                      "p-2 rounded-lg border transition-colors",
+                                      selectedMaterials.includes(material.id)
+                                        ? "bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700"
+                                        : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                    )}
+                                  >
+                                    <FormControlLabel
+                                      control={
+                                        <Checkbox
+                                          checked={selectedMaterials.includes(
+                                            material.id
+                                          )}
+                                          onChange={() =>
+                                            handleMaterialToggle(material.id)
+                                          }
+                                          sx={{
+                                            color: "rgb(59 130 246)",
+                                            "&.Mui-checked": {
+                                              color: "rgb(59 130 246)",
+                                            },
+                                          }}
+                                        />
+                                      }
+                                      label={
+                                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                          {material.i18n?.[currentLanguage.code]
+                                            ?.name || material.name}
+                                          {material.i18n?.[currentLanguage.code]
+                                            ?.unitOfMeasure ||
+                                          material.unitOfMeasure ? (
+                                            <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                                              (
+                                              {material.i18n?.[
+                                                currentLanguage.code
+                                              ]?.unitOfMeasure ||
+                                                material.unitOfMeasure}
+                                              )
+                                            </span>
+                                          ) : null}
+                                        </span>
+                                      }
+                                      className="w-full"
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            </AccordionDetails>
+                          </Accordion>
+                        );
+                      }
+                    )}
                   </div>
                 )}
               </div>

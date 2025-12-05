@@ -14,7 +14,6 @@ import {
   Trash2,
   Image as ImageIcon,
   Calendar,
-  DollarSign,
   ShoppingCart,
   Filter,
 } from "lucide-react";
@@ -497,7 +496,6 @@ export default function AdminListingsPage() {
                         {t("listings.price")}
                       </span>
                       <span className="font-semibold text-green-600 dark:text-green-400">
-                        <DollarSign className="h-4 w-4 inline" />
                         {listing.startingPrice}{" "}
                         {t("currency.sar") || t("currency.saudiriyal") || "SAR"}
                       </span>
